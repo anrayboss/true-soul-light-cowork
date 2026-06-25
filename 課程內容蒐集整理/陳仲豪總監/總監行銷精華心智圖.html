@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>陳仲豪總監 - 行銷精華 3x3 心智圖</title>
+  <!-- 載入 Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --panel-bg: rgba(15, 23, 42, 0.85);
+      --panel-border: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-color: #f59e0b;
+      --grid-color: rgba(99, 102, 241, 0.05);
+      
+      /* 心智圖預設字體 */
+      --font-serif: 'Noto Serif TC', serif;
+      --font-rounded: 'M PLUS Rounded 1c', sans-serif;
+
+      /* 漸層色彩變數 */
+      --center-start: #fbbf24;
+      --center-end: #b45309;
+
+      --p1-color: #10b981;
+      --p1-start: #34d399;
+      --p1-end: #059669;
+      --p1-sub-start: #a7f3d0;
+      --p1-sub-end: #047857;
+
+      --p2-color: #3b82f6;
+      --p2-start: #60a5fa;
+      --p2-end: #2563eb;
+      --p2-sub-start: #bfdbfe;
+      --p2-sub-end: #1d4ed8;
+
+      --p3-color: #8b5cf6;
+      --p3-start: #c084fc;
+      --p3-end: #7c3aed;
+      --p3-sub-start: #e9d5ff;
+      --p3-sub-end: #6d28d9;
+    }
+
+    /* 淺色模式樣式 */
+    .light-theme {
+      --bg-color: #f8fafc;
+      --panel-bg: rgba(255, 255, 255, 0.9);
+      --panel-border: rgba(0, 0, 0, 0.1);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --accent-color: #d97706;
+      --grid-color: rgba(99, 102, 241, 0.05);
+
+      --center-start: #fde047;
+      --center-end: #854d0e;
+
+      --p1-color: #059669;
+      --p1-start: #34d399;
+      --p1-end: #064e3b;
+      --p1-sub-start: #d1fae5;
+      --p1-sub-end: #064e3b;
+
+      --p2-color: #2563eb;
+      --p2-start: #60a5fa;
+      --p2-end: #1e40af;
+      --p2-sub-start: #dbeafe;
+      --p2-sub-end: #1e40af;
+
+      --p3-color: #7c3aed;
+      --p3-start: #a78bfa;
+      --p3-end: #5b21b6;
+      --p3-sub-start: #f3e8ff;
+      --p3-sub-end: #5b21b6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* 網格背景效果 */
+    .bg-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+      pointer-events: none;
+    }
+
+    /* 主容器 */
+    .app-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    /* 左側控制面板 */
+    .control-panel {
+      width: 360px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--panel-border);
+      backdrop-filter: blur(12px);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+    }
+
+    .panel-header {
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 15px;
+      margin-bottom: 5px;
+    }
+
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #38bdf8, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 5px;
+    }
+
+    .panel-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* 折疊選單 */
+    .setting-group {
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+      overflow: hidden;
+    }
+
+    .setting-group-header {
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.04);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .setting-group-header:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .setting-group-content {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 表單元件 */
+    .form-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.1);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    }
+
+    .slider-val {
+      font-size: 0.8rem;
+      width: 35px;
+      text-align: right;
+      font-family: monospace;
+    }
+
+    select, input[type="text"], textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:focus, input[type="text"]:focus, textarea:focus {
+      border-color: var(--accent-color);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: var(--font-rounded);
+      line-height: 1.4;
+    }
+
+    /* 按鈕樣式 */
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    /* 畫布區域 */
+    .canvas-container {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    .canvas-container:active {
+      cursor: grabbing;
+    }
+
+    /* SVG 繪圖樣式 */
+    svg {
+      width: 100%;
+      height: 100%;
+      user-select: none;
+    }
+
+    /* SVG 內的文字與發光效果 */
+    .glow-effect {
+      filter: drop-shadow(0px 0px 8px rgba(245, 158, 11, 0.6));
+    }
+
+    .glow-cyan {
+      filter: drop-shadow(0px 0px 8px rgba(6, 182, 212, 0.6));
+    }
+
+    .glow-indigo {
+      filter: drop-shadow(0px 0px 8px rgba(99, 102, 241, 0.6));
+    }
+
+    .glow-purple {
+      filter: drop-shadow(0px 0px 8px rgba(168, 85, 247, 0.6));
+    }
+
+    /* 浮動提示/編輯區 */
+    .node-editor-floating {
+      position: absolute;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      width: 280px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      backdrop-filter: blur(16px);
+      z-index: 100;
+      display: none;
+      pointer-events: auto;
+    }
+
+    /* 快捷功能 */
+    .shortcut-toolbar {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 30px;
+      padding: 8px 16px;
+      display: flex;
+      gap: 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+
+    .shortcut-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .shortcut-btn:hover {
+      background: rgba(255,255,255,0.15);
+      transform: scale(1.05);
+    }
+
+    /* 動畫效果 */
+    @keyframes pulse {
+      0% { r: var(--r); filter: drop-shadow(0 0 4px rgba(245,158,11,0.4)); }
+      50% { r: calc(var(--r) + 2px); filter: drop-shadow(0 0 12px rgba(245,158,11,0.8)); }
+      100% { r: var(--r); filter: drop-shadow(0 0 4px rgba(245,158,11,0.4)); }
+    }
+
+    .pulse-node {
+      animation: pulse 3s infinite ease-in-out;
+    }
+
+    /* 手機版與響應式 CSS 樣式 */
+    .menu-toggle-btn {
+      display: none;
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      font-size: 1.3rem;
+      cursor: pointer;
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+
+    .menu-toggle-btn:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .mobile-close-btn {
+      display: none;
+      width: 100%;
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: background 0.2s;
+    }
+
+    .mobile-close-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .mobile-view {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px 16px 80px 16px;
+      width: 100%;
+      height: 100vh;
+      overflow-y: auto;
+      background-color: var(--bg-color);
+      z-index: 5;
+    }
+
+    .mobile-header {
+      padding: 16px 0 10px 48px; /* 留空間給左上角漢堡選單 */
+      border-bottom: 1px solid var(--panel-border);
+      margin-bottom: 10px;
+    }
+
+    .mobile-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fbbf24, #ef4444);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: var(--font-serif);
+    }
+
+    .mobile-cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .mobile-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .mobile-card-header {
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 8px;
+    }
+
+    .mobile-card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: var(--font-serif);
+      letter-spacing: 1px;
+    }
+
+    .mobile-card-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    .mobile-tab-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px 4px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.25s ease;
+    }
+
+    .mobile-tab-btn .tab-type {
+      font-size: 0.65rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      opacity: 0.6;
+    }
+
+    .mobile-tab-btn .tab-label {
+      font-size: 0.85rem;
+      font-family: var(--font-serif);
+    }
+
+    .mobile-tab-btn.active {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .mobile-card-content {
+      background: rgba(0,0,0,0.15);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .mobile-content-title {
+      font-size: 0.75rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .mobile-content-body {
+      font-family: var(--font-rounded);
+      font-size: 1.35rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      text-align: center;
+      letter-spacing: 2px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* 行動裝置響應式樣式 */
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+      }
+      .menu-toggle-btn {
+        display: flex;
+      }
+      .mobile-close-btn {
+        display: block;
+      }
+      .control-panel {
+        position: fixed;
+        top: 0;
+        left: -320px; /* 隱藏於左側 */
+        width: 300px;
+        height: 100vh;
+        z-index: 999;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+      }
+      .control-panel.open {
+        left: 0; /* 滑出面板 */
+      }
+      .canvas-container, .shortcut-toolbar {
+        display: none !important;
+      }
+      .mobile-view {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <div class="app-container">
+    <!-- 手機版選單按鈕 -->
+    <button class="menu-toggle-btn" id="menuToggle" onclick="toggleMenu()" title="展開選單">☰</button>
+
+    <!-- 左側控制面板 -->
+    <div class="control-panel">
+      <button class="mobile-close-btn" onclick="toggleMenu()">✕ 關閉設定</button>
+      <div class="panel-header">
+        <h1 class="panel-title">行銷精華 3x3 心智圖</h1>
+        <p class="panel-subtitle">陳仲豪總監行銷精髓視覺化系統</p>
+      </div>
+
+      <!-- 主題與動作 -->
+      <div class="setting-group">
+        <div class="setting-group-header" onclick="toggleGroup(this)">
+          主題與匯出 <span>▼</span>
+        </div>
+        <div class="setting-group-content">
+          <div class="form-item">
+            <label>介面主題</label>
+            <select id="themeSelect" onchange="changeTheme(this.value)">
+              <option value="dark">極光暗夜 (Dark Mode)</option>
+              <option value="light">雅致明亮 (Light Mode)</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label>配色方案</label>
+            <select id="colorScheme" onchange="updateColors()">
+              <option value="neon">科技霓虹 (預設)</option>
+              <option value="amber">琉璃金沙</option>
+              <option value="forest">翡翠極光</option>
+              <option value="aurora">紫宸極光</option>
+            </select>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="exportSVG()">匯出 SVG</button>
+            <button class="btn btn-primary" onclick="exportPNG()">匯出 PNG</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 尺寸與布局微調 -->
+      <div class="setting-group">
+        <div class="setting-group-header" onclick="toggleGroup(this)">
+          半徑與尺寸微調 <span>▼</span>
+        </div>
+        <div class="setting-group-content">
+          <div class="form-item">
+            <label>第二圈半徑 (R1)</label>
+            <div class="slider-container">
+              <input type="range" id="r1Slider" min="150" max="300" value="220" oninput="updateLayout()">
+              <span class="slider-val" id="r1Val">220</span>
+            </div>
+          </div>
+          <div class="form-item">
+            <label>第三圈半徑 (R2)</label>
+            <div class="slider-container">
+              <input type="range" id="r2Slider" min="350" max="600" value="430" oninput="updateLayout()">
+              <span class="slider-val" id="r2Val">430</span>
+            </div>
+          </div>
+          <div class="form-item">
+            <label>中央球半徑</label>
+            <div class="slider-container">
+              <input type="range" id="rCenterSlider" min="60" max="110" value="80" oninput="updateLayout()">
+              <span class="slider-val" id="rCenterVal">80</span>
+            </div>
+          </div>
+          <div class="form-item">
+            <label>第二圈球半徑</label>
+            <div class="slider-container">
+              <input type="range" id="rInnerSlider" min="45" max="80" value="60" oninput="updateLayout()">
+              <span class="slider-val" id="rInnerVal">60</span>
+            </div>
+          </div>
+          <div class="form-item">
+            <label>第三圈球半徑</label>
+            <div class="slider-container">
+              <input type="range" id="rOuterSlider" min="35" max="65" value="45" oninput="updateLayout()">
+              <span class="slider-val" id="rOuterVal">45</span>
+            </div>
+          </div>
+          <div class="form-item">
+            <label>連線樣式</label>
+            <select id="lineStyle" onchange="updateLayout()">
+              <option value="straight" selected>直線 (剛強)</option>
+              <option value="curve">貝氏曲線 (柔和)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 節點內容編輯器 -->
+      <div class="setting-group" id="editorGroup">
+        <div class="setting-group-header" onclick="toggleGroup(this)">
+          編輯節點內容 <span>▼</span>
+        </div>
+        <div class="setting-group-content">
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:5px;">點擊心智圖中的圓球可快速選中編輯</p>
+          <div class="form-item">
+            <label>當前選取節點</label>
+            <select id="nodeSelect" onchange="selectNode(this.value)">
+              <option value="center">中央圓球: 行銷精隨</option>
+              <option value="p1">產品 (第一圈)</option>
+              <option value="p1_why">產品 -> Why: 離苦得樂</option>
+              <option value="p1_how">產品 -> How: 獨特優勢</option>
+              <option value="p1_what">產品 -> What: 精準定位</option>
+              <option value="p2">流量 (第一圈)</option>
+              <option value="p2_why">流量 -> Why: 建立信任</option>
+              <option value="p2_how">流量 -> How: 創造互動</option>
+              <option value="p2_what">流量 -> What: 客從哪來</option>
+              <option value="p3">系統 (第一圈)</option>
+              <option value="p3_why">系統 -> Why: 複製邏輯</option>
+              <option value="p3_how">系統 -> How: 自動流程</option>
+              <option value="p3_what">系統 -> What: 簡單變現</option>
+            </select>
+          </div>
+          
+          <div class="form-item" id="nodeTextItem">
+            <label>球內主要文字 (可用 \n 換行)</label>
+            <input type="text" id="nodeTextInput" oninput="saveNodeData()">
+          </div>
+
+          <div class="form-item" id="nodeSubtextItem" style="display:none;">
+            <label>球內次要文字 (What/How/Why 的中文標題)</label>
+            <input type="text" id="nodeSubtextInput" oninput="saveNodeData()">
+          </div>
+
+          <div class="form-item" id="descTextItem" style="display:none;">
+            <label>右側說明文字 (每行四字，共三行)</label>
+            <textarea id="descTextInput" placeholder="生存需求&#10;生活品質&#10;生命意義" oninput="saveNodeData()"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側畫布區域 -->
+    <div class="canvas-container" id="canvasContainer">
+      <svg id="mindmapSvg" viewBox="0 0 1300 1300">
+        <!-- SVG 定義漸層和濾鏡 -->
+        <defs>
+          <!-- 發光濾鏡 -->
+          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          
+          <!-- 各種漸層設定 -->
+          <radialGradient id="centerGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="var(--center-start)" />
+            <stop offset="100%" stop-color="var(--center-end)" />
+          </radialGradient>
+          
+          <!-- 產品 (翡翠綠青色) -->
+          <linearGradient id="p1Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--p1-start)" />
+            <stop offset="100%" stop-color="var(--p1-end)" />
+          </linearGradient>
+          <linearGradient id="p1GradSub" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--p1-sub-start)" />
+            <stop offset="100%" stop-color="var(--p1-sub-end)" />
+          </linearGradient>
+
+          <!-- 流量 (海洋藍藍色) -->
+          <linearGradient id="p2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--p2-start)" />
+            <stop offset="100%" stop-color="var(--p2-end)" />
+          </linearGradient>
+          <linearGradient id="p2GradSub" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--p2-sub-start)" />
+            <stop offset="100%" stop-color="var(--p2-sub-end)" />
+          </linearGradient>
+
+          <!-- 系統 (紫水晶紫色) -->
+          <linearGradient id="p3Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--p3-start)" />
+            <stop offset="100%" stop-color="var(--p3-end)" />
+          </linearGradient>
+          <linearGradient id="p3GradSub" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--p3-sub-start)" />
+            <stop offset="100%" stop-color="var(--p3-sub-end)" />
+          </linearGradient>
+
+          <!-- 線條漸層 -->
+          <linearGradient id="lineP1" x1="0%" y1="0%" x2="100%" y2="100%"></linearGradient>
+          <linearGradient id="lineP2" x1="0%" y1="0%" x2="100%" y2="100%"></linearGradient>
+          <linearGradient id="lineP3" x1="0%" y1="0%" x2="100%" y2="100%"></linearGradient>
+        </defs>
+
+        <!-- 網格背景/輔助線 -->
+        <g id="svgBackground"></g>
+        
+        <!-- 連線圖層 -->
+        <g id="linksGroup" stroke-linecap="round"></g>
+
+        <!-- 圓球圖層 -->
+        <g id="nodesGroup"></g>
+
+        <!-- 文字說明圖層 -->
+        <g id="textsGroup"></g>
+      </svg>
+    </div>
+
+    <!-- 手機版垂直卡片與選單區域 -->
+    <div class="mobile-view" id="mobileView">
+      <div class="mobile-header">
+        <span class="mobile-title">陳仲豪總監 · 行銷精華 3x3</span>
+      </div>
+      <div id="mobileViewContainer" class="mobile-cards-container"></div>
+    </div>
+
+    <!-- 浮動快捷工具 -->
+    <div class="shortcut-toolbar">
+      <button class="shortcut-btn" onclick="zoomIn()" title="放大">＋</button>
+      <button class="shortcut-btn" onclick="zoomOut()" title="縮小">－</button>
+      <button class="shortcut-btn" onclick="resetZoom()" title="還原重置">⟲</button>
+    </div>
+  </div>
+
+  <script>
+    // 預設核心資料
+    let mindData = {
+      center: { text: "陳仲豪\n行銷精隨" },
+      p1: { text: "產品" },
+      p1_why: { type: "why", label: "離苦得樂", desc: "生存需求\n生活品質\n生命意義" },
+      p1_how: { type: "how", label: "獨特優勢", desc: "你無我有\n你有我優\n你優我廉" },
+      p1_what: { type: "what", label: "精準定位", desc: "個人定位\n產品定位\n客戶定位" },
+      p2: { text: "流量" },
+      p2_why: { type: "why", label: "建立信任", desc: "自我肯定\n他人案例\n權威數據" },
+      p2_how: { type: "how", label: "創造互動", desc: "共振有趣\n真誠互動\n感動分享" },
+      p2_what: { type: "what", label: "客從哪來", desc: "天網引流\n地網體驗\n人網口碑" },
+      p3: { text: "系統" },
+      p3_why: { type: "why", label: "複製邏輯", desc: "複製選題\n複製框架\n複製模式" },
+      p3_how: { type: "how", label: "自動流程", desc: "AI運用\n科技跟進\n能量吸引" },
+      p3_what: { type: "what", label: "簡單變現", desc: "方案簡單\n制度簡單\n加入簡單" }
+    };
+
+    // 畫布操作狀態
+    let zoomLevel = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let startX, startY;
+    let activeNodeId = "center";
+
+    // 手機版 Active Tab 狀態
+    let mobileActiveTabs = {
+      p1: "p1_why",
+      p2: "p2_why",
+      p3: "p3_why"
+    };
+
+    // 幾何變數
+    const cx = 650;
+    const cy = 650;
+
+    window.onload = function() {
+      // 綁定畫布拖曳與手機觸控事件
+      const container = document.getElementById("canvasContainer");
+      container.addEventListener("mousedown", dragStart);
+      window.addEventListener("mousemove", dragMove);
+      window.addEventListener("mouseup", dragEnd);
+      container.addEventListener("wheel", handleWheel);
+
+      // 手機觸控支援
+      container.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          startX = e.touches[0].clientX - panX;
+          startY = e.touches[0].clientY - panY;
+        }
+      }, { passive: true });
+
+      container.addEventListener("touchmove", (e) => {
+        if (isDragging && e.touches.length === 1) {
+          panX = e.touches[0].clientX - startX;
+          panY = e.touches[0].clientY - startY;
+          applyTransform();
+        }
+      }, { passive: true });
+
+      container.addEventListener("touchend", () => {
+        isDragging = false;
+      });
+
+      // 手機開啟時預設將設定面板收合
+      if (window.innerWidth <= 768) {
+        document.querySelector(".control-panel").classList.remove("open");
+      }
+
+      // 初始化資料與渲染
+      selectNode("center");
+      updateLayout();
+      updateColors();
+    };
+
+    // 展開/收合控制面板分組
+    function toggleGroup(header) {
+      const content = header.nextElementSibling;
+      const arrow = header.querySelector("span");
+      if (content.style.display === "none") {
+        content.style.display = "flex";
+        arrow.textContent = "▼";
+      } else {
+        content.style.display = "none";
+        arrow.textContent = "▲";
+      }
+    }
+
+    // 渲染心智圖的主邏輯
+    function updateLayout() {
+      // 讀取 Slider 設定值
+      const r1 = parseInt(document.getElementById("r1Slider").value);
+      const r2 = parseInt(document.getElementById("r2Slider").value);
+      const rCenter = parseInt(document.getElementById("rCenterSlider").value);
+      const rInner = parseInt(document.getElementById("rInnerSlider").value);
+      const rOuter = parseInt(document.getElementById("rOuterSlider").value);
+      const lineStyle = document.getElementById("lineStyle").value;
+
+      // 更新 Slider 旁的顯示數值
+      document.getElementById("r1Val").textContent = r1;
+      document.getElementById("r2Val").textContent = r2;
+      document.getElementById("rCenterVal").textContent = rCenter;
+      document.getElementById("rInnerVal").textContent = rInner;
+      document.getElementById("rOuterVal").textContent = rOuter;
+
+      const svg = document.getElementById("mindmapSvg");
+      const nodesG = document.getElementById("nodesGroup");
+      const linksG = document.getElementById("linksGroup");
+      const textsG = document.getElementById("textsGroup");
+
+      // 清除舊繪圖內容
+      nodesG.innerHTML = "";
+      linksG.innerHTML = "";
+      textsG.innerHTML = "";
+
+      // 定義三個大分支的角度 (角度 -90度 為正上方，120度等距)
+      // 產品 = -90° (270°), 流量 = 30°, 系統 = 150°
+      const branches = [
+        { id: "p1", name: "產品", angle: -90, color: "var(--p1-color)", grad: "url(#p1Grad)", subGrad: "url(#p1GradSub)", subIds: ["p1_why", "p1_how", "p1_what"] },
+        { id: "p2", name: "流量", angle: 30, color: "var(--p2-color)", grad: "url(#p2Grad)", subGrad: "url(#p2GradSub)", subIds: ["p2_why", "p2_how", "p2_what"] },
+        { id: "p3", name: "系統", angle: 150, color: "var(--p3-color)", grad: "url(#p3Grad)", subGrad: "url(#p3GradSub)", subIds: ["p3_why", "p3_how", "p3_what"] }
+      ];
+
+      // 1. 繪製中心圓球 (中央)
+      createCenterNode(cx, cy, rCenter);
+
+      // 計算九顆外圍球的角分佈
+      // 為了讓外圍 9 顆球在以 R2 為半徑的圓周上呈現絕對等距，並且每組的中點與該組一級分支對齊：
+      // 我們設定 9 顆球的角度，其對稱分佈為：
+      // 產品組: -130°, -90°, -50°
+      // 流量組: -10°, 30°, 70°
+      // 系統組: 110°, 150°, 190°
+      // (相鄰均為 40° 間隔，完美等距大圓)
+      
+      const subAngles = {
+        "p1_why": -130, "p1_how": -90, "p1_what": -50,
+        "p2_why": -10, "p2_how": 30, "p2_what": 70,
+        "p3_why": 110, "p3_how": 150, "p3_what": 190
+      };
+
+      // 遍歷三個大分支
+      branches.forEach((b, bIdx) => {
+        // 一級分支球座標
+        const rad1 = (b.angle * Math.PI) / 180;
+        const x1 = cx + r1 * Math.cos(rad1);
+        const y1 = cy + r1 * Math.sin(rad1);
+
+        // 繪製中心到一級分支的連線
+        drawLink(cx, cy, x1, y1, b.color, lineStyle, rCenter, rInner);
+
+        // 繪製一級分支球
+        createNode(b.id, x1, y1, rInner, b.grad, mindData[b.id].text, b.color, false);
+
+        // 遍歷三級子分支
+        b.subIds.forEach((subId, subIdx) => {
+          const angle = subAngles[subId];
+          const rad2 = (angle * Math.PI) / 180;
+          
+          // 二級分支球座標 (大圓上)
+          const x2 = cx + r2 * Math.cos(rad2);
+          const y2 = cy + r2 * Math.sin(rad2);
+
+          // 繪製一級到二級的連線
+          drawLink(x1, y1, x2, y2, b.color, lineStyle, rInner, rOuter);
+
+          // 繪製二級分支球
+          const subData = mindData[subId];
+          const textBall = `${subData.type.toUpperCase()}\n${subData.label}`;
+          createNode(subId, x2, y2, rOuter, b.subGrad, textBall, b.color, true);
+
+          // 繪製右側說明文字
+          drawDescription(subId, x2, y2, rOuter, subData.desc);
+        });
+      });
+
+      // 更新 SVG 的 Viewport Transform 屬性
+      applyTransform();
+
+      // 更新手機版卡片視圖
+      updateMobileView();
+    }
+
+    // 繪製連線 (直線或貝氏曲線)
+    function drawLink(x1, y1, x2, y2, color, style, rSrc, rDst) {
+      const linksG = document.getElementById("linksGroup");
+      
+      // 計算連線起終點：扣除球半徑以優化線條接縫
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const startX = x1 + rSrc * Math.cos(angle);
+      const startY = y1 + rSrc * Math.sin(angle);
+      const endX = x2 - rDst * Math.cos(angle);
+      const endY = y2 - rDst * Math.sin(angle);
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      let d = "";
+
+      if (style === "curve") {
+        // 使用貝氏曲線，營造有機生長效果
+        // 我們用二次/三次貝氏曲線，讓控制點往外延伸
+        const cx1 = startX + (endX - startX) * 0.4;
+        const cy1 = startY + (endY - startY) * 0.1;
+        const cx2 = startX + (endX - startX) * 0.6;
+        const cy2 = startY + (endY - startY) * 0.9;
+        d = `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`;
+      } else {
+        d = `M ${startX} ${startY} L ${endX} ${endY}`;
+      }
+
+      path.setAttribute("d", d);
+      path.setAttribute("stroke", color);
+      path.setAttribute("stroke-width", "2.5");
+      path.setAttribute("fill", "none");
+      path.setAttribute("opacity", "0.6");
+      // 增加微微的發光投影效果
+      path.setAttribute("filter", "drop-shadow(0px 0px 4px " + color + "80)");
+      linksG.appendChild(path);
+    }
+
+    // 建立中心圓球
+    function createCenterNode(x, y, r) {
+      const nodesG = document.getElementById("nodesGroup");
+
+      // 漸層發光背景圈
+      const glowCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      glowCircle.setAttribute("cx", x);
+      glowCircle.setAttribute("cy", y);
+      glowCircle.setAttribute("r", r + 8);
+      glowCircle.setAttribute("fill", "none");
+      glowCircle.setAttribute("stroke", "var(--accent-color)");
+      glowCircle.setAttribute("stroke-width", "2");
+      glowCircle.setAttribute("opacity", "0.3");
+      glowCircle.setAttribute("class", "pulse-node");
+      glowCircle.style.setProperty("--r", (r + 8) + "px");
+      nodesG.appendChild(glowCircle);
+
+      // 主球體
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", x);
+      circle.setAttribute("cy", y);
+      circle.setAttribute("r", r);
+      circle.setAttribute("fill", "url(#centerGrad)");
+      circle.setAttribute("stroke", "var(--accent-color)");
+      circle.setAttribute("stroke-width", "3");
+      circle.setAttribute("style", "cursor: pointer;");
+      circle.setAttribute("filter", "url(#glow)");
+      
+      // 點擊事件
+      circle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectNode("center");
+      });
+
+      nodesG.appendChild(circle);
+
+      // 中心文字 (襯線體 - 隨半徑 r 縮放)
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", x);
+      text.setAttribute("y", y);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "middle");
+      text.setAttribute("fill", "#ffffff");
+      text.setAttribute("font-family", "var(--font-serif)");
+      text.setAttribute("font-weight", "bold");
+      
+      const fontSize = Math.round(r * 0.275);
+      text.setAttribute("font-size", fontSize + "px");
+      text.setAttribute("style", "pointer-events: none;");
+
+      const lines = mindData.center.text.split("\n");
+      lines.forEach((line, idx) => {
+        const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+        tspan.textContent = line;
+        tspan.setAttribute("x", x);
+        tspan.setAttribute("dy", idx === 0 ? `-${(lines.length - 1) * (fontSize / 2)}px` : `${Math.round(fontSize * 1.2)}px`);
+        text.appendChild(tspan);
+      });
+
+      nodesG.appendChild(text);
+    }
+
+    // 建立一級與二級分支球
+    function createNode(id, x, y, r, grad, textStr, strokeColor, isOuter) {
+      const nodesG = document.getElementById("nodesGroup");
+
+      // 外部發光環
+      if (activeNodeId === id) {
+        const selectRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        selectRing.setAttribute("cx", x);
+        selectRing.setAttribute("cy", y);
+        selectRing.setAttribute("r", r + 6);
+        selectRing.setAttribute("fill", "none");
+        selectRing.setAttribute("stroke", strokeColor);
+        selectRing.setAttribute("stroke-width", "3");
+        selectRing.setAttribute("stroke-dasharray", "5 3");
+        nodesG.appendChild(selectRing);
+      }
+
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", x);
+      circle.setAttribute("cy", y);
+      circle.setAttribute("r", r);
+      circle.setAttribute("fill", grad);
+      circle.setAttribute("stroke", strokeColor);
+      circle.setAttribute("stroke-width", "2.5");
+      circle.setAttribute("style", "cursor: pointer;");
+      circle.setAttribute("filter", "drop-shadow(0px 4px 10px rgba(0,0,0,0.35))");
+
+      circle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectNode(id);
+      });
+
+      nodesG.appendChild(circle);
+
+      // 球內文字 - 隨半徑 r 縮放
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", x);
+      text.setAttribute("y", y);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "middle");
+      text.setAttribute("fill", "#ffffff");
+      text.setAttribute("font-family", "var(--font-serif)");
+      text.setAttribute("font-weight", isOuter ? "normal" : "bold");
+      
+      const fontSize = Math.round(r * (isOuter ? 0.31 : 0.3));
+      text.setAttribute("font-size", fontSize + "px");
+      text.setAttribute("style", "pointer-events: none;");
+
+      const lines = textStr.split("\n");
+      lines.forEach((line, idx) => {
+        const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+        tspan.textContent = line;
+        tspan.setAttribute("x", x);
+        tspan.setAttribute("dy", idx === 0 ? `-${(lines.length - 1) * (fontSize / 2)}px` : `${Math.round(fontSize * 1.2)}px`);
+        // 如果是二級子節點的英文 (WHY, HOW, WHAT)，字體稍微縮小，加上間距
+        if (isOuter && idx === 0) {
+          const subFontSize = Math.round(r * 0.24);
+          tspan.setAttribute("font-size", subFontSize + "px");
+          tspan.setAttribute("font-weight", "bold");
+          tspan.setAttribute("letter-spacing", "1px");
+          tspan.setAttribute("fill", "rgba(255,255,255,0.75)");
+        }
+        text.appendChild(tspan);
+      });
+
+      nodesG.appendChild(text);
+    }
+
+    // 繪製右側說明文字 (圓體、冒號後四個字一行，共三行 - 隨半徑 r 縮放)
+    function drawDescription(id, x, y, r, descStr) {
+      if (!descStr) return;
+      const textsG = document.getElementById("textsGroup");
+
+      // 隨半徑 r 計算間隔與字體大小
+      const textGap = Math.round(r * 0.35);
+      const textX = x + r + textGap;
+      const fontSize = Math.round(r * 0.33);
+      const lineHeight = Math.round(fontSize * 1.45);
+      
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", textX);
+      text.setAttribute("y", y);
+      text.setAttribute("dominant-baseline", "middle");
+      text.setAttribute("font-family", "var(--font-rounded)");
+      text.setAttribute("font-size", fontSize + "px");
+      text.setAttribute("fill", "var(--text-main)");
+      text.setAttribute("style", "pointer-events: none;");
+
+      const lines = descStr.split("\n");
+      lines.forEach((line, idx) => {
+        const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+        tspan.textContent = line;
+        tspan.setAttribute("x", textX);
+        // 第一行與後面行的垂直偏移調整，讓三行垂直居中
+        tspan.setAttribute("dy", idx === 0 ? `-${(lines.length - 1) * (fontSize * 0.73)}px` : `${lineHeight}px`);
+        tspan.setAttribute("letter-spacing", "1px");
+        text.appendChild(tspan);
+      });
+
+      textsG.appendChild(text);
+
+      // 連接球到文字的微小引導短虛線 (隨半徑縮放)
+      const guideLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      guideLine.setAttribute("x1", x + r + 2);
+      guideLine.setAttribute("y1", y);
+      guideLine.setAttribute("x2", x + r + textGap - 4);
+      guideLine.setAttribute("y2", y);
+      guideLine.setAttribute("stroke", "var(--text-muted)");
+      guideLine.setAttribute("stroke-width", "1");
+      guideLine.setAttribute("stroke-dasharray", "2 2");
+      guideLine.setAttribute("opacity", "0.3");
+      textsG.appendChild(guideLine);
+    }
+
+    // 當前選取編輯的節點處理
+    function selectNode(id) {
+      activeNodeId = id;
+      document.getElementById("nodeSelect").value = id;
+
+      const data = mindData[id];
+      const textInput = document.getElementById("nodeTextInput");
+      const subtextInput = document.getElementById("nodeSubtextInput");
+      const descInput = document.getElementById("descTextInput");
+
+      const subtextItem = document.getElementById("nodeSubtextItem");
+      const descTextItem = document.getElementById("descTextItem");
+
+      if (id === "center" || id === "p1" || id === "p2" || id === "p3") {
+        // 中心或一級節點只有主要文字
+        textInput.value = data.text;
+        subtextItem.style.display = "none";
+        descTextItem.style.display = "none";
+      } else {
+        // 二級外圍節點 (Why, How, What)
+        textInput.value = data.type.toUpperCase();
+        subtextInput.value = data.label;
+        descInput.value = data.desc;
+
+        subtextItem.style.display = "flex";
+        descTextItem.style.display = "flex";
+      }
+
+      // 重繪選取框
+      updateLayout();
+    }
+
+    // 儲存編輯內容
+    function saveNodeData() {
+      const id = activeNodeId;
+      const data = mindData[id];
+
+      const textVal = document.getElementById("nodeTextInput").value;
+      const subtextVal = document.getElementById("nodeSubtextInput").value;
+      const descVal = document.getElementById("descTextInput").value;
+
+      if (id === "center" || id === "p1" || id === "p2" || id === "p3") {
+        data.text = textVal;
+      } else {
+        data.label = subtextVal;
+        data.desc = descVal;
+      }
+
+      // 重新渲染
+      updateLayout();
+    }
+
+    // 主題變更 (Dark / Light)
+    function changeTheme(theme) {
+      if (theme === "light") {
+        document.body.classList.add("light-theme");
+      } else {
+        document.body.classList.remove("light-theme");
+      }
+    }
+
+    // 配色方案更新
+    function updateColors() {
+      const scheme = document.getElementById("colorScheme").value;
+      const root = document.documentElement;
+
+      if (scheme === "neon") {
+        root.style.setProperty("--center-start", "#fbbf24");
+        root.style.setProperty("--center-end", "#b45309");
+        root.style.setProperty("--accent-color", "#f59e0b");
+
+        root.style.setProperty("--p1-color", "#10b981");
+        root.style.setProperty("--p1-start", "#34d399");
+        root.style.setProperty("--p1-end", "#059669");
+        root.style.setProperty("--p1-sub-start", "#a7f3d0");
+        root.style.setProperty("--p1-sub-end", "#047857");
+
+        root.style.setProperty("--p2-color", "#3b82f6");
+        root.style.setProperty("--p2-start", "#60a5fa");
+        root.style.setProperty("--p2-end", "#2563eb");
+        root.style.setProperty("--p2-sub-start", "#bfdbfe");
+        root.style.setProperty("--p2-sub-end", "#1d4ed8");
+
+        root.style.setProperty("--p3-color", "#8b5cf6");
+        root.style.setProperty("--p3-start", "#c084fc");
+        root.style.setProperty("--p3-end", "#7c3aed");
+        root.style.setProperty("--p3-sub-start", "#e9d5ff");
+        root.style.setProperty("--p3-sub-end", "#6d28d9");
+      } else if (scheme === "amber") {
+        root.style.setProperty("--center-start", "#fef08a");
+        root.style.setProperty("--center-end", "#a16207");
+        root.style.setProperty("--accent-color", "#ca8a04");
+
+        root.style.setProperty("--p1-color", "#f59e0b");
+        root.style.setProperty("--p1-start", "#fbbf24");
+        root.style.setProperty("--p1-end", "#d97706");
+        root.style.setProperty("--p1-sub-start", "#fef3c7");
+        root.style.setProperty("--p1-sub-end", "#b45309");
+
+        root.style.setProperty("--p2-color", "#f97316");
+        root.style.setProperty("--p2-start", "#fdba74");
+        root.style.setProperty("--p2-end", "#ea580c");
+        root.style.setProperty("--p2-sub-start", "#ffedd5");
+        root.style.setProperty("--p2-sub-end", "#c2410c");
+
+        root.style.setProperty("--p3-color", "#eab308");
+        root.style.setProperty("--p3-start", "#fde047");
+        root.style.setProperty("--p3-end", "#ca8a04");
+        root.style.setProperty("--p3-sub-start", "#fef9c3");
+        root.style.setProperty("--p3-sub-end", "#854d0e");
+      } else if (scheme === "forest") {
+        root.style.setProperty("--center-start", "#a7f3d0");
+        root.style.setProperty("--center-end", "#064e3b");
+        root.style.setProperty("--accent-color", "#059669");
+
+        root.style.setProperty("--p1-color", "#059669");
+        root.style.setProperty("--p1-start", "#34d399");
+        root.style.setProperty("--p1-end", "#065f46");
+        root.style.setProperty("--p1-sub-start", "#d1fae5");
+        root.style.setProperty("--p1-sub-end", "#064e3b");
+
+        root.style.setProperty("--p2-color", "#0d9488");
+        root.style.setProperty("--p2-start", "#2dd4bf");
+        root.style.setProperty("--p2-end", "#115e59");
+        root.style.setProperty("--p2-sub-start", "#ccfbf1");
+        root.style.setProperty("--p2-sub-end", "#134e4a");
+
+        root.style.setProperty("--p3-color", "#16a34a");
+        root.style.setProperty("--p3-start", "#4ade80");
+        root.style.setProperty("--p3-end", "#166534");
+        root.style.setProperty("--p3-sub-start", "#dcfce7");
+        root.style.setProperty("--p3-sub-end", "#14532d");
+      } else if (scheme === "aurora") {
+        root.style.setProperty("--center-start", "#f3e8ff");
+        root.style.setProperty("--center-end", "#581c87");
+        root.style.setProperty("--accent-color", "#a855f7");
+
+        root.style.setProperty("--p1-color", "#8b5cf6");
+        root.style.setProperty("--p1-start", "#a78bfa");
+        root.style.setProperty("--p1-end", "#5b21b6");
+        root.style.setProperty("--p1-sub-start", "#ddd6fe");
+        root.style.setProperty("--p1-sub-end", "#4c1d95");
+
+        root.style.setProperty("--p2-color", "#ec4899");
+        root.style.setProperty("--p2-start", "#f472b6");
+        root.style.setProperty("--p2-end", "#be185d");
+        root.style.setProperty("--p2-sub-start", "#fce7f3");
+        root.style.setProperty("--p2-sub-end", "#831843");
+
+        root.style.setProperty("--p3-color", "#6366f1");
+        root.style.setProperty("--p3-start", "#818cf8");
+        root.style.setProperty("--p3-end", "#3730a3");
+        root.style.setProperty("--p3-sub-start", "#e0e7ff");
+        root.style.setProperty("--p3-sub-end", "#1e1b4b");
+      }
+
+      updateLayout();
+    }
+
+    // 視角平移與縮放 (Zoom & Pan)
+    function applyTransform() {
+      const nodesG = document.getElementById("nodesGroup");
+      const linksG = document.getElementById("linksGroup");
+      const textsG = document.getElementById("textsGroup");
+      
+      const transformStr = `translate(${panX}, ${panY}) scale(${zoomLevel})`;
+      nodesG.setAttribute("transform", transformStr);
+      linksG.setAttribute("transform", transformStr);
+      textsG.setAttribute("transform", transformStr);
+    }
+
+    function handleWheel(e) {
+      e.preventDefault();
+      const zoomFactor = 1.1;
+      if (e.deltaY < 0) {
+        zoomLevel *= zoomFactor;
+      } else {
+        zoomLevel /= zoomFactor;
+      }
+      zoomLevel = Math.max(0.4, Math.min(zoomLevel, 3));
+      applyTransform();
+    }
+
+    function dragStart(e) {
+      if (e.target.tagName === "circle" || e.target.tagName === "text") return;
+      isDragging = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+    }
+
+    function dragMove(e) {
+      if (!isDragging) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      applyTransform();
+    }
+
+    function dragEnd() {
+      isDragging = false;
+    }
+
+    function zoomIn() {
+      zoomLevel *= 1.2;
+      zoomLevel = Math.min(zoomLevel, 3);
+      applyTransform();
+    }
+
+    function zoomOut() {
+      zoomLevel /= 1.2;
+      zoomLevel = Math.max(0.4, zoomLevel);
+      applyTransform();
+    }
+
+    function resetZoom() {
+      zoomLevel = 1;
+      panX = 0;
+      panY = 0;
+      applyTransform();
+    }
+
+    // 匯出為 SVG 向量檔
+    function exportSVG() {
+      const svgEl = document.getElementById("mindmapSvg");
+      
+      // 複製一個 SVG 節點，以防影響當前畫布狀態
+      const svgCopy = svgEl.cloneNode(true);
+      
+      // 將樣式內嵌以防導出後字體或顏色失效
+      const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+      
+      // 從外部讀取當前配色 CSS Variables
+      const p1Color = getComputedStyle(document.documentElement).getPropertyValue('--p1-color');
+      const p2Color = getComputedStyle(document.documentElement).getPropertyValue('--p2-color');
+      const p3Color = getComputedStyle(document.documentElement).getPropertyValue('--p3-color');
+      const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+      const textMain = getComputedStyle(document.documentElement).getPropertyValue('--text-main');
+      const textMuted = getComputedStyle(document.documentElement).getPropertyValue('--text-muted');
+      const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
+
+      styleEl.textContent = `
+        svg { background-color: ${bgColor}; }
+        text { font-family: 'Noto Serif TC', serif; }
+        .desc-text, texttspan, text { font-family: 'Noto Serif TC', serif; }
+        line, path { stroke-linecap: round; }
+      `;
+      svgCopy.insertBefore(styleEl, svgCopy.firstChild);
+
+      // 重置複製出來的 SVG 內部的 Transform 狀態，確保輸出為完整滿版心智圖
+      const nodesGroup = svgCopy.getElementById("nodesGroup");
+      const linksGroup = svgCopy.getElementById("linksGroup");
+      const textsGroup = svgCopy.getElementById("textsGroup");
+      
+      nodesGroup.removeAttribute("transform");
+      linksGroup.removeAttribute("transform");
+      textsGroup.removeAttribute("transform");
+
+      // 轉為 XML String
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(svgCopy);
+
+      // 加入 XML 聲明與 Namespace
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      if (!source.match(/^<svg[^>]+xmlns\:xlink="http\:\/\/www\.w3\.org\/1999\/xlink"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+      }
+
+      source = '<?xml version="1.0" encoding="utf-8"?>\n' + source;
+
+      // 下載儲存
+      const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "陳仲豪總監_行銷精華3x3心智圖.svg";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 匯出為 PNG 高畫質圖片
+    function exportPNG() {
+      const svgEl = document.getElementById("mindmapSvg");
+      
+      // 先複製 SVG 並重置 Transform，確保導出整個圖像
+      const svgCopy = svgEl.cloneNode(true);
+      const nodesG = svgCopy.getElementById("nodesGroup");
+      const linksG = svgCopy.getElementById("linksGroup");
+      const textsG = svgCopy.getElementById("textsGroup");
+      nodesG.removeAttribute("transform");
+      linksG.removeAttribute("transform");
+      textsG.removeAttribute("transform");
+
+      // 取出 CSS 變數並嵌入 Style 中
+      const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+      const p1Color = getComputedStyle(document.documentElement).getPropertyValue('--p1-color');
+      const p2Color = getComputedStyle(document.documentElement).getPropertyValue('--p2-color');
+      const p3Color = getComputedStyle(document.documentElement).getPropertyValue('--p3-color');
+      const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+      const textMain = getComputedStyle(document.documentElement).getPropertyValue('--text-main');
+      const textMuted = getComputedStyle(document.documentElement).getPropertyValue('--text-muted');
+      const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
+
+      styleEl.textContent = `
+        svg { background-color: ${bgColor}; }
+        :root {
+          --p1-color: ${p1Color};
+          --p2-color: ${p2Color};
+          --p3-color: ${p3Color};
+          --accent-color: ${accentColor};
+          --text-main: ${textMain};
+          --text-muted: ${textMuted};
+          --font-serif: 'Noto Serif TC', serif;
+          --font-rounded: 'M PLUS Rounded 1c', sans-serif;
+        }
+      `;
+      svgCopy.insertBefore(styleEl, svgCopy.firstChild);
+
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svgCopy);
+      const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+      const DOMURL = window.URL || window.webkitURL || window;
+      const blobUrl = DOMURL.createObjectURL(svgBlob);
+
+      const image = new Image();
+      image.onload = function() {
+        // 建立超高清的 Canvas 繪圖畫布 (2000x2000 確保列印清晰度)
+        const canvas = document.createElement("canvas");
+        canvas.width = 2000;
+        canvas.height = 2000;
+        const context = canvas.getContext("2d");
+        
+        // 滿鋪背景色
+        context.fillStyle = bgColor;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 將 SVG 圖片繪製上 Canvas (縮放繪製)
+        context.drawImage(image, 0, 0, 2000, 2000);
+        
+        // 下載 PNG 檔案
+        const pngUrl = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.href = pngUrl;
+        downloadLink.download = "陳仲豪總監_行銷精華3x3心智圖.png";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        DOMURL.revokeObjectURL(blobUrl);
+      };
+      
+      image.src = blobUrl;
+    }
+
+    // 手機版分頁點擊處理
+    function setMobileActiveTab(branchId, subId) {
+      mobileActiveTabs[branchId] = subId;
+      updateMobileView();
+    }
+
+    // 展開/收合手機版設定選單
+    function toggleMenu() {
+      const panel = document.querySelector(".control-panel");
+      panel.classList.toggle("open");
+    }
+
+    // 渲染手機版卡片與頁籤
+    function updateMobileView() {
+      const mobileContainer = document.getElementById("mobileViewContainer");
+      if (!mobileContainer) return;
+
+      const branches = [
+        { id: "p1", name: "產品", colorVar: "--p1-color", activeTab: mobileActiveTabs["p1"], subIds: ["p1_why", "p1_how", "p1_what"] },
+        { id: "p2", name: "流量", colorVar: "--p2-color", activeTab: mobileActiveTabs["p2"], subIds: ["p2_why", "p2_how", "p2_what"] },
+        { id: "p3", name: "系統", colorVar: "--p3-color", activeTab: mobileActiveTabs["p3"], subIds: ["p3_why", "p3_how", "p3_what"] }
+      ];
+
+      let html = "";
+      branches.forEach(b => {
+        const title = mindData[b.id].text;
+        
+        html += `
+          <div class="mobile-card" style="border-top: 4px solid var(${b.colorVar});">
+            <div class="mobile-card-header">
+              <span class="mobile-card-title">${title}</span>
+            </div>
+            <div class="mobile-card-tabs">
+        `;
+
+        b.subIds.forEach(subId => {
+          const subData = mindData[subId];
+          const isActive = b.activeTab === subId;
+          const activeStyle = isActive ? `background-color: var(${b.colorVar}); color: #fff; border-color: var(${b.colorVar});` : "";
+          const activeClass = isActive ? "active" : "";
+          
+          html += `
+              <button class="mobile-tab-btn ${activeClass}" 
+                      style="${activeStyle}" 
+                      onclick="setMobileActiveTab('${b.id}', '${subId}')">
+                <span class="tab-type">${subData.type.toUpperCase()}</span>
+                <span class="tab-label">${subData.label}</span>
+              </button>
+          `;
+        });
+
+        const activeSubData = mindData[b.activeTab];
+        const formattedDesc = activeSubData.desc.split("\n").map(line => `<div>${line}</div>`).join("");
+
+        html += `
+            </div>
+            <div class="mobile-card-content">
+              <div class="mobile-content-title" style="color: var(${b.colorVar})">
+                ${activeSubData.type.toUpperCase()} · ${activeSubData.label}
+              </div>
+              <div class="mobile-content-body">
+                ${formattedDesc}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      mobileContainer.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

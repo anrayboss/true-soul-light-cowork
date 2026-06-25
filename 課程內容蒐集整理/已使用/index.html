@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電商防護盾 — 完整課程地圖</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg: #060a12;
+  --border: rgba(80,160,255,0.13);
+  --text: #c8d8f0;
+  --dim: #5a7898;
+  --accent: #00b4ff;
+  --node-h: 52px;
+  --lesson-h: 36px;
+  --outline-h: 28px;
+  --col-w: 160px;
+  --gap: 24px;
+  --hdr-bg: rgba(6,10,18,.95);
+  --root-box-bg1: #001830;
+  --root-box-bg2: #002a50;
+}
+
+body.light {
+  --bg: #f0f4fa;
+  --border: rgba(0,100,200,0.15);
+  --text: #1a2a40;
+  --dim: #6080a0;
+  --accent: #0070cc;
+  --hdr-bg: rgba(240,244,250,.95);
+  --root-box-bg1: #dce8f8;
+  --root-box-bg2: #c8daf0;
+}
+
+/* ── 亮色模式：結點填色更飽滿 ── */
+body.light .mod-node {
+  /* 讓 inline gradient alpha 更深 — 用 filter 疊加 */
+  filter: saturate(1.4) brightness(0.97);
+  border-width: 2px !important;
+}
+body.light .lesson-box {
+  filter: saturate(1.3) brightness(0.96);
+  border-width: 1.5px !important;
+}
+
+/* ── 亮色模式：按鈕改為亮底暗符號 ── */
+body.light .zbtn {
+  background: rgba(255,255,255,.92);
+  border-color: rgba(0,80,180,.2);
+  color: #1a3a60;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
+body.light .zbtn:hover {
+  background: #e0eeff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+body.light .zbtn-expand.all-open {
+  background: #d0e8ff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+body.light .rnav-btn {
+  background: rgba(255,255,255,.92);
+  border-color: rgba(0,80,180,.2);
+  color: #1a3a60;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
+body.light .rnav-btn:hover {
+  background: #e0eeff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+body.light .outline-item {
+  border-left-color: rgba(0,80,180,.15);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Noto Sans TC','Microsoft JhengHei',sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ── HEADER ── */
+#hdr {
+  position: fixed; top:0; left:0; right:0; height:50px;
+  background: var(--hdr-bg);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap:.9rem;
+  padding: 0 1.4rem; z-index:200;
+}
+#hdr h1 { font-size:.92rem; font-weight:900; color:var(--accent); flex:1; letter-spacing:.04em; }
+.badge { font-size:.65rem; color:var(--dim); font-family:'JetBrains Mono',monospace;
+         border:1px solid var(--border); padding:.18rem .55rem; border-radius:4px; }
+.hint  { font-size:.68rem; color:var(--dim); }
+
+/* ── CANVAS ── */
+#canvas {
+  position:fixed; top:50px; left:0; right:0; bottom:0;
+  overflow:hidden; cursor:grab;
+}
+#canvas:active { cursor:grabbing; }
+#wrap { position:absolute; top:0; left:0; transform-origin:0 0; will-change:transform; }
+
+/* ── TREE ROOT: vertical stack on the left ── */
+.tree-root {
+  display:flex; flex-direction:row; align-items:stretch;
+  padding: 40px 60px 60px 50px; gap:0;
+}
+
+/* Left anchor: root box + two vertical connectors */
+.root-anchor {
+  display:flex; flex-direction:column; align-items:center;
+  flex-shrink:0; gap:0;
+  justify-content:center;
+}
+
+.root-box {
+  flex-shrink:0;
+  background: linear-gradient(135deg, var(--root-box-bg1), var(--root-box-bg2));
+  border: 2px solid var(--accent);
+  border-radius:14px; padding:16px 18px; text-align:center;
+  min-width:110px;
+  box-shadow: 0 0 36px rgba(0,180,255,.22), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.root-icon  { font-size:1.5rem; margin-bottom:4px; }
+.root-title { font-size:.88rem; font-weight:900; color:var(--accent); line-height:1.3; }
+.root-sub   { font-size:.57rem; color:var(--dim); margin-top:3px; }
+
+/* vertical line from root up to upper strip level */
+.root-vline {
+  width:2px; flex:1; min-height:24px;
+  background:rgba(0,180,255,.35);
+}
+
+/* ── RIGHT SIDE: two strips stacked vertically ── */
+.strips-col {
+  display:flex; flex-direction:column; align-items:flex-start;
+  gap:0; justify-content:center; align-self:stretch;
+}
+
+/* Short horizontal connector root→each strip */
+.strip-hconn {
+  display:flex; flex-direction:row; align-items:flex-start;
+  gap:0; flex:1;
+}
+.strip-hconn-line {
+  width:28px; height:2px; flex-shrink:0;
+  background:linear-gradient(90deg,var(--accent),rgba(0,180,255,.35));
+  margin-top:25px; /* align with h-spine top:25px */
+}
+
+/* ── MODULE STRIP ── */
+.modules-strip {
+  display:flex; flex-direction:row; align-items:flex-start;
+  gap:0; position:relative;
+}
+.h-spine {
+  position:absolute; top:25px; left:0; right:0; height:2px;
+  background:rgba(0,180,255,.28); pointer-events:none;
+}
+
+/* ── MODULE COLUMN ── */
+.mod-col {
+  display:flex; flex-direction:column; align-items:center;
+  width:var(--col-w); flex-shrink:0; padding:0 8px;
+  position:relative;
+}
+.mod-col::before {
+  content:''; position:absolute; top:25px; left:50%; width:2px; height:14px;
+  background:rgba(0,180,255,.3); transform:translateX(-50%);
+}
+
+/* ── MODULE NODE ── */
+.mod-node {
+  margin-top:38px;
+  border-radius:10px; padding:8px 10px; width:144px;
+  border-width:1.5px; border-style:solid; cursor:pointer;
+  transition: transform .15s, box-shadow .15s;
+  text-align:center; position:relative; z-index:2;
+  user-select:none;
+}
+.mod-node:hover { transform:translateY(-2px); }
+.mod-num  { font-family:'JetBrains Mono',monospace; font-size:.57rem; opacity:.6; margin-bottom:2px; }
+.mod-title{ font-size:.72rem; font-weight:700; line-height:1.35; }
+.mod-sub  { font-size:.56rem; opacity:.58; margin-top:2px; }
+.mod-arrow{ font-size:.55rem; margin-top:4px; opacity:.5; transition:transform .2s; }
+.mod-node.open .mod-arrow { transform:rotate(180deg); opacity:.9; }
+
+/* Vertical spine from module node down to lessons */
+.mod-vline {
+  width:2px;
+  transition: height .3s ease, opacity .3s;
+  overflow:hidden;
+}
+
+/* ── LESSONS CONTAINER ── */
+.lessons-wrap {
+  display:none;
+  flex-direction:column; align-items:center;
+  gap:0; overflow:hidden;
+  max-height:0; transition: max-height .35s ease;
+  width:100%;
+}
+.lessons-wrap.open { display:flex; max-height:9999px; }
+
+/* ── LESSON NODE ── */
+.lesson-node {
+  display:flex; flex-direction:column; align-items:center;
+  width:100%; padding:3px 0;
+}
+/* tick down from mod-vline to lesson box */
+.lesson-hline {
+  width:2px; height:8px; flex-shrink:0; opacity:.4;
+}
+.lesson-box {
+  border-radius:7px; padding:5px 9px; width:140px;
+  border-width:1px; border-style:solid; cursor:pointer;
+  transition:all .13s; text-align:left; user-select:none;
+}
+.lesson-box:hover { transform:scale(1.03); }
+.lesson-id   { font-family:'JetBrains Mono',monospace; font-size:.54rem; opacity:.55; }
+.lesson-name { font-size:.65rem; line-height:1.3; display:block; margin-top:1px; }
+.lesson-arrow{ font-size:.5rem; opacity:.45; transition:transform .18s; margin-top:3px; display:block; }
+.lesson-box.open .lesson-arrow { transform:rotate(180deg); opacity:.8; }
+
+/* ── OUTLINE (level 3) ── */
+.outline-wrap {
+  overflow:hidden; max-height:0;
+  width:136px; margin:0 auto;
+}
+.outline-wrap.open { max-height:800px; }
+.outline-item {
+  display:flex; align-items:flex-start; gap:5px;
+  padding:3px 6px 3px 8px; font-size:.6rem; color:var(--dim);
+  line-height:1.4; border-left:1.5px solid rgba(255,255,255,.08);
+}
+.outline-dot { font-size:.45rem; margin-top:3px; flex-shrink:0; }
+
+/* ── ZOOM CTRL ── */
+#zctrl {
+  position:fixed; bottom:18px; left:18px;
+  display:flex; flex-direction:column; gap:4px; z-index:200;
+}
+.zbtn {
+  width:30px; height:30px;
+  background:rgba(6,10,18,.88); border:1px solid var(--border);
+  border-radius:6px; color:var(--text); cursor:pointer;
+  font-size:.95rem; display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(8px); transition:all .15s;
+}
+.zbtn:hover { background:rgba(0,180,255,.18); border-color:var(--accent); color:var(--accent); }
+.zbtn-expand { font-size:1.1rem; }
+.zbtn-expand.all-open { background:rgba(0,180,255,.18); border-color:var(--accent); color:var(--accent); }
+.zbtn-theme { font-size:.9rem; }
+
+/* 手機版標題列主題按鈕 */
+#hdrThemeBtn {
+  display:none;
+  background:none; border:1px solid var(--border);
+  border-radius:5px; color:var(--dim); cursor:pointer;
+  font-size:.85rem; padding:.2rem .5rem;
+  transition:all .15s;
+}
+#hdrThemeBtn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* ── ROW NAV (上下排導航) ── */
+.row-nav {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:5px; flex-shrink:0; padding:0 8px;
+  margin-top:25px; /* align with h-spine */
+}
+.rnav-btn {
+  width:28px; height:28px;
+  background:rgba(6,10,18,.88); border:1px solid var(--border);
+  border-radius:6px; color:var(--dim); cursor:pointer;
+  font-size:.8rem; display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(8px); transition:all .15s; user-select:none;
+  line-height:1;
+}
+.rnav-btn:hover { background:rgba(0,180,255,.18); border-color:var(--accent); color:var(--accent); }
+.rnav-btn.disabled { opacity:.2; cursor:default; pointer-events:none; }
+
+/* ── TOOLTIP ── */
+#tip {
+  position:fixed; background:rgba(4,10,26,.97);
+  border:1px solid rgba(0,180,255,.35); border-radius:9px;
+  padding:.7rem .9rem; font-size:.74rem; color:#c0d8f0;
+  max-width:270px; pointer-events:none; z-index:999;
+  display:none; line-height:1.6;
+  box-shadow:0 8px 28px rgba(0,0,0,.6);
+}
+#tip strong { font-size:.78rem; display:block; margin-bottom:.3rem; }
+
+/* ── MOBILE ── */
+@media (max-width:768px) {
+  body { overflow:auto; height:auto; }
+  #canvas { position:static; overflow:visible; cursor:default; height:auto; }
+  #wrap { position:static; transform:none !important; }
+  .tree-root {
+    flex-direction:column; padding:66px 14px 60px;
+    align-items:center;
+  }
+  .root-anchor { flex-direction:row; width:auto; }
+  .root-vline { display:none; }
+  .strips-col { align-items:center; width:100%; }
+  .strip-hconn { justify-content:center; width:100%; }
+  .strip-hconn-line { display:none; }
+  .modules-strip {
+    flex-direction:column; align-items:center; width:100%;
+  }
+  .h-spine { display:none; }
+  .mod-col {
+    width:auto; padding:0;
+    align-items:center;
+    border-left:none;
+    margin-bottom:8px;
+  }
+  .mod-col::before { display:none; }
+  .mod-node {
+    margin-top:8px; width:auto; min-width:180px; text-align:center;
+    transform:none !important;
+  }
+  .mod-node:hover { transform:none !important; }
+  .mod-vline { display:none; }
+  .lessons-wrap { align-items:center; padding-left:0; }
+  .lesson-node { align-items:center; }
+  .lesson-box {
+    width:auto; min-width:160px; max-width:calc(100vw - 40px);
+    transform:none !important;
+  }
+  .lesson-box:hover { transform:none !important; }
+  .outline-wrap { width:auto; max-width:calc(100vw - 40px); margin:0; }
+  #zctrl { display:none; }
+  .hint { display:none; }
+  .row-nav { display:none; }
+  #hdrThemeBtn { display:inline-flex; align-items:center; }
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>⚡ 電商防護盾 — 完整課程地圖</h1>
+  <span class="badge">17 模組 · 94 課</span>
+  <span class="hint">拖曳平移 · 滾輪縮放 · 點擊展開</span>
+  <button id="hdrThemeBtn" onclick="toggleTheme()" title="切換亮色/暗色">🌙</button>
+</div>
+
+<div id="canvas">
+  <div id="wrap">
+    <div class="tree-root" id="tree-root"></div>
+  </div>
+</div>
+
+<div id="tip"></div>
+
+<div id="zctrl">
+  <button class="zbtn" onclick="zoom(0.15)">+</button>
+  <button class="zbtn" onclick="zoom(-0.15)">−</button>
+  <button class="zbtn" onclick="resetV()" title="重置">⌂</button>
+  <button class="zbtn zbtn-expand" id="expandBtn" onclick="toggleAll()" title="展開／收合所有">⊞</button>
+  <button class="zbtn zbtn-theme" id="themeBtn" onclick="toggleTheme()" title="切換亮色/暗色">🌙</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  DATA  (module num → lessons num auto-computed as mod.num + '-' + (i+1))
+// ══════════════════════════════════════════
+const MODS = [
+  { id:'m01', num:1, title:'課程準備', sub:'前置作業與資源', color:'#60a0ff',
+    url:'https://course.ecsoga.com/shield/m01/',
+    lessons:[
+      { title:'資源與贈品下載使用方式', outline:['了解如何使用這套資源','幫助你做出成績'] },
+      { title:'學員社團',               outline:['申請加入社團','互相學習、參與討論'] },
+      { title:'免責聲明',               outline:['正確心態建立','目標不等於保證'] },
+      { title:'快速賺回學費',           outline:['35% 聯盟推廣計畫','推廣即可分潤'] },
+      { title:'客製化私人顧問服務',     outline:['客製化需求說明','一對一輔導方案'] },
+      { title:'內容許願',               outline:['填寫表單補充課程需求'] },
+      { title:'電商基礎知識',           outline:['不定期更新電商知識','時事話題與工具分享'] },
+    ]
+  },
+  { id:'m02', num:2, title:'暖身動作', sub:'電商基礎建立', color:'#00c8a0',
+    url:'https://course.ecsoga.com/shield/m02/',
+    lessons:[
+      { title:'自架平台與電商平台差異', outline:['比較優缺點','自架：完全掌控品牌，需自帶流量','電商平台：流量現成但抽成高、規則多'] },
+      { title:'沒有產品怎麼辦',         outline:['微商/直銷：話術備齊，適合無經驗者','聯盟行銷：選品平台需社群+SEO基礎','1688進貨：批發價，蝦皮主流來源','代理產品：展覽選品，需本金+叫貨量','OEM：貼自有品牌，一次性銀貨兩訖'] },
+      { title:'市場建議指南',           outline:['從自身興趣與專長找利基市場','評估市場競爭度與獲利潛力','建立長期可持續的市場定位'] },
+      { title:'偷窺目標市場廣告',       outline:['FindNiche：AliExpress商品數據圖表','綠界市場分析：熱賣商品/分類/客單價','BigSpy：查FB廣告熱度','DropShip-Spy：TikTok熱賣（付費）','AdSpy：進階FB廣告分析'] },
+      { title:'偷窺競品流量方法',       outline:['SimilarWeb：月流量、排名、關鍵字','查競品行銷管道占比','受眾性別年齡與興趣數據'] },
+      { title:'三種產品定位',           outline:['引流款：吸引新客，薄利多銷','主打款：核心產品，穩定獲利','利潤款：高客單，深度服務'] },
+    ]
+  },
+  { id:'m03', num:3, title:'電商店舖', sub:'各別做法', color:'#ff6b6b',
+    url:'https://course.ecsoga.com/shield/m03/',
+    lessons:[
+      { title:'選品店定義',         outline:['新手從選品店開始','測試找到適合受眾後再延伸','低風險低門檻入門方式'] },
+      { title:'選品管道與方法',     outline:['蝦皮趨勢/速賣通/1688','如何選品、測品及銷售','數據驅動選品決策'] },
+      { title:'貨款支付與集運',     outline:['無支付寶可用第三方代付','集運：貨品集中後配送','降低跨境物流成本'] },
+      { title:'如何做一件代發',     outline:['顧客下單→直接轉單給廠商','廠商出貨，你只負責行銷','零庫存創業模式'] },
+      { title:'歐美代發工具１',     outline:['自動鋪貨、自動上架到電商平台','需搭配Chrome輔助插件','AliDropship建議使用自家主機'] },
+      { title:'歐美代發工具２',     outline:['另一款歐美市場自動鋪貨工具','擴展歐美市場的進階選擇'] },
+      { title:'品牌店定義',         outline:['從選品店升級到品牌店','建立自有品牌識別','長期競爭力的核心'] },
+      { title:'大型平台店做法',     outline:['蝦皮/Shopee/Amazon等大平台','利用平台流量快速起步','平台規則與演算法優化'] },
+    ]
+  },
+  { id:'m04', num:4, title:'虛擬產品', sub:'如何靠虛擬產品做電商', color:'#b06aff',
+    url:'https://course.ecsoga.com/shield/03-1/',
+    lessons:[
+      { title:'如何靠虛擬產品做電商', outline:['服務類：架站、行銷、廣告代操、銷售頁設計、一對一輔導','課程類：線上教學、函授課程、陪跑式計畫','優點：無形產品大幅降低成本，容易包裝成獨一無二','缺點：較有爭議、金流不接受分期付款、容易被拷貝','定價：服務高價 → 課程次高價 → 模板/電子書好入手價格','策略：流量款（低價切入）→ 普通款 → 持續升級'] },
+      { title:'上架第一支虛擬產品', outline:['架站模組限定內容'] },
+      { title:'架設線上課程網站要用什麼系統', outline:['架站模組限定內容'] },
+      { title:'線上課程網站架設教學', outline:['架站模組限定內容'] },
+    ]
+  },
+  { id:'m05', num:5, title:'開始架站', sub:'架設電商官網', color:'#ffaa40',
+    url:'https://course.ecsoga.com/shield/m06/',
+    lessons:[
+      { title:'最快一天完成電商架設',   outline:['不想自己摸索可使用此服務','省時省力'] },
+      { title:'入門VPS購買',           outline:['預算有限適合的VPS主機選擇'] },
+      { title:'購買VPS+架設電商站',    outline:['10分鐘完成網站架設','VPS主機購買全流程'] },
+      { title:'網域註冊與購買',         outline:['網域申請步驟教學'] },
+      { title:'SSL網域與伺服器串接',   outline:['免費SSL憑證使用','與網域/伺服器完整串連'] },
+      { title:'購買主題與安裝',         outline:['購買主題+安裝主題教學'] },
+      { title:'主題設定細節',           outline:['安裝後需注意的細節'] },
+      { title:'產品上架',               outline:['產品上架方法及注意事項'] },
+      { title:'追蹤碼插件安裝',         outline:['FB/Google追蹤碼串接網站'] },
+      { title:'Google Analytics 串接', outline:['GA分析消費者客群','收集網站數據'] },
+      { title:'GA4 安裝與基本應用',    outline:['2023年7月起以GA4為主'] },
+      { title:'獨懂GA4報表',           outline:['GA4報表解讀方法'] },
+      { title:'手機APP訂單通知',       outline:['手機即時顯示訂單通知'] },
+      { title:'Email訂單通知',         outline:['顧客下單自動發送通知Mail'] },
+      { title:'不架站直接上架電商',     outline:['直接使用一頁電商'] },
+      { title:'部落格/SEO文章架設',    outline:['WordPress架站','電商平台主流選擇'] },
+      { title:'WooCommerce產品輪播',   outline:['增加客人購買率','輪播功能設定'] },
+    ]
+  },
+  { id:'m06', num:6, title:'串接金流', sub:'台灣與國際金流', color:'#40d0a0',
+    url:'https://course.ecsoga.com/shield/m07/',
+    lessons:[
+      { title:'台灣金流申請', outline:[
+        '推薦三大台灣金流：統一、藍新、LinePay',
+        '分期/無卡方案可加申 zingala 銀角無卡',
+        '附優待費率申請連結（限0抽成網站）'] },
+      { title:'台灣金物流串接', outline:[
+        '安裝綠界金物流 WooCommerce 外掛',
+        '後台填入 MerchantID、HashKey、HashIV',
+        '啟用信用卡、ATM、超商取貨等付款方式',
+        '設定 7-ELEVEN / 全家超商取貨物流方式',
+        '串接完成即可開始正式接單'] },
+      { title:'Stripe 申請', outline:[
+        'Stripe 優點：信用卡欄位內置結帳頁，降低客戶流失',
+        '需先有美國或英國公司才能申請（附 Bonus 教學）',
+        'Email 建議用網域後綴，國家選公司所在地',
+        '填入公司資訊、WISE 銀行帳號作為收款帳戶',
+        '資料送出後不可更改，否則直接觸發風控封號'] },
+      { title:'PayPal 申請', outline:[
+        '推薦申請英國 PayPal：風控低、手續費最便宜',
+        '台灣帳號無法收台灣信用卡（金管會限制）',
+        '需先有英國公司（附 Bonus 教學連結）',
+        '進入 paypal.com/uk 註冊，勿用 /tw 網域'] },
+      { title:'WISE提領', outline:[
+        'Stripe/PayPal 撥款到 WISE，再匯本地外幣帳戶',
+        '需事先在台灣銀行開設外幣帳戶',
+        '匯款選「國際」、收款幣別選「美金」自動換匯',
+        '需提供銀行 SWIFT code、英文戶名、外幣帳號',
+        '手續費單筆 14 美金，比按%收費更划算'] },
+      { title:'電商運費客製化設定', outline:['架站模組限定內容'] },
+    ]
+  },
+  { id:'m07', num:7, title:'Facebook ADS', sub:'廣告投放與帳號養護', color:'#ff8060',
+    url:'https://course.ecsoga.com/shield/m08/',
+    lessons:[
+      { title:'FB興趣漏斗：AI廣告系統', outline:[
+        '與未來實驗室合作，分享AI廣告系統實戰',
+        '透過AI降低廣告投放成本、放大營業額',
+        '說明廣告漏斗邏輯與興趣標籤找法',
+        '綁定AI系統享免費30天＋專人輔導'] },
+      { title:'Facebook與Google差異', outline:[
+        'FB適合開箱、口碑、觸及冷受眾；Google適合搜尋意圖強的受眾',
+        '透過消費者旅程在不同階段搭配KOL、論壇、公關',
+        '兩者互補，而非互斥'] },
+      { title:'廣告投遞前置作業', outline:[
+        '投廣告前需建構安全環境防誤判封號',
+        '使用 AdsPower 虛擬電腦隔離不同帳號環境',
+        '單帳號可免費建立2個虛擬電腦'] },
+      { title:'廣告帳號養號邏輯', outline:[
+        '新帳號不能馬上進企業管理平台，需等3天',
+        '新裝置先用 mbasic.facebook.com 登入再轉正常網址',
+        '每天滑動態、按讚留言，讓FB認定為真人帳號',
+        '開啟雙重驗證＋綁定電話號碼',
+        '多帳號操作必須用 AdsPower 各自隔離'] },
+      { title:'Facebook封鎖廣告帳號規則', outline:[
+        '多帳號同台電腦、用VPN登入、頻繁換IP都會觸發封鎖',
+        '新粉專至少等7天、新FB帳號等24小時再投廣告',
+        '不同信用卡綁定不同廣告帳號，勿共用',
+        '被封廣告不要重複投遞，需更換素材、網址',
+        '封號後勿用同台電腦馬上重開帳號'] },
+      { title:'創建企業管理帳號', outline:[
+        '在 business.facebook.com 開設企業管理平台',
+        '投遞廣告的必要前置步驟'] },
+      { title:'創建廣告帳戶及付款方式', outline:[
+        '在企業管理平台內開設廣告帳戶',
+        '綁定信用卡付款方式'] },
+      { title:'建立像素', outline:[
+        'Pixel 追蹤消費者網站行為',
+        '廣告投放精準受眾的核心資料來源'] },
+      { title:'驗證網域', outline:[
+        '因應 iOS 政策，驗證網域讓廣告數據更精準',
+        '提升像素事件的追蹤可靠度'] },
+      { title:'事件追蹤設定', outline:[
+        '設定像素追蹤事件（瀏覽、加購、購買等）',
+        '讓 FB 系統學習並優化廣告投放'] },
+      { title:'廣告架構說明與建立廣告', outline:[
+        '廣告層級：活動 > 廣告組合 > 廣告',
+        '活動目標設轉換>銷售業績，轉換事件選購買',
+        '建議同時開3個廣告組合測試不同興趣標籤'] },
+      { title:'廣告後台架構示例', outline:[
+        '實際後台截圖示範設定參考',
+        '幫助對照自己廣告設定是否正確'] },
+      { title:'廣告投放步驟+數據分析', outline:[
+        '前3天不調廣告，讓系統學習；3天後看CPC/ROAS決定去留',
+        'CPC>30、CTR<1% → 換素材；CPC低但無單 → 改銷售頁',
+        'ROAS>2 每次增加20%預算；累積1000購買受眾後可拉類似受眾',
+        '7天無單可降維投「瀏覽/加購」廣告幫系統累積數據'] },
+      { title:'如何開立發票抵稅', outline:[
+        '已開公司者可用非FB直客帳號管道申請發票抵稅'] },
+      { title:'Facebook廣告受眾規劃', outline:[
+        '依產品屬性延伸選擇興趣標籤',
+        '每個廣告組受眾建議 300~500 萬',
+        '加速找到適合受眾、提升推廣效率'] },
+      { title:'Facebook AI廣告自動設定', outline:[
+        '綁定 AI 廣告系統自動設定精準受眾',
+        '免費30天試用＋完成綁定有專人電話輔導',
+        '搭配課程操作廣告後再與 AI 進行優化'] },
+    ]
+  },
+  { id:'m08', num:8, title:'Google ADS', sub:'關鍵字與多媒體廣告', color:'#60c0ff',
+    url:'https://course.ecsoga.com/shield/m09/',
+    lessons:[
+      { title:'Google AD帳號創立', outline:[
+        '建立 Google Ads 帳號',
+        '投放 Google 廣告的必要前置步驟'] },
+      { title:'設定帳單資訊', outline:[
+        '設定 Google Ads 付款方式',
+        '選擇帳戶類型（個人/公司）'] },
+      { title:'與GA帳號綁定', outline:[
+        '將 Google Ads 與 GA 帳號串接',
+        '追蹤廣告成效、提供系統訊號判讀'] },
+      { title:'Google廣告架構基礎', outline:[
+        '關鍵字廣告、多媒體廣告、影片廣告都從「不依目標建立活動」開始',
+        '了解廣告活動 > 廣告組合 > 廣告的層級架構'] },
+      { title:'關鍵字廣告設定', outline:[
+        '關鍵字分四類：品牌字、通用詞、競品詞、潛在人群詞',
+        '關鍵字＋到達頁依受眾做不同組合，用特定字導特定頁',
+        'Google文案重比價比較；FB文案重使用場景',
+        '建置一次後可長期運作，先苦後甘'] },
+      { title:'多媒體廣告設定', outline:[
+        '自訂目標對象：搜尋字詞、看過的網站、到過的地點、用過的APP',
+        '下完聯播網廣告後必須排除應用程式',
+        '刊登位置推薦：搜尋前三頁、熱門影片/文章、合作部落客'] },
+      { title:'再行銷廣告', outline:[
+        '讓瀏覽過網頁的受眾持續看到廣告',
+        '受眾需超過 1000 人才能順利投遞',
+        '提升回訪率與最終轉換率'] },
+    ]
+  },
+  { id:'m09', num:9, title:'Email 行銷', sub:'自動化跟進與再行銷', color:'#c060ff',
+    url:'https://course.ecsoga.com/shield/m10/',
+    lessons:[
+      { title:'註冊Email發信系統', outline:[
+        '申請 Email 自動發信系統帳號',
+        '開通 Email 自動化發信功能'] },
+      { title:'Email串接WooCommerce', outline:[
+        '將發信系統與 WooCommerce 商城串接',
+        '顧客下單後自動觸發發信流程'] },
+      { title:'驗證Email與細節設定', outline:[
+        '驗證 Email 讓發信更有效率',
+        '追蹤顧客開信、點擊等行為',
+        '在網站放置名單搜集功能'] },
+      { title:'自動化行銷設定', outline:[
+        '設定自動化動態行為行銷流程',
+        '依消費者旅程觸發不同 Email',
+        '創造顧客回購、降低棄購率'] },
+      { title:'Gmail網域發信', outline:[
+        '透過 Gmail 以自己的網域發信',
+        '例如以 yourid@abc.com 格式寄出',
+        '提升品牌專業感與信任度'] },
+    ]
+  },
+  { id:'m10', num:10, title:'行銷活動策略', sub:'KOL合作與促銷設定', color:'#ff60a0',
+    url:'https://course.ecsoga.com/shield/m11/',
+    lessons:[
+      { title:'產品加價購', outline:[
+        '在產品頁放置加購品選項',
+        '提升每筆訂單的客單價'] },
+      { title:'活動倒數計時', outline:[
+        '使用 Finale Lite 外掛設定倒數計時',
+        '活動檔期中放上倒數增加下單迫切度'] },
+      { title:'短網址追蹤工具', outline:[
+        '縮短長網址，具備點擊成效追蹤功能',
+        '提升行銷素材的專業感'] },
+      { title:'KOL合作洽談時機', outline:[
+        '合作前需先確認 KOL 各項指標',
+        '避免選錯人浪費預算'] },
+      { title:'適合團媽銷售的產品', outline:[
+        '並非所有產品都適合團媽/團購主銷售',
+        '合作前先評估產品特性與受眾契合度'] },
+      { title:'折價券使用教學', outline:[
+        '設定不同折扣方案給不同通路',
+        '可用折價券使用次數計算 KOL 績效',
+        '支援固定金額或百分比折扣'] },
+      { title:'消費滿額自動升級會員', outline:[
+        '會員購買金額達指定門檻後自動升級',
+        '設定不同會員等級的優惠折扣',
+        '建構系統化的會員分級制度'] },
+    ]
+  },
+  { id:'m11', num:11, title:'一頁式銷售頁', sub:'測品與爆單工具', color:'#80e060',
+    url:'https://course.ecsoga.com/shield/m12/',
+    lessons:[
+      { title:'一頁式銷售頁的使用時機', outline:[
+        '測品必備工具：短時間內大量衝訂單',
+        '適合新品上市或廣告集中測試'] },
+      { title:'銷售頁插件安裝與設定', outline:['架站模組限定內容'] },
+      { title:'銷售文案架構與設計', outline:[
+        '銷售頁文案撰寫方法與架構',
+        '也教你如何找設計師製作銷售頁'] },
+    ]
+  },
+  { id:'m12', num:12, title:'SEO 優化', sub:'長尾銷售與關鍵字', color:'#40b8e0',
+    url:'https://course.ecsoga.com/shield/m13/',
+    lessons:[
+      { title:'為什麼一定要做SEO', outline:[
+        '長期佈局，雖慢卻是電商必備核心技能',
+        '讓 Google 持續為你帶來免費精準流量'] },
+      { title:'SEO必備元素', outline:[
+        'SEO 必備要素清單與注意事項',
+        '讓 Google 喜歡你的網站的基礎設定'] },
+      { title:'SEO外掛安裝與設定', outline:[
+        '安裝 SEO 輔助工具外掛',
+        '依工具指引完成優化設定'] },
+      { title:'SEO文章架構範例', outline:[
+        '依範例撰寫 SEO 文章架構',
+        '搭配外掛設定標題、描述、關鍵字'] },
+      { title:'把網站提交給Google', outline:[
+        '將網站提交 Google 讓內容被收錄',
+        '未來更新內容時 Google 自動更新索引'] },
+      { title:'提交網站地圖', outline:[
+        '提交 Sitemap 完成完整收錄流程',
+        '確保所有頁面都被 Google 抓取'] },
+      { title:'Google關鍵字規劃工具', outline:[
+        '找出合適目標關鍵字',
+        '提升電商行銷的長尾搜尋流量'] },
+    ]
+  },
+  { id:'m13', num:13, title:'電商防雷技巧', sub:'KOL合作避坑指南', color:'#ffd060',
+    url:'https://course.ecsoga.com/shield/m14/',
+    lessons:[
+      { title:'KOL合作合約範本', outline:[
+        '合作前必先簽約，明定發稿內容與日期',
+        '附可修改的合約範本供直接套用',
+        '簽約可大幅降低延宕與糾紛'] },
+      { title:'KOL合作流程表', outline:[
+        'KOL 合作每步驟流程清單',
+        '各階段注意事項一次列清'] },
+      { title:'部落客文章撰寫規範', outline:[
+        '清楚列下部落客發文重點與內容要求',
+        '確保合作內容符合行銷目標'] },
+      { title:'KOL發文檢查表', outline:[
+        '進度追蹤表格，掌握每位 KOL 發文狀態',
+        '降低遺漏或延誤發稿的風險'] },
+    ]
+  },
+  { id:'m14', num:14, title:'Bonus', sub:'附贈福利與工具', color:'#ff9040',
+    url:'https://course.ecsoga.com/shield/bouns/',
+    lessons:[
+      { title:'綜合資源', outline:[
+        '不定時更新講師在用的行銷資源與合作管道'] },
+      { title:'美國/英國公司註冊', outline:[
+        '跨境電商收款必須先有美國或英國公司',
+        '申請 Stripe/PayPal 的前置條件'] },
+      { title:'取得美英手機號碼', outline:[
+        '申請 Stripe、PayPal 需要美/英手機號碼',
+        '教你如何取得虛擬號碼'] },
+      { title:'取得美英公司銀行帳號', outline:[
+        '透過 WISE 取得美/英銀行帳號',
+        '用於 Stripe/PayPal 收款帳戶設定'] },
+      { title:'新品測款與走期規劃', outline:[
+        '新品上市前的測品流程',
+        '行銷走期與活動檔期規劃方法'] },
+      { title:'銷售頁文案框架', outline:[
+        '一頁式銷售文案的撰寫框架',
+        '套用即可快速產出高轉換文案'] },
+      { title:'900句可立即使用銷售文案', outline:[
+        '900 句現成銷售文案資源庫',
+        '直接套用節省文案撰寫時間'] },
+      { title:'社群行銷前的準備', outline:[
+        '推廣前必須完成的帳號與內容準備',
+        '打好基礎才能在推廣時有顯著成效'] },
+      { title:'社群導流策略', outline:[
+        '透過社群為電商帶來免費流量',
+        '增加自然觸及與潛在顧客'] },
+      { title:'社群發文檢查表', outline:[
+        '社群排程參考表格',
+        '幫助維持穩定發文節奏'] },
+      { title:'虛擬信用卡申請', outline:[
+        '透過 WISE 申辦虛擬信用卡',
+        '可無限申請，適合多帳號廣告付款'] },
+      { title:'素材設計大全', outline:[
+        '線上工具設計廣告圖文、電商主圖、銷售頁',
+        '內含大量模板可直接挑選使用'] },
+      { title:'6套高階主題+7套外掛', outline:[
+        '總價值超過 1537 美金的主題＋外掛',
+        '課程直接贈送，不需自費購買'] },
+      { title:'Astra Theme免費主題', outline:[
+        '最多人使用的免費 WordPress 主題',
+        '適合不想使用付費主題的學員'] },
+      { title:'授權圖片下載懶人包', outline:[
+        '授權圖片資源整理，免費合法使用',
+        '解決電商素材版權問題'] },
+    ]
+  },
+  { id:'m15', num:15, title:'工具總覽', sub:'課程工具資料庫', color:'#a0c0ff',
+    url:'https://course.ecsoga.com/shield/m16/',
+    lessons:[
+      { title:'市場分析：shopistores', outline:[
+        'shopistores.com',
+        '分析競品熱賣商品、市場趨勢'] },
+      { title:'選品分析：AdSpy', outline:[
+        'app.adspy.com',
+        '搜尋 Facebook 廣告資料庫、找熱銷商品'] },
+      { title:'選品分析：Dropispy', outline:[
+        'dropispy.com',
+        '分析 TikTok / FB 熱賣商品廣告數據'] },
+      { title:'選品分析：NicheScraper', outline:[
+        'nichescraper.com',
+        '精選利基商品分析工具'] },
+      { title:'VPS/一般主機購買', outline:[
+        'VPS 主機適合需要完整控制權的電商',
+        '一般主機適合入門預算有限者'] },
+      { title:'網域購買', outline:[
+        '課程推薦網域申請平台連結',
+        '搭配 SSL 憑證一起設定'] },
+      { title:'Email通知：SendGrid', outline:[
+        'sendgrid.com',
+        '訂單成立自動發送通知 Email 給顧客'] },
+      { title:'金流：Stripe/PayPal/WISE', outline:[
+        'Stripe 國際收款、PayPal 主流金流',
+        'WISE 用於跨境撥款提領到本地帳戶'] },
+      { title:'安全廣告投放系統', outline:[
+        'AdsPower — 多帳號隔離虛擬電腦環境',
+        '防止 Facebook 廣告帳號被誤判封鎖'] },
+    ]
+  },
+  { id:'m16', num:16, title:'產品經銷', sub:'經銷商資源總覽', color:'#e080ff',
+    url:'https://course.ecsoga.com/shield/17-affiliation/',
+    lessons:[
+      { title:'產品導覽與說明', outline:[
+        '免費成為經銷商（課程學員專屬，無需先買貨）',
+        '申請加入：dealer.myans.net，選「獨立經銷商」，備註防護盾學員',
+        '分潤約 30%，業績達 30 萬可升級總經銷（分潤約 50%）',
+        '另可申請 20+ 台灣在地品牌經銷（KIKI、老媽拌麵等）',
+        '有訂單後在經銷商平台下單，由總部負責出貨與客服'] },
+      { title:'CC保貼（私密處面膜）', outline:[
+        '私密處面膜，歐盟有機、專利規格',
+        '目標受眾：女性 18~35 歲',
+        '興趣標籤：love&sex、美容、個人護理、面膜'] },
+      { title:'私密宮廷（私密處噴霧）', outline:[
+        '私密處噴霧，附一頁式銷售頁素材',
+        '目標受眾：女性 18~35 歲',
+        '興趣標籤：love&sex、美容、個人護理、面膜'] },
+      { title:'調理宮殿（暖宮精油）', outline:[
+        '暖宮精油，附一頁式銷售頁素材',
+        '目標受眾：男性 18~35 歲',
+        '興趣標籤：love&sex、個人護理、交友、約會'] },
+      { title:'嫩Q足膜', outline:[
+        '足部護理面膜',
+        '目標受眾：女性 18~45 歲',
+        '興趣標籤：高跟鞋、美容保養、腿、個人護理'] },
+      { title:'美臀膜', outline:[
+        '臀部護理膜',
+        '目標受眾：女性 18~35 歲',
+        '興趣標籤：臀、大腿、重訓、肌力訓練'] },
+      { title:'GG膜', outline:[
+        '男性私密護理膜',
+        '目標受眾：男性 18~45 歲',
+        '興趣標籤：love&sex、性生活、美容'] },
+    ]
+  },
+  { id:'m17', num:17, title:'學員問題整理', sub:'Q&A 解答專區', color:'#60e0b0',
+    url:'https://course.ecsoga.com/shield/qa/',
+    lessons:[
+      { title:'為何用ActiveCampaign', outline:[
+        '說明選擇 ActiveCampaign 而非 ConvertKit 的理由',
+        '討論串連結在私密社團，可查看完整回答'] },
+      { title:'Hostgator vs VPS主機差別', outline:[
+        '說明 VPS 主機的優勢與和一般主機的差異',
+        '幫助選擇適合自己階段的主機方案'] },
+      { title:'選品分析工具無法進入', outline:[
+        '說明選品分析工具無法登入或查看數據的解決方法',
+        '包含 coupon 使用方式說明'] },
+      { title:'代儲平台無法使用怎麼辦', outline:[
+        '進行選品、進貨時遇到代儲問題的解套方法',
+        '討論串連結提供完整操作步驟'] },
+      { title:'開發票、繳稅問題', outline:[
+        '說明經營電商是否需要開發票與繳稅',
+        '附參考文章：ecarmor.cc/start_business/'] },
+      { title:'流量款需要多少廣告預算', outline:[
+        '依照產品客單價規劃測品廣告預算邏輯',
+        '與 m07 課13 廣告投放執行步驟搭配使用'] },
+    ]
+  },
+];
+
+// ══════════════════════════════════════════
+//  BUILD
+// ══════════════════════════════════════════
+function buildStrip(mods) {
+  const strip = document.createElement('div');
+  strip.className = 'modules-strip';
+  const hspine = document.createElement('div');
+  hspine.className = 'h-spine';
+  strip.appendChild(hspine);
+
+  mods.forEach(mod => {
+    const col = document.createElement('div');
+    col.className = 'mod-col';
+
+    const mn = document.createElement('div');
+    mn.className = 'mod-node';
+    mn.style.borderColor = mod.color + '70';
+    mn.style.background = `linear-gradient(160deg,${mod.color}1a,${mod.color}08)`;
+    mn.style.boxShadow = `0 2px 12px ${mod.color}18`;
+    mn.innerHTML = `
+      <div class="mod-num" style="color:${mod.color}">${String(mod.num).padStart(2,'0')}</div>
+      <div class="mod-title" style="color:${mod.color}">${mod.title}</div>
+      <div class="mod-sub">${mod.sub}</div>
+      <div class="mod-arrow" style="color:${mod.color}">▼</div>
+    `;
+
+    const lw = document.createElement('div');
+    lw.className = 'lessons-wrap';
+
+    const vline = document.createElement('div');
+    vline.className = 'mod-vline';
+    vline.style.background = mod.color;
+    vline.style.height = '0px';
+
+    mod.lessons.forEach((lesson, li) => {
+      const lessonId = `${mod.num}-${li + 1}`;
+      const lnode = document.createElement('div');
+      lnode.className = 'lesson-node';
+
+      const tick = document.createElement('div');
+      tick.className = 'lesson-hline';
+      tick.style.background = mod.color;
+
+      const lb = document.createElement('div');
+      lb.className = 'lesson-box';
+      lb.style.borderColor = mod.color + '48';
+      lb.style.background = mod.color + '0e';
+      lb.innerHTML = `
+        <span class="lesson-id" style="color:${mod.color}">${lessonId}</span>
+        <span class="lesson-name">${lesson.title}</span>
+        <span class="lesson-arrow" style="color:${mod.color}">▼</span>
+      `;
+
+      const ow = document.createElement('div');
+      ow.className = 'outline-wrap';
+      lesson.outline.forEach(pt => {
+        const oi = document.createElement('div');
+        oi.className = 'outline-item';
+        oi.innerHTML = `<span class="outline-dot" style="color:${mod.color}">◆</span><span>${pt}</span>`;
+        ow.appendChild(oi);
+      });
+
+      lb.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = ow.classList.contains('open');
+
+        if (!isOpen) {
+          // 同模組其他課程：瞬間收起
+          lw.querySelectorAll('.outline-wrap.open').forEach(o => {
+            o.style.transition = 'none';
+            o.classList.remove('open');
+          });
+          lw.querySelectorAll('.lesson-box.open').forEach(b => b.classList.remove('open'));
+          // 展開本課程：有動畫
+          ow.style.transition = 'max-height .3s ease';
+          ow.classList.add('open');
+          lb.classList.add('open');
+        } else {
+          // 收起本課程：瞬間
+          ow.style.transition = 'none';
+          ow.classList.remove('open');
+          lb.classList.remove('open');
+        }
+      });
+
+      lnode.appendChild(tick);
+      lnode.appendChild(lb);
+      lnode.appendChild(ow);
+      lw.appendChild(lnode);
+    });
+
+    mn.addEventListener('click', () => {
+      const isOpen = lw.classList.contains('open');
+
+      if (!isOpen) {
+        // 關閉所有其他模組（含其底下所有課程大綱）
+        document.querySelectorAll('.lessons-wrap.open').forEach(w => {
+          w.classList.remove('open');
+          w.previousElementSibling.style.height = '0px';
+          w.querySelectorAll('.outline-wrap.open').forEach(o => {
+            o.style.transition = 'none';
+            o.classList.remove('open');
+          });
+          w.querySelectorAll('.lesson-box.open').forEach(b => b.classList.remove('open'));
+        });
+        document.querySelectorAll('.mod-node.open').forEach(n => n.classList.remove('open'));
+        // 開啟本模組
+        lw.classList.add('open');
+        mn.classList.add('open');
+        vline.style.height = '12px';
+      } else {
+        // 收起本模組（含底下所有課程大綱）
+        lw.classList.remove('open');
+        mn.classList.remove('open');
+        vline.style.height = '0px';
+        lw.querySelectorAll('.outline-wrap.open').forEach(o => {
+          o.style.transition = 'none';
+          o.classList.remove('open');
+        });
+        lw.querySelectorAll('.lesson-box.open').forEach(b => b.classList.remove('open'));
+      }
+    });
+
+    col.appendChild(mn);
+    col.appendChild(vline);
+    col.appendChild(lw);
+    strip.appendChild(col);
+  });
+
+  return strip;
+}
+
+// ── 儲存/還原展開狀態 ──
+function saveState() {
+  const openMods = new Set();
+  const openLessons = new Set(); // key: "modNum-lessonIdx"
+  document.querySelectorAll('.lessons-wrap.open').forEach(lw => {
+    const mn = lw.previousElementSibling?.previousElementSibling; // mod-node
+    if (mn) {
+      const num = mn.querySelector('.mod-num')?.textContent?.trim();
+      if (num) openMods.add(num);
+    }
+    lw.querySelectorAll('.lesson-box.open').forEach(lb => {
+      const id = lb.querySelector('.lesson-id')?.textContent?.trim();
+      if (id) openLessons.add(id);
+    });
+  });
+  return { openMods, openLessons };
+}
+
+function restoreState({ openMods, openLessons }) {
+  document.querySelectorAll('.mod-col').forEach(col => {
+    const mn = col.querySelector('.mod-node');
+    const lw = col.querySelector('.lessons-wrap');
+    const vl = col.querySelector('.mod-vline');
+    const num = mn?.querySelector('.mod-num')?.textContent?.trim();
+    if (num && openMods.has(num)) {
+      lw.classList.add('open');
+      mn.classList.add('open');
+      if (vl) vl.style.height = '12px';
+      // 還原課程大綱
+      lw.querySelectorAll('.lesson-box').forEach(lb => {
+        const id = lb.querySelector('.lesson-id')?.textContent?.trim();
+        if (id && openLessons.has(id)) {
+          lb.classList.add('open');
+          const ow = lb.nextElementSibling;
+          if (ow) { ow.style.transition = 'none'; ow.classList.add('open'); }
+        }
+      });
+    }
+  });
+  // 同步 allOpen 按鈕狀態
+  const total = document.querySelectorAll('.mod-col').length;
+  const opened = document.querySelectorAll('.lessons-wrap.open').length;
+  allOpen = opened === total;
+  const btn = document.getElementById('expandBtn');
+  if (btn) { btn.textContent = allOpen ? '⊟' : '⊞'; btn.classList.toggle('all-open', allOpen); }
+}
+
+function build(state) {
+  const root = document.getElementById('tree-root');
+  root.innerHTML = '';
+  if (!state) {
+    allOpen = false;
+    const btn = document.getElementById('expandBtn');
+    if (btn) { btn.textContent = '⊞'; btn.classList.remove('all-open'); }
+  }
+
+  const MOD_W    = 160;   // module col width (--col-w)
+  const ANCHOR_W = 150;   // root anchor
+  const HCONN_W  = 28;    // strip-hconn-line
+  const PAD      = 110;   // .tree-root padding left+right
+
+  const avail = cv.offsetWidth - ANCHOR_W - HCONN_W - PAD;
+
+  // 每排模組數（至少 1）
+  const perRow = Math.max(1, Math.floor(avail / MOD_W));
+
+  // 切成多排模組
+  const rows = [];
+  for (let i = 0; i < MODS.length; i += perRow) {
+    rows.push(MODS.slice(i, i + perRow));
+  }
+
+  // ── Left anchor ──
+  const anchor = document.createElement('div');
+  anchor.className = 'root-anchor';
+
+  if (rows.length > 1) {
+    const vlineTop = document.createElement('div');
+    vlineTop.className = 'root-vline';
+    anchor.appendChild(vlineTop);
+  }
+
+  const rootBox = document.createElement('div');
+  rootBox.className = 'root-box';
+  rootBox.innerHTML = `
+    <div class="root-icon">⚡</div>
+    <div class="root-title">電商防護盾</div>
+    <div class="root-sub">完整課程地圖</div>
+  `;
+  anchor.appendChild(rootBox);
+
+  if (rows.length > 1) {
+    const vlineBot = document.createElement('div');
+    vlineBot.className = 'root-vline';
+    anchor.appendChild(vlineBot);
+  }
+
+  // ── Right: N strips ──
+  const stripsCol = document.createElement('div');
+  stripsCol.className = 'strips-col';
+
+  const connEls = []; // 儲存每排的 conn 元素，供導航用
+
+  rows.forEach((rowMods, rowIdx) => {
+    const conn = document.createElement('div');
+    conn.className = 'strip-hconn';
+    conn.dataset.row = rowIdx;
+    const connLine = document.createElement('div');
+    connLine.className = 'strip-hconn-line';
+    const strip = buildStrip(rowMods);
+    conn.appendChild(connLine);
+    conn.appendChild(strip);
+
+    // 每排最後加導航箭頭
+    const nav = document.createElement('div');
+    nav.className = 'row-nav';
+
+    const btnUp = document.createElement('button');
+    btnUp.className = 'rnav-btn' + (rowIdx === 0 ? ' disabled' : '');
+    btnUp.textContent = '▲';
+    btnUp.title = '上一排';
+
+    const btnDown = document.createElement('button');
+    btnDown.className = 'rnav-btn' + (rowIdx === rows.length - 1 ? ' disabled' : '');
+    btnDown.textContent = '▼';
+    btnDown.title = '下一排';
+
+    nav.appendChild(btnUp);
+    nav.appendChild(btnDown);
+    conn.appendChild(nav);
+    stripsCol.appendChild(conn);
+    connEls.push(conn);
+
+    // 點擊後 pan 到目標排
+    btnUp.addEventListener('click', e => { e.stopPropagation(); navigateToRow(connEls, rowIdx - 1); });
+    btnDown.addEventListener('click', e => { e.stopPropagation(); navigateToRow(connEls, rowIdx + 1); });
+  });
+
+  root.appendChild(anchor);
+  root.appendChild(stripsCol);
+
+  if (state) {
+    restoreState(state);
+  } else {
+    setTimeout(resetV, 120);
+  }
+}
+
+// ══════════════════════════════════════════
+//  PAN & ZOOM
+// ══════════════════════════════════════════
+let px=80, py=0, sc=1, drag=false, lx=0, ly=0;
+const cv = document.getElementById('canvas');
+const wp = document.getElementById('wrap');
+
+const applyT = () => { wp.style.transform = `translate(${px}px,${py}px) scale(${sc})`; };
+
+cv.addEventListener('mousedown', e => { if(e.button) return; drag=true; lx=e.clientX; ly=e.clientY; e.preventDefault(); });
+window.addEventListener('mousemove', e => { if(!drag) return; px+=e.clientX-lx; py+=e.clientY-ly; lx=e.clientX; ly=e.clientY; applyT(); });
+window.addEventListener('mouseup', ()=>{ drag=false; });
+
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const d = e.deltaY>0 ? -0.1 : 0.1;
+  const ns = Math.max(0.15, Math.min(3, sc+d));
+  const r = cv.getBoundingClientRect();
+  px = (e.clientX-r.left) - ((e.clientX-r.left)-px)*(ns/sc);
+  py = (e.clientY-r.top)  - ((e.clientY-r.top)-py)*(ns/sc);
+  sc=ns; applyT();
+}, {passive:false});
+
+// Touch
+let t0=[];
+cv.addEventListener('touchstart', e=>{ t0=[...e.touches]; if(e.touches.length===1){lx=e.touches[0].clientX;ly=e.touches[0].clientY;} },{passive:true});
+cv.addEventListener('touchmove', e=>{
+  if(e.touches.length===1){ px+=e.touches[0].clientX-lx; py+=e.touches[0].clientY-ly; lx=e.touches[0].clientX; ly=e.touches[0].clientY; applyT(); }
+  else if(e.touches.length===2&&t0.length===2){
+    const nd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    const od=Math.hypot(t0[0].clientX-t0[1].clientX,t0[0].clientY-t0[1].clientY);
+    if(od>0){sc=Math.max(0.15,Math.min(3,sc*nd/od));applyT();}
+    t0=[...e.touches];
+  }
+},{passive:true});
+
+function zoom(d){ sc=Math.max(0.15,Math.min(3,sc+d)); applyT(); }
+
+// ── 亮色/暗色切換 ──
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  const icon = isLight ? '☀️' : '🌙';
+  const btn = document.getElementById('themeBtn');
+  const hdrBtn = document.getElementById('hdrThemeBtn');
+  if (btn) btn.textContent = icon;
+  if (hdrBtn) hdrBtn.textContent = icon;
+}
+
+// ── 導航到指定排 ──
+function navigateToRow(connEls, targetIdx) {
+  if (targetIdx < 0 || targetIdx >= connEls.length) return;
+  const target = connEls[targetIdx];
+
+  // 目標排相對於 wrap 左上角的 y 偏移（未縮放座標）
+  const wrapRect = wp.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const targetTopInWrap = (targetRect.top - wrapRect.top) / sc;
+
+  // 讓目標排頂部對齊視窗上方，留 60px 邊距
+  const MARGIN = 60;
+  py = -(targetTopInWrap * sc) + MARGIN;
+
+  wp.style.transition = 'transform .45s cubic-bezier(.4,0,.2,1)';
+  applyT();
+  setTimeout(() => { wp.style.transition = ''; }, 480);
+}
+
+// ── 展開/收合所有 ──
+let allOpen = false;
+function toggleAll() {
+  const btn = document.getElementById('expandBtn');
+  allOpen = !allOpen;
+  btn.classList.toggle('all-open', allOpen);
+  btn.textContent = allOpen ? '⊟' : '⊞';
+
+  const cols = document.querySelectorAll('.mod-col');
+
+  if (allOpen) {
+    // 逐個模組展開（stagger）
+    cols.forEach((col, i) => {
+      setTimeout(() => {
+        const mn  = col.querySelector('.mod-node');
+        const lw  = col.querySelector('.lessons-wrap');
+        const vl  = col.querySelector('.mod-vline');
+        if (!lw.classList.contains('open')) {
+          lw.classList.add('open');
+          mn.classList.add('open');
+          if (vl) vl.style.height = '12px';
+        }
+      }, i * 60);
+    });
+  } else {
+    // 逐個模組收合（反序 stagger），結束後回到初始畫面
+    const arr = Array.from(cols).reverse();
+    arr.forEach((col, i) => {
+      setTimeout(() => {
+        const mn = col.querySelector('.mod-node');
+        const lw = col.querySelector('.lessons-wrap');
+        const vl = col.querySelector('.mod-vline');
+        lw.classList.remove('open');
+        mn.classList.remove('open');
+        if (vl) vl.style.height = '0px';
+        lw.querySelectorAll('.outline-wrap.open').forEach(o => {
+          o.style.transition = 'none';
+          o.classList.remove('open');
+        });
+        lw.querySelectorAll('.lesson-box.open').forEach(b => b.classList.remove('open'));
+      }, i * 40);
+    });
+    setTimeout(resetV, arr.length * 40 + 300);
+  }
+}
+
+function resetV(){
+  const cw=cv.offsetWidth, ch=cv.offsetHeight;
+  const tw=wp.offsetWidth||1600, th=wp.offsetHeight||400;
+  sc = Math.min(cw/tw, ch/th) * 0.96;  // 96% 留小邊距
+  px = (cw - tw*sc)/2;
+  py = (ch - th*sc)/2;
+  applyT();
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+build();
+window.addEventListener('resize', () => {
+  const state = saveState();
+  setTimeout(() => build(state), 80);
+});
+</script>
+</body>
+</html>
