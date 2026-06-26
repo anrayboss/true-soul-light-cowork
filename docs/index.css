@@ -14,16 +14,23 @@
     --radius-lg: 16px;
 
     /* Light Theme (Default Heritage Warmth) */
-    --color-bg: #FAF7F2;          /* Alabaster Warm Cream */
-    --color-bg-secondary: #F3ECE3;/* Warm Stone */
+    --color-bg: #FAF7F2;
+    /* Alabaster Warm Cream */
+    --color-bg-secondary: #F3ECE3;
+    /* Warm Stone */
     --color-surface: #FFFFFF;
-    --color-text: #2A2421;        /* Deep Espresso */
-    --color-text-muted: #6A5D59;  /* Muted Cocoa */
-    --color-primary: #8C5E47;     /* Terracotta Earth */
+    --color-text: #2A2421;
+    /* Deep Espresso */
+    --color-text-muted: #6A5D59;
+    /* Muted Cocoa */
+    --color-primary: #8C5E47;
+    /* Terracotta Earth */
     --color-primary-hover: #734C37;
-    --color-accent: #C5A059;      /* Antique Gold */
-    --color-border: #E8DFD5;      /* Soft Sand */
-    
+    --color-accent: #C5A059;
+    /* Antique Gold */
+    --color-border: #E8DFD5;
+    /* Soft Sand */
+
     --color-shadow: rgba(42, 36, 33, 0.04);
     --color-shadow-hover: rgba(42, 36, 33, 0.08);
     --glass-bg: rgba(255, 255, 255, 0.75);
@@ -36,16 +43,23 @@
 
 body.dark-mode {
     /* Dark Theme Heritage Warmth */
-    --color-bg: #15110F;          /* Extremely Dark Warm Soil */
-    --color-bg-secondary: #1E1917;/* Charcoal Warm Soil */
+    --color-bg: #15110F;
+    /* Extremely Dark Warm Soil */
+    --color-bg-secondary: #1E1917;
+    /* Charcoal Warm Soil */
     --color-surface: #1E1917;
-    --color-text: #F3ECE3;        /* Soft Warm White */
-    --color-text-muted: #A3938D;  /* Pale Clay */
-    --color-primary: #D4B29A;     /* Muted Terracotta Gold */
+    --color-text: #F3ECE3;
+    /* Soft Warm White */
+    --color-text-muted: #A3938D;
+    /* Pale Clay */
+    --color-primary: #D4B29A;
+    /* Muted Terracotta Gold */
     --color-primary-hover: #E3C9B8;
-    --color-accent: #ECC880;      /* Bright Antique Gold */
-    --color-border: #332B28;      /* Deep Earth Border */
-    
+    --color-accent: #ECC880;
+    /* Bright Antique Gold */
+    --color-border: #332B28;
+    /* Deep Earth Border */
+
     --color-shadow: rgba(0, 0, 0, 0.2);
     --color-shadow-hover: rgba(0, 0, 0, 0.3);
     --glass-bg: rgba(30, 25, 23, 0.75);
@@ -82,7 +96,10 @@ body {
 }
 
 /* Typography styles */
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
     font-family: var(--font-heading);
     font-weight: 500;
     line-height: 1.2;
@@ -94,9 +111,11 @@ p {
 }
 
 /* Tags & Captions */
-.section-tag, .caption {
+.section-tag,
+.caption {
     font-family: var(--font-caption);
-    font-size: 0.8rem;
+    font-size: 1.2rem;
+    font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.15em;
     color: var(--color-accent);
@@ -531,14 +550,19 @@ body.light-mode .hero-overlay {
     cursor: pointer;
     transition: var(--transition-smooth);
     min-height: 100px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    vertical-align: middle;
     font-size: 0.95rem;
     font-weight: 500;
     position: relative;
     overflow: hidden;
+}
+
+.matrix-cell-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
 }
 
 .matrix-cell.empty {
@@ -598,7 +622,7 @@ body.light-mode .hero-overlay {
     position: relative;
     transform: translateY(20px);
     transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    box-shadow: 0 40px 80px rgba(0,0,0,0.15);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.15);
 }
 
 .modal.active .modal-content {
@@ -723,7 +747,7 @@ body.light-mode .hero-overlay {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 10px;
 }
 
 .carousel-tool-img {
@@ -899,7 +923,8 @@ body.light-mode .hero-overlay {
     margin-bottom: 8px;
 }
 
-.quiz-form-group input, .quiz-form-group select {
+.quiz-form-group input,
+.quiz-form-group select {
     width: 100%;
     font-family: var(--font-body);
     padding: 12px 16px;
@@ -912,7 +937,8 @@ body.light-mode .hero-overlay {
     transition: var(--transition-fast);
 }
 
-.quiz-form-group input:focus, .quiz-form-group select:focus {
+.quiz-form-group input:focus,
+.quiz-form-group select:focus {
     border-color: var(--color-primary);
     background-color: var(--color-surface);
 }
@@ -1415,8 +1441,13 @@ body.light-mode .cta-overlay {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
@@ -1424,6 +1455,7 @@ body.light-mode .cta-overlay {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1431,51 +1463,87 @@ body.light-mode .cta-overlay {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes rotateSlow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Scroll Trigger Animations */
-.stack-card, .editorial-visual, .matrix-container, .carousel-outer, .quiz-card, .upload-container, .pricing-card, .inspiration-box {
+.stack-card,
+.editorial-visual,
+.matrix-container,
+.carousel-outer,
+.quiz-card,
+.upload-container,
+.pricing-card,
+.inspiration-box {
     opacity: 0;
     transform: translateY(40px);
     transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.stack-card.active, .editorial-visual.active, .matrix-container.active, .carousel-outer.active, .quiz-card.active, .upload-container.active, .pricing-card.active, .inspiration-box.active {
+.stack-card.active,
+.editorial-visual.active,
+.matrix-container.active,
+.carousel-outer.active,
+.quiz-card.active,
+.upload-container.active,
+.pricing-card.active,
+.inspiration-box.active {
     opacity: 1;
     transform: translateY(0);
 }
 
 /* Stagger transition delay for pricing cards */
-.pricing-grid .pricing-card:nth-child(1) { transition-delay: 0.1s; }
-.pricing-grid .pricing-card:nth-child(2) { transition-delay: 0.2s; }
-.pricing-grid .pricing-card:nth-child(3) { transition-delay: 0.3s; }
+.pricing-grid .pricing-card:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.pricing-grid .pricing-card:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.pricing-grid .pricing-card:nth-child(3) {
+    transition-delay: 0.3s;
+}
 
 /* Responsive design */
 @media (max-width: 992px) {
-    .editorial-grid, .quiz-wrapper {
+
+    .editorial-grid,
+    .quiz-wrapper {
         grid-template-columns: 1fr;
         gap: 50px;
     }
+
     .editorial-content {
         padding-right: 0;
     }
+
     .pricing-grid {
         grid-template-columns: 1fr;
         gap: 30px;
     }
+
     .pricing-card.popular {
         transform: translateY(0);
     }
+
     .carousel-card {
         grid-template-columns: 1fr;
         min-height: auto;
     }
+
     .carousel-image-container {
         aspect-ratio: 16 / 9;
         height: 250px;
@@ -1486,28 +1554,36 @@ body.light-mode .cta-overlay {
     .header-container {
         padding: 0 20px;
     }
+
     .nav {
-        display: none; /* In a real layout we'd build a burger menu, keeping it simple here */
+        display: none;
+        /* In a real layout we'd build a burger menu, keeping it simple here */
     }
+
     .footer-grid {
         grid-template-columns: 1fr;
         gap: 40px;
     }
+
     .footer-bottom {
         flex-direction: column;
         gap: 20px;
         text-align: center;
     }
+
     .matrix-container {
         padding: 24px;
     }
+
     .matrix-table {
         border-spacing: 5px;
     }
+
     .matrix-cell {
         padding: 10px;
         font-size: 0.85rem;
     }
+
     .inspiration-container {
         grid-template-columns: 1fr;
     }
