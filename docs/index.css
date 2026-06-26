@@ -129,19 +129,25 @@ p {
 }
 
 .logo {
-    font-family: var(--font-heading);
-    font-size: 1.6rem;
-    color: var(--color-text);
-    font-weight: 700;
     text-decoration: none;
-    letter-spacing: -0.01em;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
 }
 
-.logo-accent {
+.logo-zh {
+    font-family: 'Klee One', 'Noto Serif TC', serif;
+    font-weight: 600;
+    font-size: 1.6rem;
+    color: var(--color-text);
+}
+
+.logo-en {
+    font-family: 'Ephesis', cursive;
+    font-size: 1.8rem;
     color: var(--color-primary);
+    margin-left: 6px;
+    vertical-align: middle;
 }
 
 .nav {
@@ -363,21 +369,38 @@ body.light-mode .hero-overlay {
     box-shadow: 0 30px 60px -20px var(--color-shadow-hover);
 }
 
-/* 隨選修行靈感樣式 */
-.inspiration-box {
+/* 隨選修行靈感三欄樣式 */
+.inspiration-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
     margin-top: 30px;
+}
+
+.inspiration-box {
     background-color: var(--color-bg-secondary);
     border-radius: var(--radius-md);
-    padding: 24px;
+    padding: 28px 24px;
     border: 1px dashed var(--color-accent);
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 300px;
+    transition: var(--transition-smooth);
+}
+
+.inspiration-box:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-surface);
+    box-shadow: 0 15px 30px var(--color-shadow-hover);
+    transform: translateY(-4px);
 }
 
 .inspiration-card {
-    min-height: 120px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 .inspiration-meta {
@@ -386,19 +409,22 @@ body.light-mode .hero-overlay {
     color: var(--color-primary);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 6px;
 }
 
 .inspiration-title {
     font-family: var(--font-heading);
     font-size: 1.3rem;
     color: var(--color-text);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
 .inspiration-desc {
     font-size: 0.95rem;
     color: var(--color-text-muted);
+    line-height: 1.6;
 }
 
 .inspiration-actions {
@@ -415,7 +441,7 @@ body.light-mode .hero-overlay {
     border: none;
     color: var(--color-text-muted);
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -688,42 +714,28 @@ body.light-mode .hero-overlay {
     box-shadow: 0 15px 35px var(--color-shadow);
 }
 
-.carousel-image {
+.carousel-image-container {
     position: relative;
-    background-color: var(--color-primary);
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--color-surface);
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    padding: 20px;
 }
 
-.carousel-image::before {
-    content: '';
-    position: absolute;
-    width: 150%;
-    height: 150%;
-    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-    animation: rotateSlow 20s linear infinite;
+.carousel-tool-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    transition: var(--transition-smooth);
 }
 
-.carousel-tool-icon {
-    font-size: 5rem;
-    color: rgba(255, 255, 255, 0.9);
-    z-index: 2;
-    text-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-
-.carousel-tool-name-bg {
-    position: absolute;
-    bottom: -20px;
-    left: -10px;
-    font-family: var(--font-heading);
-    font-size: 6rem;
-    font-weight: 900;
-    color: rgba(255, 255, 255, 0.05);
-    z-index: 1;
-    white-space: nowrap;
-    user-select: none;
+.carousel-card:hover .carousel-tool-img {
+    transform: scale(1.03);
 }
 
 .carousel-content {
@@ -1147,7 +1159,7 @@ body.light-mode .hero-overlay {
     top: 24px;
     right: 40px;
     font-family: var(--font-caption);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: #FFF;
@@ -1214,6 +1226,86 @@ body.light-mode .hero-overlay {
 .pricing-card .btn {
     width: 100%;
     text-align: center;
+}
+
+/* Call to Action Section */
+.cta-section {
+    position: relative;
+    padding: 120px 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.cta-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.cta-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cta-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(21, 17, 15, 0.75);
+}
+
+body.light-mode .cta-overlay {
+    background-color: rgba(250, 247, 242, 0.85);
+}
+
+.cta-container {
+    position: relative;
+    z-index: 2;
+    max-width: 650px;
+    padding: 0 20px;
+}
+
+.cta-title {
+    font-size: clamp(2.2rem, 4vw, 3rem);
+    margin-bottom: 20px;
+}
+
+.cta-lead {
+    font-size: 1.15rem;
+    color: var(--color-text-muted);
+    margin-bottom: 40px;
+}
+
+.cta-form {
+    display: flex;
+    gap: 16px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.cta-form input[type="email"] {
+    flex-grow: 1;
+    font-family: var(--font-body);
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    outline: none;
+    font-size: 0.95rem;
+}
+
+.cta-form input[type="email"]:focus {
+    border-color: var(--color-primary);
 }
 
 /* Footer */
@@ -1348,13 +1440,13 @@ body.light-mode .hero-overlay {
 }
 
 /* Scroll Trigger Animations */
-.stack-card, .editorial-visual, .matrix-container, .carousel-outer, .quiz-card, .upload-container, .pricing-card {
+.stack-card, .editorial-visual, .matrix-container, .carousel-outer, .quiz-card, .upload-container, .pricing-card, .inspiration-box {
     opacity: 0;
     transform: translateY(40px);
     transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.stack-card.active, .editorial-visual.active, .matrix-container.active, .carousel-outer.active, .quiz-card.active, .upload-container.active, .pricing-card.active {
+.stack-card.active, .editorial-visual.active, .matrix-container.active, .carousel-outer.active, .quiz-card.active, .upload-container.active, .pricing-card.active, .inspiration-box.active {
     opacity: 1;
     transform: translateY(0);
 }
@@ -1384,9 +1476,9 @@ body.light-mode .hero-overlay {
         grid-template-columns: 1fr;
         min-height: auto;
     }
-    .carousel-image {
+    .carousel-image-container {
         aspect-ratio: 16 / 9;
-        padding: 40px 0;
+        height: 250px;
     }
 }
 
@@ -1415,5 +1507,8 @@ body.light-mode .hero-overlay {
     .matrix-cell {
         padding: 10px;
         font-size: 0.85rem;
+    }
+    .inspiration-container {
+        grid-template-columns: 1fr;
     }
 }

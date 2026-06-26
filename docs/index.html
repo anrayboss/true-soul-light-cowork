@@ -1,29 +1,33 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>真靈光 True Soul Light - 一站式身心靈定位入口網站</title>
-    <!-- Google Fonts: Playfair Display & Inter -->
+    <!-- Google Fonts: Playfair Display, Inter, Klee One & Ephesis -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300;400;500;600;700;800&family=Klee+One:wght@400;600&family=Ephesis&display=swap"
+        rel="stylesheet">
+
     <!-- Vercel Geist & Geist Mono CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/font/css/geist.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/font/css/geist-mono.min.css">
-    
+
     <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <link rel="stylesheet" href="index.css">
 </head>
+
 <body class="light-mode">
     <!-- Header -->
     <header class="header">
         <div class="header-container">
             <a href="#" class="logo">
-                <span class="logo-accent">真</span>靈光 <span class="caption" style="font-size:0.7rem; letter-spacing:0.05em; color:var(--color-primary); margin-bottom:0;">True Soul Light</span>
+                <span class="logo-zh">真靈光</span><span class="logo-en">True Soul Light</span>
             </a>
             <nav class="nav">
                 <a href="#about" class="nav-link">每日修行資源</a>
@@ -44,13 +48,15 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-bg">
-            <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1920" alt="晨霧繚繞的寧靜山巒" class="hero-img">
+            <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1920" alt="晨霧繚繞的寧靜山巒"
+                class="hero-img">
             <div class="hero-overlay"></div>
         </div>
         <div class="hero-container">
             <span class="caption animate-fade-in">Vol. I — 一站式身心靈探索</span>
             <h1 class="hero-title animate-slide-up">探索你此生的<br>靈魂軌跡與天賦定位</h1>
-            <p class="hero-lead animate-slide-up-delay">結合量子身心靈檢測、十六大命理工具交叉分析，以及客製化靈性報告，在資訊紛擾的時代，帶您實現「定、清、補」三步驟，活出專屬您的靈性與財富藍圖。</p>
+            <p class="hero-lead animate-slide-up-delay">
+                結合量子身心靈檢測、十六大命理工具交叉分析，以及客製化靈性報告，在資訊紛擾的時代，帶您實現「定、清、補」三步驟，活出專屬您的靈性與財富藍圖。</p>
             <div class="hero-actions animate-slide-up-delay-more">
                 <a href="#quiz" class="btn btn-primary">免費命理測驗</a>
                 <a href="#matrix" class="btn btn-secondary">了解服務矩陣</a>
@@ -58,37 +64,67 @@
         </div>
     </section>
 
-    <!-- Editorial Story Section (隨機每日免費學習資源) -->
+    <!-- Editorial Story Section (隨機每日免費學習資源 - 三欄並排) -->
     <section id="about" class="editorial-section">
         <div class="container">
-            <div class="editorial-grid">
-                <div class="editorial-content">
-                    <span class="section-tag">01 / Daily Learning</span>
-                    <h2 class="section-title">每日免費修行靈感</h2>
-                    <p class="body-text">我們相信修行融入於日常生活中的每一個微小選擇。本系統提供身、心、靈 × 清、補、調九大面向的修持知識，每天隨機提供一項實修指引，讓您的日常成為觉察的溫床。</p>
-                    <p class="body-text">點擊下方按鈕隨機抽取今日修行建議，若喜愛可點擊收藏儲存至您的個人靈修庫，未來我們將據此為您推薦合適的能量工具。</p>
-                    
-                    <!-- 互動隨選知識卡片 -->
-                    <div class="inspiration-box shadow-premium">
-                        <div class="inspiration-card" id="inspiration-card">
-                            <span class="inspiration-meta" id="insp-meta">身 - 補 (Body Nourish)</span>
-                            <h3 class="inspiration-title" id="insp-title">高頻能量咖啡</h3>
-                            <p class="inspiration-desc" id="insp-desc">精選高山雨林咖啡豆，經量子音頻調頻注入生命力，每日清晨一杯，在提神的同時喚醒身體每個細胞的精微震動，補足一整天所需的純淨生命能量。</p>
-                        </div>
-                        <div class="inspiration-actions">
-                            <button id="collect-btn" class="collect-btn" aria-label="Collect card">
-                                <i class="fa-regular fa-heart"></i> <span id="collect-text">收藏卡片</span>
-                            </button>
-                            <button id="next-insp-btn" class="btn btn-primary btn-mini">隨選下一則</button>
-                        </div>
+            <div style="margin-bottom: 50px;">
+                <span class="section-tag">01 / Daily Learning</span>
+                <h2 class="section-title">每日免費修行靈感</h2>
+                <p class="body-text" style="max-width: 800px;">
+                    我們相信修行融入於日常生活中的每一個微小選擇。本系統提供身、心、靈三面向對應清、補、調的九大修持指引。下方三張卡片分別呈現「身」、「心」、「靈」的今日指引，點擊「隨選今日靈感」按鈕即可隨機洗牌更新。
+                </p>
+            </div>
+
+            <!-- 三欄卡片容器 -->
+            <div class="inspiration-container">
+                <!-- 身卡片 -->
+                <div class="inspiration-box shadow-premium" id="box-body">
+                    <div class="inspiration-card">
+                        <span class="inspiration-meta" id="insp-body-meta">身 (Body) · 補</span>
+                        <h3 class="inspiration-title" id="insp-body-title">細胞級膳食補充</h3>
+                        <p class="inspiration-desc" id="insp-body-desc">提供天然草本營養素與量子調頻能量咖啡，修復細胞壁，補足一整天所需的精微能量。</p>
+                    </div>
+                    <div class="inspiration-actions">
+                        <button class="collect-btn" id="collect-btn-body" onclick="toggleCollect('body')"
+                            aria-label="Collect body card">
+                            <i class="fa-regular fa-heart"></i> <span id="collect-text-body">收藏卡片</span>
+                        </button>
                     </div>
                 </div>
-                <div class="editorial-visual">
-                    <div class="image-wrapper shadow-premium">
-                        <img src="https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=1200" alt="清晨森林中灑落的陽光" class="editorial-img">
-                        <div class="image-caption">圖 1.1 — 靜心與大自然共振，光之晨曦，2026.</div>
+
+                <!-- 心卡片 -->
+                <div class="inspiration-box shadow-premium" id="box-mind">
+                    <div class="inspiration-card">
+                        <span class="inspiration-meta" id="insp-mind-meta">心 (Mind) · 調</span>
+                        <h3 class="inspiration-title" id="insp-mind-title">西方敘事諮商與算命</h3>
+                        <p class="inspiration-desc" id="insp-mind-desc">結合命理格局與敘事諮商，梳理思維盲點，調正內在心態信念與人生定位。</p>
+                    </div>
+                    <div class="inspiration-actions">
+                        <button class="collect-btn" id="collect-btn-mind" onclick="toggleCollect('mind')"
+                            aria-label="Collect mind card">
+                            <i class="fa-regular fa-heart"></i> <span id="collect-text-mind">收藏卡片</span>
+                        </button>
                     </div>
                 </div>
+
+                <!-- 靈卡片 -->
+                <div class="inspiration-box shadow-premium" id="box-soul">
+                    <div class="inspiration-card">
+                        <span class="inspiration-meta" id="insp-soul-meta">靈 (Soul) · 清</span>
+                        <h3 class="inspiration-title" id="insp-soul-title">業力消災祈福法會</h3>
+                        <p class="inspiration-desc" id="insp-soul-desc">針對宿世因果業力堵塞進行超度與功德迴向，清除靈魂深層負能與業力糾纏。</p>
+                    </div>
+                    <div class="inspiration-actions">
+                        <button class="collect-btn" id="collect-btn-soul" onclick="toggleCollect('soul')"
+                            aria-label="Collect soul card">
+                            <i class="fa-regular fa-heart"></i> <span id="collect-text-soul">收藏卡片</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <button id="next-insp-btn" class="btn btn-primary">隨選今日靈感</button>
             </div>
         </div>
     </section>
@@ -100,9 +136,10 @@
                 <div class="matrix-header">
                     <span class="section-tag">02 / Service Matrix</span>
                     <h2 class="section-title">身心靈 x 清補調服務矩陣</h2>
-                    <p class="section-lead">透過「檢測定位」找到痛點，並結合「定、清、補」三層次，從身體健康、心理平靜、靈性覺醒到現實財富，全面引導您的能量流向最順遂的狀態。點擊下方矩陣格子查看詳細項目與預約詳情。</p>
+                    <p class="section-lead">
+                        透過「檢測定位」找到痛點，並結合「定、清、補」三層次，從身體健康、心理平靜、靈性覺醒到現實財富，全面引導您的能量流向最順遂的狀態。點擊下方矩陣格子查看詳細項目與預約詳情。</p>
                 </div>
-                
+
                 <div class="matrix-table-wrapper">
                     <table class="matrix-table">
                         <thead>
@@ -118,66 +155,76 @@
                             <!-- 檢測行 -->
                             <tr>
                                 <td class="matrix-row-title">檢測定位</td>
-                                <td class="matrix-cell" data-section="檢測-身" data-service="AI 量子身心靈量測儀" data-details="藉由精密AI量子生物反饋檢測儀，掃描身體十二經絡與器官頻率，定位先天體質強弱與潛在亞健康風險，快速找出需要調理的身體環節。">
+                                <td class="matrix-cell" data-section="檢測-身" data-service="AI 量子身心靈量測儀"
+                                    data-details="藉由精密AI量子生物反饋檢測儀，掃描身體十二經絡與器官頻率，定位先天體質強弱與潛在亞健康風險，快速找出需要調理的身體環節。">
                                     AI 量子身心靈量測儀
                                     <span class="matrix-cell-tag">ai scan</span>
                                 </td>
-                                <td class="matrix-cell empty">
-                                    -
-                                </td>
-                                <td class="matrix-cell" data-section="檢測-靈" data-service="線上照片出報告" data-details="透過高清晰近照，由靈性導師連線阿卡西記錄與精微氣場，進行照片接訊解析，揭示您的靈魂光體顏色、脈輪氣場狀態及潛在業力堵塞。">
+                                <td class="matrix-cell empty">-</td>
+                                <td class="matrix-cell" data-section="檢測-靈" data-service="線上照片出報告"
+                                    data-details="透過高清晰近照，由靈性導師連線阿卡西記錄與精微氣場，進行照片接訊解析，揭示您的靈魂光體顏色、脈輪氣場狀態及潛在業力堵塞。">
                                     線上照片出報告
                                     <span class="matrix-cell-tag">soul scan</span>
                                 </td>
-                                <td class="matrix-cell empty">
-                                    -
-                                </td>
+                                <td class="matrix-cell empty">-</td>
                             </tr>
                             <!-- 定行 -->
                             <tr>
                                 <td class="matrix-row-title">定 (Align)</td>
-                                <td class="matrix-cell" data-section="定-身" data-service="整脊、經絡整復、按摩" data-details="配合人體工學與傳統骨傷推拿，調整歪斜的脊椎骨盆骨架，疏通深層經絡氣血，緩解慢性痠痛，使肉體重回端正穩定的重心平衡。">
+                                <td class="matrix-cell" data-section="定-身" data-service="整脊、經絡整復、按摩"
+                                    data-details="配合人體工學與傳統骨傷推拿，調整歪斜的脊椎骨盆骨架，疏通深層經絡氣血，緩解慢性痠痛，使肉體重回端正穩定的重心平衡。">
                                     整脊、經絡整復、按摩
                                 </td>
-                                <td class="matrix-cell" data-section="定-心" data-service="心理諮詢、命理算命" data-details="結合西方敘事心理諮商與東方經典命理分析（紫微斗數、八字），幫您看清心智執著與大腦盲點，重新設定個人生命心態定位。">
+                                <td class="matrix-cell" data-section="定-心" data-service="心理諮詢、命理算命"
+                                    data-details="結合西方敘事心理諮商與東方經典命理分析（紫微斗數、八字），幫您看清心智執著與大腦盲點，重新設定個人生命心態定位。">
                                     諮詢、算命
                                 </td>
-                                <td class="matrix-cell" data-section="定-靈" data-service="靈性引導與高我諮詢" data-details="透過一對一深度靈性引導，協助連結您的指導靈與內在高我，確定靈魂在今生重大事件或抉擇中的定位與方向。">
+                                <td class="matrix-cell" data-section="定-靈" data-service="靈性引導與高我諮詢"
+                                    data-details="透過一對一深度靈性引導，協助連結您的指導靈與內在高我，確定靈魂在今生重大事件或抉擇中的定位與方向。">
                                     諮詢
                                 </td>
-                                <td class="matrix-cell" data-section="定-財富" data-service="諮詢與行銷業務課程" data-details="透過精準商業諮詢，梳理您個人特質的護城河，設定專屬定位；搭配系統化行銷業務課程，重新定義您的商業變現道路。">
+                                <td class="matrix-cell" data-section="定-財富" data-service="諮詢與行銷業務課程"
+                                    data-details="透過精準商業諮詢，梳理您個人特質的護城河，設定專屬定位；搭配系統化行銷業務課程，重新定義您的商業變現道路。">
                                     諮詢、行銷業務課程
                                 </td>
                             </tr>
                             <!-- 清行 -->
                             <tr>
                                 <td class="matrix-row-title">清 (Clear)</td>
-                                <td class="matrix-cell" data-section="清-身" data-service="能量艙、甕蒸、運動課程" data-details="採用遠紅外線太赫茲能量艙與漢方甕蒸，加速全身血液循環，深層排汗排毒，並搭配核心心肺防禦拉伸運動，清除肉體累積毒素與緊繃。">
+                                <td class="matrix-cell" data-section="清-身" data-service="能量艙、甕蒸、運動課程"
+                                    data-details="採用遠紅外線太赫茲能量艙與漢方甕蒸，加速全身血液循環，深層排汗排毒，並搭配核心心肺防禦拉伸運動，清除肉體累積毒素與緊繃。">
                                     能量艙、甕蒸、運動課程
                                 </td>
-                                <td class="matrix-cell" data-section="清-心" data-service="鈦缽、心靈靜心課程" data-details="運用鈦金屬唱缽產生的精微泛音與聲頻共振，清理大腦積壓的焦慮、壓力與潛意識負面情緒種子，恢復心靈寧靜。">
+                                <td class="matrix-cell" data-section="清-心" data-service="鈦缽、心靈靜心課程"
+                                    data-details="運用鈦金屬唱缽產生的精微泛音與聲頻共振，清理大腦積壓的焦慮、壓力與潛意識負面情緒種子，恢復心靈寧靜。">
                                     鈦缽、心靈課程
                                 </td>
-                                <td class="matrix-cell" data-section="清-靈" data-service="音療課程與消業障法會" data-details="由專業音療導師與宗教法師，引導高頻頌缽聲納共振淨化靈體；或透過消業消災祈福法會，清除深層業力與能量糾纏。">
+                                <td class="matrix-cell" data-section="清-靈" data-service="音療課程與消業障法會"
+                                    data-details="由專業音療導師與宗教法師，引導高頻頌缽聲納共振淨化靈體；或透過消業消災祈福法會，清除深層業力與能量糾纏。">
                                     鈦缽、音療課程、法會
                                 </td>
-                                <td class="matrix-cell" data-section="清-財富" data-service="行銷業務排毒與優化課程" data-details="釐清並清除您對金錢與成功的限制性信念，優化現有的低效行銷漏斗，將業務流程中多餘、卡關的雜質全部清理乾淨。">
+                                <td class="matrix-cell" data-section="清-財富" data-service="行銷業務排毒與優化課程"
+                                    data-details="釐清並清除您對金錢與成功的限制性信念，優化現有的低效行銷漏斗，將業務流程中多餘、卡關的雜質全部清理乾淨。">
                                     行銷業務課程
                                 </td>
                             </tr>
                             <!-- 補行 -->
                             <tr>
                                 <td class="matrix-row-title">補 (Nourish)</td>
-                                <td class="matrix-cell" data-section="補-身" data-service="營養補充、葉醫師產品與能量咖啡" data-details="提供天然無添加營養膳食補充品、葉醫師研發漢方草本配方、及注入高頻音波的能量咖啡，修復細胞壁，全面補充肉體元氣與精微養分。">
+                                <td class="matrix-cell" data-section="補-身" data-service="營養補充、葉醫師產品與能量咖啡"
+                                    data-details="提供天然無添加營養膳食補充品、葉醫師研發漢方草本配方、及注入高頻音波的能量咖啡，修復細胞壁，全面補充肉體元氣與精微養分。">
                                     營養補充、葉醫師產品、能量咖啡
                                 </td>
-                                <td class="matrix-cell" data-section="補-心" data-service="心靈充電課程與學員社群支持" data-details="包含自我同理、肯定語冥想心靈課程，並加入真靈光共修社群，在充滿愛與理解的同伴支持中，滋養心靈底氣。">
+                                <td class="matrix-cell" data-section="補-心" data-service="心靈充電課程與學員社群支持"
+                                    data-details="包含自我同理、肯定語冥想心靈課程，並加入真靈光共修社群，在充滿愛與理解的同伴支持中，滋養心靈底氣。">
                                     心靈課程、學員社群
                                 </td>
-                                <td class="matrix-cell" data-section="補-靈" data-service="量子能量卡（晶圓鍊）與高頻能量水" data-details="使用奈米矽晶圓製成的量子能量晶片卡（晶圓鍊）配戴於身，或飲用特殊調頻之小分子能量水，修復並強化個人靈性氣場防護罩。">
+                                <td class="matrix-cell" data-section="補-靈" data-service="量子能量卡（晶圓鍊）與高頻能量水"
+                                    data-details="使用奈米矽晶圓製成的量子能量晶片卡（晶圓鍊）配戴於身，或飲用特殊調頻之小分子能量水，修復並強化個人靈性氣場防護罩。">
                                     量子能量補充卡（晶圓鍊）、能量水
                                 </td>
-                                <td class="matrix-cell" data-section="補-財富" data-service="高級行銷實戰與業務成交課程" data-details="補充頂尖的商業行銷技能、社群注意力變現思維，與高難度業務一對一成交技術，全面補足商業系統的吸金與盈利能力。">
+                                <td class="matrix-cell" data-section="補-財富" data-service="高級行銷實戰與業務成交課程"
+                                    data-details="補充頂尖的商業行銷技能、社群注意力變現思維，與高難度業務一對一成交技術，全面補足商業系統的吸金與盈利能力。">
                                     行銷業務課程
                                 </td>
                             </tr>
@@ -196,7 +243,7 @@
                 <h2 class="section-title text-center">七大靈魂解碼工具</h2>
                 <p class="section-lead">我們融會貫通了古今中外最知名的自我探索工具，將其彙整於下方的輪播卡片中。這些工具將共同在您的測驗中發揮作用，共同交織出您的命運與使命藍圖。</p>
             </div>
-            
+
             <div class="carousel-outer">
                 <button class="carousel-btn prev" id="carousel-prev" aria-label="Previous slide">
                     <i class="fa-solid fa-chevron-left"></i>
@@ -204,20 +251,20 @@
                 <button class="carousel-btn next" id="carousel-next" aria-label="Next slide">
                     <i class="fa-solid fa-chevron-right"></i>
                 </button>
-                
+
                 <div class="carousel-container">
                     <div class="carousel-track" id="carousel-track">
                         <!-- 星盤 -->
                         <div class="carousel-slide">
                             <div class="carousel-card">
-                                <div class="carousel-image" style="background: linear-gradient(135deg, #1A1F3C, #4E148C);">
-                                    <i class="fa-solid fa-star-and-crescent carousel-tool-icon"></i>
-                                    <div class="carousel-tool-name-bg">ASTROLOGY</div>
+                                <div class="carousel-image-container">
+                                    <img src="images for website/astrology.png" alt="星盤" class="carousel-tool-img">
                                 </div>
                                 <div class="carousel-content">
                                     <div>
                                         <h3 class="carousel-tool-title">星盤 (Western Astrology)</h3>
-                                        <p class="carousel-tool-desc">以個體出生當下的精確時間與空間座標，繪製黃道十二宮、十大行星及相位關係，這是您今生靈魂投胎前設定的本命藍圖。</p>
+                                        <p class="carousel-tool-desc">
+                                            以個體出生當下的精確時間與空間座標，繪製黃道十二宮、十大行星及相位關係，這是您今生靈魂投胎前設定的本命藍圖。</p>
                                     </div>
                                     <div class="carousel-tool-info">
                                         <div class="carousel-info-row">
@@ -236,14 +283,14 @@
                         <!-- 人類圖 -->
                         <div class="carousel-slide">
                             <div class="carousel-card">
-                                <div class="carousel-image" style="background: linear-gradient(135deg, #2D3A3A, #0F6E68);">
-                                    <i class="fa-solid fa-diagram-project carousel-tool-icon"></i>
-                                    <div class="carousel-tool-name-bg">HUMAN DESIGN</div>
+                                <div class="carousel-image-container">
+                                    <img src="images for website/human design.png" alt="人類圖" class="carousel-tool-img">
                                 </div>
                                 <div class="carousel-content">
                                     <div>
                                         <h3 class="carousel-tool-title">人類圖 (Human Design)</h3>
-                                        <p class="carousel-tool-desc">結合占星、易經、卡巴拉、印度脈輪，以出生的時間計算出意識與潛意識的能量管道，被譽為人生的使用說明書。</p>
+                                        <p class="carousel-tool-desc">結合占星、易經、卡巴拉、印度脈輪，以出生的時間計算出意識與潛意識的能量管道，被譽為人生的使用說明書。
+                                        </p>
                                     </div>
                                     <div class="carousel-tool-info">
                                         <div class="carousel-info-row">
@@ -262,19 +309,19 @@
                         <!-- 紫微斗數 -->
                         <div class="carousel-slide">
                             <div class="carousel-card">
-                                <div class="carousel-image" style="background: linear-gradient(135deg, #3A2333, #702632);">
-                                    <i class="fa-solid fa-moon-bi-color carousel-tool-icon"></i>
-                                    <div class="carousel-tool-name-bg">ZI WEI DOU SHU</div>
+                                <div class="carousel-image-container">
+                                    <img src="images for website/zi wei.png" alt="紫微斗數" class="carousel-tool-img">
                                 </div>
                                 <div class="carousel-content">
                                     <div>
                                         <h3 class="carousel-tool-title">紫微斗數</h3>
-                                        <p class="carousel-tool-desc">東方命理經典，以陰曆時間將諸星排入十二宮位，分析個人一生命運格局起伏，對於世俗事業與運勢精準度極高。</p>
+                                        <p class="carousel-tool-desc">東方命理經典，以陰曆時間將諸星排入十二宮位，分析個人一生命運格局起伏，對於世俗事業與運勢精準度極高。
+                                        </p>
                                     </div>
                                     <div class="carousel-tool-info">
                                         <div class="carousel-info-row">
                                             <strong>天賦指標 (Talents)</strong>
-                                            <p>命宮與身宮主星配置、化祿（天生資源與才華變現處）、化科（名望、企劃、貴人與智慧）。</p>
+                                            <p>命宮與身宮主星配置、化祿（天生資源與才華變現處）、化科（名聲、企劃、貴人與智慧）。</p>
                                         </div>
                                         <div class="carousel-info-row">
                                             <strong>使命指標 (Mission)</strong>
@@ -288,9 +335,8 @@
                         <!-- 生命靈數 -->
                         <div class="carousel-slide">
                             <div class="carousel-card">
-                                <div class="carousel-image" style="background: linear-gradient(135deg, #1D2A44, #3B60E4);">
-                                    <i class="fa-solid fa-arrow-1-9 carousel-tool-icon"></i>
-                                    <div class="carousel-tool-name-bg">NUMEROLOGY</div>
+                                <div class="carousel-image-container">
+                                    <img src="images for website/numerology.png" alt="生命靈數" class="carousel-tool-img">
                                 </div>
                                 <div class="carousel-content">
                                     <div>
@@ -314,14 +360,15 @@
                         <!-- 瑪雅曆 -->
                         <div class="carousel-slide">
                             <div class="carousel-card">
-                                <div class="carousel-image" style="background: linear-gradient(135deg, #0A2E12, #2B9348);">
-                                    <i class="fa-solid fa-circle-nodes carousel-tool-icon"></i>
-                                    <div class="carousel-tool-name-bg">DREAMSPELL</div>
+                                <div class="carousel-image-container">
+                                    <img src="images for website/dreamspell.png" alt="瑪雅十三月亮曆"
+                                        class="carousel-tool-img">
                                 </div>
                                 <div class="carousel-content">
                                     <div>
                                         <h3 class="carousel-tool-title">瑪雅十三月亮曆 (Dreamspell)</h3>
-                                        <p class="carousel-tool-desc">基於卓爾金曆與自然時間法則，換算出個人的星系印記，透過太陽圖騰與銀河音階，調整個人與宇宙共時共振。</p>
+                                        <p class="carousel-tool-desc">基於卓爾金曆與自然時間法則，換算出個人的星系印記，透過太陽圖騰與銀河音階，調整個人與宇宙共時共振。
+                                        </p>
                                     </div>
                                     <div class="carousel-tool-info">
                                         <div class="carousel-info-row">
@@ -330,7 +377,7 @@
                                         </div>
                                         <div class="carousel-info-row">
                                             <strong>使命指標 (Mission)</strong>
-                                            <p>引導圖騰（高我指引方向）、銀河音階（服務世界的特質）、個人生命波符（靈魂演化軌跡）。</p>
+                                            <p>引導圖騰（高我指引方向）、銀河音階（服務世界的品質）、個人生命波符（靈魂演化軌跡）。</p>
                                         </div>
                                     </div>
                                 </div>
@@ -340,14 +387,14 @@
                         <!-- 基因天命 -->
                         <div class="carousel-slide">
                             <div class="carousel-card">
-                                <div class="carousel-image" style="background: linear-gradient(135deg, #2E1B0F, #8E5A36);">
-                                    <i class="fa-solid fa-dna carousel-tool-icon"></i>
-                                    <div class="carousel-tool-name-bg">GENE KEYS</div>
+                                <div class="carousel-image-container">
+                                    <img src="images for website/gene keys.png" alt="基因天命" class="carousel-tool-img">
                                 </div>
                                 <div class="carousel-content">
                                     <div>
                                         <h3 class="carousel-tool-title">基因天命 (Gene Keys)</h3>
-                                        <p class="carousel-tool-desc">結合易經六十四卦與遺傳學，計算出黃金序列全息輪廓圖，指引個體如何將基因中的陰影頻率蛻變為天賦與悉地光芒。</p>
+                                        <p class="carousel-tool-desc">
+                                            結合易經六十四卦與遺傳學，計算出黃金序列全息輪廓圖，指引個體如何將基因中的陰影頻率蛻變為天賦與悉地光芒。</p>
                                     </div>
                                     <div class="carousel-tool-info">
                                         <div class="carousel-info-row">
@@ -366,14 +413,15 @@
                         <!-- 印度占星 -->
                         <div class="carousel-slide">
                             <div class="carousel-card">
-                                <div class="carousel-image" style="background: linear-gradient(135deg, #1C0A35, #A23B72);">
-                                    <i class="fa-solid fa-compass carousel-tool-icon"></i>
-                                    <div class="carousel-tool-name-bg">VEDIC ASTRO</div>
+                                <div class="carousel-image-container">
+                                    <img src="images for website/vedic astrology.png" alt="印度占星"
+                                        class="carousel-tool-img">
                                 </div>
                                 <div class="carousel-content">
                                     <div>
                                         <h3 class="carousel-tool-title">印度占星 (Vedic Astrology)</h3>
-                                        <p class="carousel-tool-desc">使用考慮歲差的恆星黃道系統，著重於靈魂多生累劫累積的業力印記，搭配獨特的月宿（Nakshatras）分析心理本底。</p>
+                                        <p class="carousel-tool-desc">
+                                            使用考慮歲差的恆星黃道系統，著重於靈魂多生累劫累積的業力印記，搭配獨特的月宿（Nakshatras）分析心理本底。</p>
                                     </div>
                                     <div class="carousel-tool-info">
                                         <div class="carousel-info-row">
@@ -390,7 +438,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="carousel-dots" id="carousel-dots">
                     <!-- Dots will be populated by JS -->
                 </div>
@@ -406,14 +454,14 @@
                     <span class="section-tag">04 / Free Navigation</span>
                     <h2 class="section-title">解鎖您的靈性導航報告</h2>
                     <p class="body-text">輸入您的出生時空資訊，我們的交叉演算引擎將比對星盤、人類圖、紫微斗數與生命靈數，為您即時計算出個人專屬的身心靈定位特質解析。</p>
-                    
+
                     <ul>
                         <li><i class="fa-solid fa-check"></i> <span>不需要重置：只需輸入一次出生資訊，登入會員即可保存。</span></li>
                         <li><i class="fa-solid fa-check"></i> <span>整合分析：告別單一工具的偏頗，給出交叉統整的宏觀視角。</span></li>
                         <li><i class="fa-solid fa-check"></i> <span>指明路徑：根據分析結果為您指出最合適的「清、補、調」修行步驟。</span></li>
                     </ul>
                 </div>
-                
+
                 <div class="quiz-card shadow-premium">
                     <!-- 表單 -->
                     <div id="quiz-form-container">
@@ -421,7 +469,7 @@
                             <h3 class="result-title">靈魂時空定位輸入</h3>
                             <span class="result-subtitle">ENTER BIRTH DATA</span>
                         </div>
-                        
+
                         <form id="soul-quiz-form" onsubmit="calculateSoulProfile(event)">
                             <div class="quiz-form-group">
                                 <label for="user-name">您的姓名 / 暱稱</label>
@@ -431,47 +479,33 @@
                                 <label>出生西元年月日與時辰</label>
                                 <div class="quiz-datetime-grid">
                                     <input type="date" id="user-date" required>
-                                    <select id="user-time" required>
-                                        <option value="">選擇時辰</option>
-                                        <option value="子">子時 (23:00 - 01:00)</option>
-                                        <option value="丑">丑時 (01:00 - 03:00)</option>
-                                        <option value="寅">寅時 (03:00 - 05:00)</option>
-                                        <option value="卯">卯時 (05:00 - 07:00)</option>
-                                        <option value="辰">辰時 (07:00 - 09:00)</option>
-                                        <option value="巳">巳時 (09:00 - 11:00)</option>
-                                        <option value="午">午時 (11:00 - 13:00)</option>
-                                        <option value="未">未時 (13:00 - 15:00)</option>
-                                        <option value="申">申時 (15:00 - 17:00)</option>
-                                        <option value="酉">酉時 (17:00 - 19:00)</option>
-                                        <option value="戌">戌時 (19:00 - 21:00)</option>
-                                        <option value="亥">亥時 (21:00 - 23:00)</option>
-                                        <option value="吉">吉時 (不知精確時間)</option>
-                                    </select>
+                                    <input type="time" id="user-time" required>
                                 </div>
                             </div>
                             <div class="quiz-form-group">
                                 <label for="user-location">出生地點 (城市)</label>
                                 <input type="text" id="user-location" placeholder="例如：台北市、台中市" required>
                             </div>
-                            
-                            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;">開啟靈魂解析報告</button>
+
+                            <button type="submit" class="btn btn-primary"
+                                style="width:100%; margin-top:10px;">開啟靈魂解析報告</button>
                         </form>
                     </div>
-                    
+
                     <!-- 載入中 -->
                     <div id="quiz-loading" class="quiz-loading">
                         <div class="spinner"></div>
                         <h3 class="inspiration-title">正連線至阿卡西記錄...</h3>
                         <p class="inspiration-desc">正在為您進行星盤定位、人類圖通道解構與紫微宮位演算法運算...</p>
                     </div>
-                    
+
                     <!-- 解析結果 -->
                     <div id="quiz-result" class="quiz-result">
                         <div class="result-header">
                             <span class="result-subtitle" id="res-birth-info">張靈光 · 1995-08-15 子時 · 出生地台北</span>
                             <h3 class="result-title" id="res-user-title">靈魂交叉比對分析報告</h3>
                         </div>
-                        
+
                         <div class="result-grid">
                             <div class="result-stat-card">
                                 <span class="result-stat-label">靈魂核心元素 (星盤)</span>
@@ -490,13 +524,17 @@
                                 <div class="result-stat-val" id="res-ziwei">紫微獨坐 · 帝星格</div>
                             </div>
                         </div>
-                        
+
                         <div class="result-summary-box">
                             <h4 id="res-summary-title">【綜合特質交叉解析】</h4>
-                            <p id="res-summary-content">您天生具備烈火般的熱情與帝王般的領袖魅力（紫微帝星格），在團隊中極具號召力（人類圖 4 號線）。生命靈數 8 賦予您極佳的物質與現實變現掌控能力。然而，您此生的靈魂北交點落在天蠍座，這意味著您今生必須跨越世俗物質的表象（南交金牛），深入到精神、生死與靈性轉化的深層領域。建議您目前修持步驟為：先藉由音療清除心智積壓的焦慮，再補足高級行銷業務邏輯，將您的靈性與現實財富完成能量對齊。</p>
+                            <p id="res-summary-content">您天生具備烈火般的熱情與帝王般的領袖魅力（紫微帝星格），在團隊中極具號召力（人類圖 4
+                                號線）。生命靈數 8
+                                賦予您極佳的物質與現實變現掌控能力。然而，您此生的靈魂北交點落在天蠍座，這意味著您今生必須跨越世俗物質的表象（南交金牛），深入到精神、生死與靈性轉化的深層領域。建議您目前修持步驟為：先藉由音療清除心智積壓的焦慮，再補足高級行銷業務邏輯，將您的靈性與現實財富完成能量對齊。
+                            </p>
                         </div>
-                        
-                        <button onclick="resetQuiz()" class="btn btn-secondary" style="width:100%; margin-top:24px;">重新解碼</button>
+
+                        <button onclick="resetQuiz()" class="btn btn-secondary"
+                            style="width:100%; margin-top:24px;">重新解碼</button>
                     </div>
                 </div>
             </div>
@@ -511,17 +549,18 @@
                 <h2 class="section-title">付費個人專屬靈性報告</h2>
                 <p class="section-lead">如果您想要更深入的靈魂藍圖解析，可以選擇上傳相片，由我們資深的靈性老師連線高我並看相接訊，為您量身撰寫專屬一生的極致靈魂報告書。</p>
             </div>
-            
+
             <!-- 圖片上傳區域 -->
             <div class="upload-container shadow-premium">
                 <h3 class="inspiration-title" style="margin-bottom:20px;">第一步：上傳個人相片進行接訊掃描</h3>
                 <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
-                    <input type="file" id="file-input" style="display:none" accept="image/*" onchange="handleFileSelect(event)">
+                    <input type="file" id="file-input" style="display:none" accept="image/*"
+                        onchange="handleFileSelect(event)">
                     <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                     <p class="upload-text">點擊此處或將個人相片拖曳至此</p>
                     <p class="upload-hint">建議提供正面、無墨鏡、光線充足的清晰相片 (JPG/PNG，最大 10MB)</p>
                 </div>
-                
+
                 <!-- 上傳進度 -->
                 <div class="upload-progress-container" id="upload-progress-box">
                     <p class="upload-text" style="font-size:0.9rem;" id="progress-text">正在對齊靈性信道... 0%</p>
@@ -529,7 +568,7 @@
                         <div class="progress-fill" id="progress-fill"></div>
                     </div>
                 </div>
-                
+
                 <!-- 預覽框 -->
                 <div class="file-preview-box" id="file-preview">
                     <img src="" alt="Photo preview" id="preview-img" class="preview-img">
@@ -537,12 +576,13 @@
                         <div class="file-name" id="preview-name">photo.jpg</div>
                         <div class="file-size" id="preview-size">1.2 MB</div>
                     </div>
-                    <button class="theme-toggle-btn" onclick="clearUploadedFile(event)" style="color:#E74C3C" aria-label="Delete file">
+                    <button class="theme-toggle-btn" onclick="clearUploadedFile(event)" style="color:#E74C3C"
+                        aria-label="Delete file">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- 定價卡片格線 -->
             <div class="pricing-grid">
                 <!-- 方案 1 -->
@@ -612,7 +652,9 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <a href="#" class="logo">真靈光 <span class="caption" style="font-size:0.7rem; color:var(--color-primary); margin-bottom:0;">True Soul Light</span></a>
+                    <a href="#" class="logo">
+                        <span class="logo-zh">真靈光</span><span class="logo-en">True Soul Light</span>
+                    </a>
                     <p class="footer-desc">真靈光專注於為現代人梳理繁雜的身心靈探索工具，提供一站式、科學且具溫度的靈性定位、能量清理與修行補充落地指引。</p>
                 </div>
                 <div class="footer-links">
@@ -633,7 +675,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 真靈光 True Soul Light. 版權所有。本網站採用溫潤 Editorial Landscape Stack 視覺架構。</p>
+                <p>&copy; 2026 真靈光 True Soul Light. 版權所有</p>
                 <div class="social-icons">
                     <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
                     <a href="#" aria-label="Pinterest"><i class="fa-brands fa-pinterest"></i></a>
@@ -661,7 +703,8 @@
                 </ul>
             </div>
             <div class="modal-actions" style="display:flex; gap:15px;">
-                <button class="btn btn-primary" onclick="alert('感謝您的預約意願！專屬助理將於 1 個工作天內聯繫您。'); closeModal();" style="flex:1">立即線上預約</button>
+                <button class="btn btn-primary" onclick="alert('感謝您的預約意願！專屬助理將於 1 個工作天內聯繫您。'); closeModal();"
+                    style="flex:1">立即線上預約</button>
                 <button class="btn btn-secondary" onclick="closeModal()">返回矩陣</button>
             </div>
         </div>
@@ -686,111 +729,144 @@
             }
         });
 
-        // 2. 隨選修行靈感
-        const inspirations = [
+        // 2. 身心靈 x 清補調 九大知識點分類
+        const bodyInspirations = [
             {
-                meta: "身 - 清 (Body Clear)",
+                meta: "身 (Body) · 清 (Clear)",
                 title: "遠紅外線甕蒸排汗",
-                desc: "藉由陶甕古法蒸氣及數十種漢方草本精華，深入皮下毛孔，加速代謝體內深層濕寒毒素，是清除身體毒素的頂級物理療法。"
+                desc: "運用古法漢方草本蒸氣加速深層發汗，帶走皮下毛孔毒素與體內濕寒，重塑輕盈排毒循環。"
             },
             {
-                meta: "身 - 補 (Body Nourish)",
-                title: "細胞級營養防禦補充",
-                desc: "由知名葉醫師團隊監製研發，精選活性人參精華、多重維生素及天然膳食多醣體，修復細胞壁障礙，為肉體注入純淨充沛的能量。"
+                meta: "身 (Body) · 補 (Nourish)",
+                title: "細胞級膳食營養補充",
+                desc: "配合葉醫師草本高抗氧精華與特調量子調頻咖啡，修復受損細胞壁，補足精微元氣。"
             },
             {
-                meta: "身 - 調 (Body Align)",
-                title: "全身經絡平衡按摩",
-                desc: "針對身體十二經絡氣血阻塞處，進行定點撥筋與經絡整復推拿，調整歪斜氣血流向，舒緩長期肩頸腰椎慢性緊繃。"
-            },
-            {
-                meta: "心 - 清 (Mind Clear)",
-                title: "純鈦金屬唱缽淨化",
-                desc: "聆聽高純度鈦金屬敲擊出的超高頻音波震盪，清除大腦中殘留的焦慮雜念，引導腦波進入深層修復的 𝜽 (Theta) 波狀態。"
-            },
-            {
-                meta: "心 - 補 (Mind Nourish)",
-                title: "學員同頻共振社群",
-                desc: "加入真靈光共修社群，在充滿愛、無批判的互助環境中，與同頻夥伴分享生命覺察與日常挑戰，補充心靈急需的群體支持底氣。"
-            },
-            {
-                meta: "心 - 調 (Mind Align)",
-                title: "西方敘事心理諮詢",
-                desc: "藉由專業諮商心理師引導，回溯過往的記憶片段，以敘事角度重組人生故事，消除心智防衛盲點，調正內在心態定位。"
-            },
-            {
-                meta: "靈 - 清 (Soul Clear)",
-                title: "前世因果業障消災法會",
-                desc: "配合宗教法師與接訊師，針對特定宿世業力堵塞進行超度與功德迴向儀軌，清理靈魂深層攜帶的糾纏業障包袱。"
-            },
-            {
-                meta: "靈 - 補 (Soul Nourish)",
-                title: "量子矽晶圓能量卡",
-                desc: "利用半導體奈米技術製成的量子矽晶卡（晶圓鍊），配戴於胸前心輪，能有效調頻並擴展人體氣場（Aura），隔絕外部負能量侵擾。"
-            },
-            {
-                meta: "靈 - 調 (Soul Align)",
-                title: "阿卡西記錄靈魂接訊",
-                desc: "由連線導師開啟阿卡西記錄，解讀靈魂來源星系、此生終極使命方向，將您目前混亂的靈性軌跡調正回原本的投胎目的。"
+                meta: "身 (Body) · 調 (Align)",
+                title: "整脊與經絡平衡按摩",
+                desc: "微調與擺正长期歪斜的骨骼關節，揉開經絡阻塞之筋結，使肉體力線結構回歸正直平衡。"
             }
         ];
 
-        let currentInspIndex = 0;
-        const inspMeta = document.getElementById('insp-meta');
-        const inspTitle = document.getElementById('insp-title');
-        const inspDesc = document.getElementById('insp-desc');
-        const collectBtn = document.getElementById('collect-btn');
-        const collectText = document.getElementById('collect-text');
-        const nextInspBtn = document.getElementById('next-insp-btn');
-        
-        // 收藏狀態記錄
-        const collectedList = new Set();
-
-        nextInspBtn.addEventListener('click', () => {
-            currentInspIndex = (currentInspIndex + 1) % inspirations.length;
-            const item = inspirations[currentInspIndex];
-            
-            // 漸變動畫
-            const card = document.getElementById('inspiration-card');
-            card.style.opacity = 0;
-            card.style.transform = 'translateY(10px)';
-            card.style.transition = 'all 0.3s ease';
-            
-            setTimeout(() => {
-                inspMeta.innerText = item.meta;
-                inspTitle.innerText = item.title;
-                inspDesc.innerText = item.desc;
-                
-                // 檢查是否已收藏
-                if (collectedList.has(currentInspIndex)) {
-                    collectBtn.classList.add('collected');
-                    collectBtn.querySelector('i').className = 'fa-solid fa-heart';
-                    collectText.innerText = '已收藏此卡';
-                } else {
-                    collectBtn.classList.remove('collected');
-                    collectBtn.querySelector('i').className = 'fa-regular fa-heart';
-                    collectText.innerText = '收藏卡片';
-                }
-                
-                card.style.opacity = 1;
-                card.style.transform = 'translateY(0)';
-            }, 300);
-        });
-
-        collectBtn.addEventListener('click', () => {
-            if (collectedList.has(currentInspIndex)) {
-                collectedList.delete(currentInspIndex);
-                collectBtn.classList.remove('collected');
-                collectBtn.querySelector('i').className = 'fa-regular fa-heart';
-                collectText.innerText = '收藏卡片';
-            } else {
-                collectedList.add(currentInspIndex);
-                collectBtn.classList.add('collected');
-                collectBtn.querySelector('i').className = 'fa-solid fa-heart';
-                collectText.innerText = '已收藏此卡';
-                alert('收藏成功！該修行指引已存至您的個人靈修庫。');
+        const mindInspirations = [
+            {
+                meta: "心 (Mind) · 清 (Clear)",
+                title: "純鈦唱缽聲頻清理",
+                desc: "聆聽高純度鈦金唱缽產生的超高頻共振泛音，震開情緒陰霾，清除潛意識大腦焦慮與雜念。"
+            },
+            {
+                meta: "心 (Mind) · 補 (Nourish)",
+                title: "同頻學員支持社群",
+                desc: "加入溫暖且包容的學員心靈充電圈，在真誠傾聽與愛的共振中，補充足夠的情緒底氣。"
+            },
+            {
+                meta: "心 (Mind) · 調 (Align)",
+                title: "西方敘事諮商與算命",
+                desc: "結合東西方命理格局與敘事諮詢，協助打破慣性思維盲點，調正內在心態信念與事業定位。"
             }
+        ];
+
+        const soulInspirations = [
+            {
+                meta: "靈 (Soul) · 清 (Clear)",
+                title: "業力消災祈福法會",
+                desc: "針對多生累劫累積的宿世業力堵塞，進行深度消災儀軌與功德迴向，清除靈魂深層負能糾纏。"
+            },
+            {
+                meta: "靈 (Soul) · 補 (Nourish)",
+                title: "量子矽晶圓能量卡",
+                desc: "隨身佩戴微米半導體矽晶能量晶圓鍊或飲用調頻水，修補並強化個人外圍氣場防護罩。"
+            },
+            {
+                meta: "靈 (Soul) · 調 (Align)",
+                title: "阿卡西靈魂定位諮詢",
+                desc: "開啟靈魂的阿卡西記錄，解讀本源星系與靈性軌跡，調整人生天命航道與此生藍圖。"
+            }
+        ];
+
+        // 收藏狀態記錄
+        const collectedState = {
+            body: false,
+            mind: false,
+            soul: false
+        };
+
+        const currentInspIndexes = {
+            body: 1, // 初始預設膳食補充
+            mind: 2, // 初始預設敘事諮商
+            soul: 0  // 初始預設業力法會
+        };
+
+        const nextInspBtn = document.getElementById('next-insp-btn');
+
+        // 初始化收藏按鈕狀態
+        function updateCollectBtnUi(type) {
+            const btn = document.getElementById(`collect-btn-${type}`);
+            const textSpan = btn.querySelector('span');
+            const icon = btn.querySelector('i');
+
+            if (collectedState[type]) {
+                btn.classList.add('collected');
+                icon.className = 'fa-solid fa-heart';
+                textSpan.innerText = '已收藏';
+            } else {
+                btn.classList.remove('collected');
+                icon.className = 'fa-regular fa-heart';
+                textSpan.innerText = '收藏卡片';
+            }
+        }
+
+        // 隨選按鈕點擊：同時洗牌三張卡片
+        nextInspBtn.addEventListener('click', () => {
+            // 洗牌三個面向的索引
+            currentInspIndexes.body = Math.floor(Math.random() * bodyInspirations.length);
+            currentInspIndexes.mind = Math.floor(Math.random() * mindInspirations.length);
+            currentInspIndexes.soul = Math.floor(Math.random() * soulInspirations.length);
+
+            // 重置三張卡片的收藏狀態（新抽取的預設不收藏）
+            collectedState.body = false;
+            collectedState.mind = false;
+            collectedState.soul = false;
+
+            // 平滑漸變切換
+            animateCardSwitch('body', bodyInspirations[currentInspIndexes.body]);
+            animateCardSwitch('mind', mindInspirations[currentInspIndexes.mind]);
+            animateCardSwitch('soul', soulInspirations[currentInspIndexes.soul]);
         });
+
+        function animateCardSwitch(type, item) {
+            const box = document.getElementById(`box-${type}`);
+            const meta = document.getElementById(`insp-${type}-meta`);
+            const title = document.getElementById(`insp-${type}-title`);
+            const desc = document.getElementById(`insp-${type}-desc`);
+
+            box.style.opacity = 0;
+            box.style.transform = 'translateY(15px)';
+
+            setTimeout(() => {
+                meta.innerText = item.meta;
+                title.innerText = item.title;
+                desc.innerText = item.desc;
+
+                updateCollectBtnUi(type);
+
+                box.style.opacity = 1;
+                box.style.transform = 'translateY(0)';
+            }, 300);
+        }
+
+        // 收藏切換
+        function toggleCollect(type) {
+            collectedState[type] = !collectedState[type];
+            updateCollectBtnUi(type);
+
+            if (collectedState[type]) {
+                const item = type === 'body' ? bodyInspirations[currentInspIndexes.body] :
+                    type === 'mind' ? mindInspirations[currentInspIndexes.mind] :
+                        soulInspirations[currentInspIndexes.soul];
+                alert(`成功收藏【${item.meta} · ${item.title}】！該指引已記錄至個人靈修庫。`);
+            }
+        }
 
         // 3. 服務矩陣 Modal 彈窗
         const modal = document.getElementById('matrix-modal');
@@ -803,11 +879,11 @@
                 const section = cell.getAttribute('data-section');
                 const service = cell.getAttribute('data-service');
                 const details = cell.getAttribute('data-details');
-                
+
                 modalSecTag.innerText = section;
                 modalSecTitle.innerText = service;
                 modalSecDetails.innerText = details;
-                
+
                 modal.classList.add('active');
                 body.style.overflow = 'hidden'; // 鎖定網頁滾動
             });
@@ -831,7 +907,7 @@
         const prevBtn = document.getElementById('carousel-prev');
         const nextBtn = document.getElementById('carousel-next');
         const dotsContainer = document.getElementById('carousel-dots');
-        
+
         let slideWidth = slides[0].getBoundingClientRect().width;
         let activeSlideIndex = 0;
 
@@ -872,12 +948,12 @@
         // 5. 免費命理測驗
         function calculateSoulProfile(event) {
             event.preventDefault();
-            
+
             const name = document.getElementById('user-name').value;
             const dateStr = document.getElementById('user-date').value;
             const time = document.getElementById('user-time').value;
             const location = document.getElementById('user-location').value;
-            
+
             if (!name || !dateStr || !time || !location) return;
 
             document.getElementById('quiz-form-container').style.display = 'none';
@@ -894,17 +970,18 @@
                 const birthYear = new Date(dateStr).getFullYear();
                 const birthMonth = new Date(dateStr).getMonth() + 1;
                 const birthDay = new Date(dateStr).getDate();
-                
+
                 // 1. 生命靈數主命數計算 (數字全部相加至個位數)
                 const dateDigits = (name.length + birthYear + birthMonth + birthDay).toString().split('');
                 let sum = dateDigits.reduce((acc, curr) => acc + parseInt(curr), 0);
                 while (sum > 9 && sum !== 11 && sum !== 22 && sum !== 33) {
                     sum = sum.toString().split('').reduce((acc, curr) => acc + parseInt(curr), 0);
                 }
-                
+
                 // 2. 元素計算 (根據月份與時間)
                 const elements = ["烈火系 (火象)", "磐石系 (土象)", "微風系 (風象)", "流水系 (水象)"];
-                const elementIndex = (birthMonth + time.charCodeAt(0)) % 4;
+                const hour = parseInt(time.split(':')[0]) || 0;
+                const elementIndex = (birthMonth + hour) % 4;
                 const element = elements[elementIndex];
 
                 // 3. 人類圖人生角色
@@ -923,7 +1000,7 @@
                 else conclusion += "強大的情感共情力與藝術感知直覺，能輕易同理他人的隱密痛點。";
 
                 conclusion += `結合人類圖 ${profile} 與紫微斗數中的【${ziwei}】格局，您在世俗社會最合適扮演`;
-                
+
                 if (sum === 8 || sum === 11 || sum === 22) {
                     conclusion += `「高階管理者與商業變現引領者」的角色。生命靈數 ${sum} 賦予您天生掌控大局的變現能量。然而，您也容易因為過度操勞肉體（身）或執著於金錢指標，導致能量卡關。`;
                 } else {
@@ -933,7 +1010,7 @@
                 conclusion += ` 我們建議您當前的「清、補、調」修行步驟為：【調身】定期進行脊椎經絡整復，釋放骨架緊繃；【清心】透過唱缽音療，清除潛意識對未知金錢關卡的恐懼；【補財富】積極補足高級業務與成交心法，將您的靈性天賦與真實世界進行穩固的對齊變現。`;
 
                 // 填入 HTML
-                document.getElementById('res-birth-info').innerText = `${name} · 出生西元 ${birthYear}年${birthMonth}月${birthDay}日 · 出生地${location}`;
+                document.getElementById('res-birth-info').innerText = `${name} · 出生西元 ${birthYear}年${birthMonth}月${birthDay}日 ${time} · 出生地${location}`;
                 document.getElementById('res-element').innerText = element;
                 document.getElementById('res-profile').innerText = profile;
                 document.getElementById('res-number').innerText = `主命數 ${sum} · ${sum === 8 || sum === 11 || sum === 22 || sum === 33 ? '高頻變現者' : '靈性覺察者'}`;
@@ -958,7 +1035,7 @@
         const previewImg = document.getElementById('preview-img');
         const previewName = document.getElementById('preview-name');
         const previewSize = document.getElementById('preview-size');
-        
+
         let selectedFile = null;
 
         // 拖拽事件
@@ -1001,7 +1078,7 @@
             selectedFile = file;
             uploadZone.style.display = 'none';
             progressBox.style.display = 'block';
-            
+
             // 模擬上傳與靈性信道對齊進度
             let progress = 0;
             const interval = setInterval(() => {
@@ -1009,14 +1086,14 @@
                 if (progress >= 100) {
                     progress = 100;
                     clearInterval(interval);
-                    
+
                     // 顯示預覽
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         previewImg.src = e.target.result;
                         previewName.innerText = file.name;
                         previewSize.innerText = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-                        
+
                         progressBox.style.display = 'none';
                         previewBox.style.display = 'flex';
                     };
@@ -1045,7 +1122,7 @@
 
             const email = prompt(`您選擇了【${planName}】方案。\n為了將最終報告書寄送給您，請輸入您的收件 Email 郵箱：`);
             if (email === null) return; // 點擊取消
-            
+
             if (!email || !email.includes('@')) {
                 alert('請輸入正確的 Email 地址！');
                 return;
@@ -1055,13 +1132,13 @@
         }
 
         // 8. 滾動顯示動畫
-        const revealElements = document.querySelectorAll('.stack-card, .editorial-visual, .matrix-container, .carousel-outer, .quiz-card, .upload-container, .pricing-card');
+        const revealElements = document.querySelectorAll('.stack-card, .editorial-visual, .matrix-container, .carousel-outer, .quiz-card, .upload-container, .pricing-card, .inspiration-box');
         const revealOnScroll = () => {
             for (let i = 0; i < revealElements.length; i++) {
                 const windowHeight = window.innerHeight;
                 const elementTop = revealElements[i].getBoundingClientRect().top;
                 const elementVisible = 100;
-                
+
                 if (elementTop < windowHeight - elementVisible) {
                     revealElements[i].classList.add('active');
                 }
@@ -1072,4 +1149,5 @@
         revealOnScroll(); // 頁面載入時先執行一次
     </script>
 </body>
+
 </html>
