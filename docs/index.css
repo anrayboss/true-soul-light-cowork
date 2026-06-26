@@ -257,6 +257,18 @@ p {
     background-color: var(--color-bg-secondary);
 }
 
+/* 深色模式下的實底按鈕與標籤對比度優化 */
+body.dark-mode .btn-primary,
+body.dark-mode .cta-button,
+body.dark-mode .popular-badge {
+    color: #15110F !important;
+}
+
+body.dark-mode .btn-primary:hover,
+body.dark-mode .cta-button:hover {
+    color: #15110F !important;
+}
+
 /* Hero Section */
 .hero {
     position: relative;
