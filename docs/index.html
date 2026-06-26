@@ -43,6 +43,9 @@
                 <button id="auth-btn" class="theme-toggle-btn" aria-label="Member Hub" style="margin-right: 8px;">
                     <i class="fa-regular fa-user"></i>
                 </button>
+                <button id="menu-toggle" class="menu-toggle-btn" aria-label="Toggle menu" style="margin-right: 8px;" onclick="document.getElementById('mobile-menu').classList.add('active'); document.body.style.overflow = 'hidden';">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <a href="#quiz" class="cta-button">開啟靈性導航</a>
             </div>
         </div>
@@ -231,6 +234,72 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- 手機版 Tab + 卡片結構 -->
+                <div class="matrix-mobile-view">
+                    <div class="matrix-tabs">
+                        <button class="matrix-tab-btn active" onclick="switchMatrixTab('body')">身 (Body)</button>
+                        <button class="matrix-tab-btn" onclick="switchMatrixTab('mind')">心 (Mind)</button>
+                        <button class="matrix-tab-btn" onclick="switchMatrixTab('soul')">靈 (Soul)</button>
+                    </div>
+                    
+                    <!-- 身 (Body) 內容 -->
+                    <div class="matrix-tab-content active" id="tab-body">
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('清 - 身', '遠紅外線甕蒸排汗', '運用古法草本蒸氣加速深層排汗，代謝體內累積的濕寒與毒素，重拾輕盈體態。這是身體排毒與清理負擔的第一步。')">
+                            <span class="card-step">清 (Clear)</span>
+                            <h4>遠紅外線甕蒸排汗</h4>
+                            <p>古法草本排毒</p>
+                        </div>
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('補 - 身', '細胞級膳食補充', '提供天然草本營養素與量子調頻能量咖啡，修復細胞壁，補足精微能量，為身體打下高能量的底氣。')">
+                            <span class="card-step">補 (Nourish)</span>
+                            <h4>細胞級膳食補充</h4>
+                            <p>草本與能量咖啡</p>
+                        </div>
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('調 - 身', '整脊與經絡整復', '微調擺正骨骼關節，疏通經絡氣血瘀滯，使肉體重心重回端正平衡，達到骨格與經絡的和諧。')">
+                            <span class="card-step">調 (Align)</span>
+                            <h4>整脊與經絡整復</h4>
+                            <p>關節與氣血調理</p>
+                        </div>
+                    </div>
+
+                    <!-- 心 (Mind) 內容 -->
+                    <div class="matrix-tab-content" id="tab-mind">
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('清 - 心', '純鈦缽聲音沐浴', '利用鈦缽精微泛音清理雜念，排除潛意識壓抑的情緒垃圾與焦慮，回復內心的平靜。')">
+                            <span class="card-step">清 (Clear)</span>
+                            <h4>純鈦缽聲音沐浴</h4>
+                            <p>精微泛音清理</p>
+                        </div>
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('補 - 心', '同頻學員支持社群', '建立溫暖且無批判的心靈交流圈，在夥伴的陪伴中補充足夠的情緒底氣，得到愛與理解的同頻共振。')">
+                            <span class="card-step">補 (Nourish)</span>
+                            <h4>同頻學員支持社群</h4>
+                            <p>同理與愛的滋養</p>
+                        </div>
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('調 - 心', '西方敘事諮商與算命', '結合命理格局與敘事諮商，梳理思維盲點，調正內在心態信念與人生定位。')">
+                            <span class="card-step">調 (Align)</span>
+                            <h4>西方敘事諮商與算命</h4>
+                            <p>心態調整與命理</p>
+                        </div>
+                    </div>
+
+                    <!-- 靈 (Soul) 內容 -->
+                    <div class="matrix-tab-content" id="tab-soul">
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('清 - 靈', '業力消災祈福法會', '針對宿世因果業力堵塞進行超度與功德迴向，清除靈魂深層負能與業力糾纏。')">
+                            <span class="card-step">清 (Clear)</span>
+                            <h4>業力消災祈福法會</h4>
+                            <p>超度與功德迴向</p>
+                        </div>
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('補 - 靈', '量子矽晶圓能量卡', '佩戴奈米矽晶片能量晶圓鍊或飲用高頻能量水，修補並強化個人氣場防護罩，遠離外部能量干擾。')">
+                            <span class="card-step">補 (Nourish)</span>
+                            <h4>量子矽晶圓能量卡</h4>
+                            <p>能量晶圓與調頻水</p>
+                        </div>
+                        <div class="matrix-mobile-card" onclick="openMatrixModal('調 - 靈', '阿卡西靈魂定位諮詢', '連線阿卡西記錄與高我接訊，解讀靈魂來源與生命軌跡，調整人生天命航道，活出誕生目的。')">
+                            <span class="card-step">調 (Align)</span>
+                            <h4>阿卡西靈魂定位諮詢</h4>
+                            <p>高我接訊與軌跡解讀</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -705,8 +774,8 @@
                 </ul>
             </div>
             <div class="modal-actions" style="display:flex; gap:15px;">
-                <button class="btn btn-primary" onclick="alert('感謝您的預約意願！專屬助理將於 1 個工作天內聯繫您。'); closeModal();"
-                    style="flex:1">立即線上預約</button>
+                <button class="btn btn-primary" onclick="alert('感謝您的預約！我們將於 1 個工作天內和您聯絡。'); closeModal();"
+                    style="flex:1">立即預約</button>
                 <button class="btn btn-secondary" onclick="closeModal()">返回</button>
             </div>
         </div>
@@ -1284,7 +1353,74 @@
 
         window.addEventListener('scroll', revealOnScroll);
         revealOnScroll(); // 頁面載入時先執行一次
+
+        // 手機版漢堡選單控制
+        const menuToggle = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+        menuToggle.addEventListener('click', () => {
+            mobileMenu.classList.add('active');
+            body.style.overflow = 'hidden'; // 防止背景滾動
+        });
+
+        const closeMobileMenu = () => {
+            mobileMenu.classList.remove('active');
+            body.style.overflow = '';
+        };
+
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        // 手機版矩陣 Tab 切換與 Modal 啟動控制
+        function switchMatrixTab(tabName) {
+            // 切換按鈕 active 樣式
+            const tabBtns = document.querySelectorAll('.matrix-tab-btn');
+            tabBtns.forEach(btn => {
+                if (btn.getAttribute('onclick').includes(tabName)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // 切換內容 active 樣式
+            const tabContents = document.querySelectorAll('.matrix-tab-content');
+            tabContents.forEach(content => {
+                if (content.id === `tab-${tabName}`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        }
+
+        function openMatrixModal(section, service, details) {
+            modalSecTag.innerText = section;
+            modalSecTitle.innerText = service;
+            modalSecDetails.innerText = details;
+
+            modal.classList.add('active');
+            body.style.overflow = 'hidden';
+        }
     </script>
+
+    <!-- 手機版抽屜式選單 -->
+    <div class="mobile-menu" id="mobile-menu">
+        <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">&times;</button>
+        <nav class="mobile-nav">
+            <a href="#about" class="mobile-nav-link" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">每日修行資源</a>
+            <a href="#matrix" class="mobile-nav-link" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">服務原理</a>
+            <a href="#tools" class="mobile-nav-link" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">命盤定位</a>
+            <a href="#quiz" class="mobile-nav-link" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">免費測驗</a>
+            <a href="#pricing" class="mobile-nav-link" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">專屬靈性報告</a>
+            <a href="#quiz" class="mobile-nav-link mobile-nav-cta" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">開啟靈性導航</a>
+        </nav>
+    </div>
 </body>
 
 </html>
