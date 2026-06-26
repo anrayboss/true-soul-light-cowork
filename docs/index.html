@@ -944,6 +944,32 @@
             moveToSlide(index);
         });
 
+        // 觸控滑動支援 (Swipe)
+        let startX = 0;
+        let endX = 0;
+
+        track.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        }, { passive: true });
+
+        track.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].clientX;
+            const diffX = startX - endX;
+
+            if (Math.abs(diffX) > 50) { // 滑動距離大於 50px 才觸發
+                if (diffX > 0) {
+                    // 往左滑，下一張
+                    let index = (activeSlideIndex + 1) % slides.length;
+                    moveToSlide(index);
+                } else {
+                    // 往右滑，上一張
+                    let index = activeSlideIndex - 1;
+                    if (index < 0) index = slides.length - 1;
+                    moveToSlide(index);
+                }
+            }
+        }, { passive: true });
+
         // 5. 免費命理測驗
         function calculateSoulProfile(event) {
             event.preventDefault();
