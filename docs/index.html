@@ -837,6 +837,32 @@
 
     <!-- JavaScript 交互邏輯 -->
     <script>
+        // 0. Custom Alert Modal Override
+        window._nativeAlert = window.alert;
+        window.alert = function(message) {
+            const alertOverlay = document.getElementById('custom-alert');
+            const alertMessage = document.getElementById('custom-alert-message');
+            if (alertOverlay && alertMessage) {
+                alertMessage.textContent = message;
+                alertOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                console.warn('Custom alert elements not found, falling back to browser alert.');
+                window._nativeAlert(message);
+            }
+        };
+
+        function closeCustomAlert() {
+            const alertOverlay = document.getElementById('custom-alert');
+            if (alertOverlay) {
+                alertOverlay.classList.remove('active');
+                const activeModals = document.querySelectorAll('.mobile-menu.active, .modal.active, .login-modal.active, .quiz-modal.active');
+                if (activeModals.length === 0) {
+                    document.body.style.overflow = '';
+                }
+            }
+        }
+
         // 1. Theme Toggle (Light/Dark)
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
@@ -1421,6 +1447,17 @@
             <a href="#pricing" class="mobile-nav-link" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">專屬靈性報告</a>
             <a href="#quiz" class="mobile-nav-link mobile-nav-cta" onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">開啟靈性導航</a>
         </nav>
+    </div>
+
+    <!-- 自訂 Alert 彈窗 -->
+    <div id="custom-alert" class="custom-alert-overlay">
+        <div class="custom-alert-modal">
+            <div class="custom-alert-icon">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <div class="custom-alert-message" id="custom-alert-message"></div>
+            <button class="btn btn-primary custom-alert-btn" onclick="closeCustomAlert()">確定</button>
+        </div>
     </div>
 </body>
 
