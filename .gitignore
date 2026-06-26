@@ -2,3 +2,5 @@
 /node_modules
 /內容來源檔案(不版控)
 /線上 AI 對話整理(不版控)
+/.tmp.driveupload
+/.tmp.drivedownload
