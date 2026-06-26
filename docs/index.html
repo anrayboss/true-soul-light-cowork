@@ -31,14 +31,17 @@
             </a>
             <nav class="nav">
                 <a href="#about" class="nav-link">每日修行資源</a>
-                <a href="#matrix" class="nav-link">服務矩陣</a>
-                <a href="#tools" class="nav-link">命盤工具</a>
+                <a href="#matrix" class="nav-link">服務原理</a>
+                <a href="#tools" class="nav-link">命盤定位</a>
                 <a href="#quiz" class="nav-link">免費測驗</a>
-                <a href="#pricing" class="nav-link">付費靈性報告</a>
+                <a href="#pricing" class="nav-link">專屬靈性報告</a>
             </nav>
             <div class="actions">
                 <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
                     <i class="fa-solid fa-moon"></i>
+                </button>
+                <button id="auth-btn" class="theme-toggle-btn" aria-label="Member Hub" style="margin-right: 8px;">
+                    <i class="fa-regular fa-user"></i>
                 </button>
                 <a href="#quiz" class="cta-button">開啟靈性導航</a>
             </div>
@@ -709,6 +712,59 @@
         </div>
     </div>
 
+    <!-- 會員登入/註冊彈窗 (Auth Modal) -->
+    <div class="modal" id="auth-modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <button class="modal-close" onclick="closeAuthModal()" aria-label="Close modal">&times;</button>
+            <div class="modal-header" style="text-align: center; margin-bottom: 25px;">
+                <span class="modal-tag">MEMBER HUB</span>
+                <h3 class="modal-title" id="auth-modal-title"
+                    style="font-family: var(--font-heading); font-size: 1.8rem; margin-top: 5px;">會員登入</h3>
+            </div>
+
+            <!-- 登入表單 -->
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+                <div class="quiz-form-group" style="margin-bottom: 16px;">
+                    <label for="auth-email">電子信箱</label>
+                    <input type="email" id="auth-email" placeholder="name@example.com" required>
+                </div>
+                <div class="quiz-form-group" style="margin-bottom: 20px;">
+                    <label for="auth-password">密碼</label>
+                    <input type="password" id="auth-password" placeholder="請輸入密碼" required>
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; padding: 12px; margin-bottom: 20px; font-weight: 600;">登入</button>
+            </form>
+
+            <div style="text-align: center; margin: 15px 0; position: relative;">
+                <span
+                    style="background: var(--color-surface); padding: 0 10px; font-size: 0.85rem; color: var(--color-text-muted); position: relative; z-index: 1;">或透過以下方式快速登入</span>
+                <div
+                    style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--color-border); z-index: 0;">
+                </div>
+            </div>
+
+            <!-- 第三方登入按鈕 -->
+            <div class="social-login-grid">
+                <button class="social-btn" onclick="handleSocialLogin('Google')">
+                    <i class="fa-brands fa-google" style="color: #EA4335;"></i> Google 帳號登入
+                </button>
+                <button class="social-btn" onclick="handleSocialLogin('Apple')">
+                    <i class="fa-brands fa-apple"></i> Apple 帳號登入
+                </button>
+                <button class="social-btn" onclick="handleSocialLogin('LINE')">
+                    <i class="fa-brands fa-line" style="color: #06C755;"></i> LINE 帳號登入
+                </button>
+            </div>
+
+            <div style="text-align: center; margin-top: 25px; font-size: 0.9rem;">
+                <span id="auth-switch-text" style="color: var(--color-text-muted);">還沒有帳號嗎？</span>
+                <a href="javascript:void(0)" id="auth-switch-btn" onclick="toggleAuthMode()"
+                    style="color: var(--color-accent); font-weight: 600; text-decoration: none; margin-left: 5px;">立即註冊</a>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript 交互邏輯 -->
     <script>
         // 1. Theme Toggle (Light/Dark)
@@ -750,7 +806,7 @@
         const mindInspirations = [
             {
                 meta: "心 (Mind) · 清 (Clear)",
-                title: "純鈦唱缽聲頻清理",
+                title: "純鈦缽聲音沐浴",
                 desc: "聆聽高純度鈦金唱缽產生的超高頻共振泛音，震開情緒陰霾，清除潛意識大腦焦慮與雜念。"
             },
             {
@@ -899,6 +955,62 @@
                 closeModal();
             }
         });
+
+        // 會員彈窗 (Auth Modal) 控制
+        const authModal = document.getElementById('auth-modal');
+        const authBtn = document.getElementById('auth-btn');
+        let isSignUpMode = false;
+
+        authBtn.addEventListener('click', () => {
+            authModal.classList.add('active');
+            body.style.overflow = 'hidden'; // 鎖定網頁滾動
+        });
+
+        function closeAuthModal() {
+            authModal.classList.remove('active');
+            body.style.overflow = '';
+            // 重設為登入模式
+            if (isSignUpMode) toggleAuthMode();
+        }
+
+        // 點擊會員彈窗外部關閉
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) {
+                closeAuthModal();
+            }
+        });
+
+        function toggleAuthMode() {
+            const title = document.getElementById('auth-modal-title');
+            const submitBtn = document.querySelector('#auth-form button[type="submit"]');
+            const switchText = document.getElementById('auth-switch-text');
+            const switchBtn = document.getElementById('auth-switch-btn');
+
+            isSignUpMode = !isSignUpMode;
+            if (isSignUpMode) {
+                title.textContent = '註冊會員';
+                submitBtn.textContent = '註冊';
+                switchText.textContent = '已經有帳號了？';
+                switchBtn.textContent = '立即登入';
+            } else {
+                title.textContent = '會員登入';
+                submitBtn.textContent = '登入';
+                switchText.textContent = '還沒有帳號嗎？';
+                switchBtn.textContent = '立即註冊';
+            }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            alert(`已成功以 ${email} 進行會員${isSignUpMode ? '註冊' : '登入'}模擬！`);
+            closeAuthModal();
+        }
+
+        function handleSocialLogin(platform) {
+            alert(`已觸發 ${platform} 快速登入模擬！`);
+            closeAuthModal();
+        }
 
         // 4. 命盤工具輪播卡片
         const track = document.getElementById('carousel-track');

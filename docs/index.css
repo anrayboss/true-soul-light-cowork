@@ -1604,3 +1604,48 @@ body.light-mode .cta-overlay {
         grid-template-columns: 1fr;
     }
 }
+
+/* Social Login Buttons in Auth Modal */
+.social-login-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 16px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    transition: var(--transition-fast);
+}
+
+.social-btn:hover {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-primary);
+}
+
+.social-btn i {
+    font-size: 1.1rem;
+    width: 16px;
+    text-align: center;
+}
+
+body.dark-mode .social-btn {
+    background-color: var(--color-bg-secondary);
+}
+
+body.dark-mode .social-btn:hover {
+    background-color: var(--color-border);
+}
