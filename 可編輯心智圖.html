@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,18 +22,18 @@
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script>
         // Override d3.linkHorizontal to support toggling between straight lines and curves
-        (function() {
+        (function () {
             const originalLinkHorizontal = d3.linkHorizontal;
             window.useStraightLines = true; // Default to straight lines with right angles
 
-            d3.linkHorizontal = function() {
+            d3.linkHorizontal = function () {
                 const originalGenerator = originalLinkHorizontal();
                 let sourceAccessor = d => d.source;
                 let targetAccessor = d => d.target;
                 let xAccessor = d => d[0];
                 let yAccessor = d => d[1];
 
-                const generator = function(d) {
+                const generator = function (d) {
                     if (!window.useStraightLines) {
                         return originalGenerator(d);
                     }
@@ -46,7 +47,7 @@
                     return `M${x0},${y0} L${x_mid},${y0} L${x_mid},${y1} L${x1},${y1}`;
                 };
 
-                generator.source = function(_) {
+                generator.source = function (_) {
                     if (arguments.length) {
                         sourceAccessor = _;
                         originalGenerator.source(_);
@@ -54,7 +55,7 @@
                     }
                     return sourceAccessor;
                 };
-                generator.target = function(_) {
+                generator.target = function (_) {
                     if (arguments.length) {
                         targetAccessor = _;
                         originalGenerator.target(_);
@@ -62,7 +63,7 @@
                     }
                     return targetAccessor;
                 };
-                generator.x = function(_) {
+                generator.x = function (_) {
                     if (arguments.length) {
                         xAccessor = _;
                         originalGenerator.x(_);
@@ -70,7 +71,7 @@
                     }
                     return xAccessor;
                 };
-                generator.y = function(_) {
+                generator.y = function (_) {
                     if (arguments.length) {
                         yAccessor = _;
                         originalGenerator.y(_);
@@ -91,21 +92,40 @@
             --scrollbar-thumb: #cbd5e1;
             --scrollbar-thumb-hover: #94a3b8;
         }
+
         .dark {
             --scrollbar-track: #1e293b;
             --scrollbar-thumb: #475569;
             --scrollbar-thumb-hover: #64748b;
         }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
-        .markmap-node { cursor: pointer; }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+        }
+
+        .markmap-node {
+            cursor: pointer;
+        }
 
         @media (max-width: 767px) {
             main {
                 flex-direction: column !important;
             }
+
             #drag-bar {
                 width: 100% !important;
                 height: 6px !important;
@@ -113,80 +133,104 @@
                 border-top: 1px solid rgba(226, 232, 240, 0.8);
                 border-bottom: 1px solid rgba(226, 232, 240, 0.8);
             }
+
             .dark #drag-bar {
                 border-top: 1px solid rgba(51, 65, 85, 0.8);
                 border-bottom: 1px solid rgba(51, 65, 85, 0.8);
             }
-            #drag-bar > div {
+
+            #drag-bar>div {
                 width: 24px !important;
                 height: 3px !important;
             }
-            #editor-container, #map-container {
+
+            #editor-container,
+            #map-container {
                 border-right: none !important;
             }
         }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
-    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3 flex items-center justify-between shadow-lg shrink-0">
+
+<body
+    class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
+    <header
+        class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3 flex items-center justify-between shadow-lg shrink-0">
         <div class="flex items-center space-x-2 md:space-x-3">
             <div class="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2 md:p-2.5 rounded-xl shadow-md shrink-0">
                 <i class="fa-solid fa-sitemap text-lg md:text-xl text-white"></i>
             </div>
             <div>
-                <h1 class="text-base md:text-lg font-bold tracking-wide text-slate-900 dark:text-white flex flex-wrap items-center gap-1 md:gap-2">
-                    AWAKEN THE HEALING POWER <span class="text-[10px] md:text-xs bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/50 px-2 py-0.5 rounded-full font-normal">陳仲豪身心健康行銷變現</span>
+                <h1
+                    class="text-base md:text-lg font-bold tracking-wide text-slate-900 dark:text-white flex flex-wrap items-center gap-1 md:gap-2">
+                    AWAKEN THE HEALING POWER <span
+                        class="text-[10px] md:text-xs bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/50 px-2 py-0.5 rounded-full font-normal">陳仲豪身心健康行銷變現</span>
                 </h1>
                 <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400">可即時編輯、縮放與匯出的動態心智圖系統</p>
             </div>
         </div>
         <!-- Desktop Toolbar (Hidden on Mobile) -->
         <div class="hidden md:flex items-center space-x-3">
-            <div class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center space-x-1">
-                <button id="btn-view-split" onclick="switchView('split')" title="分割模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1">
+            <div
+                class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center space-x-1">
+                <button id="btn-view-split" onclick="switchView('split')" title="分割模式"
+                    class="px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1">
                     <i class="fa-solid fa-columns"></i><span>雙欄</span>
                 </button>
-                <button id="btn-view-edit" onclick="switchView('edit')" title="純編輯模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
+                <button id="btn-view-edit" onclick="switchView('edit')" title="純編輯模式"
+                    class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
                     <i class="fa-solid fa-file-pen"></i><span>編輯</span>
                 </button>
-                <button id="btn-view-map" onclick="switchView('map')" title="純心智圖模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
+                <button id="btn-view-map" onclick="switchView('map')" title="純心智圖模式"
+                    class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
                     <i class="fa-solid fa-expand"></i><span>心智圖</span>
                 </button>
             </div>
             <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-            <button onclick="zoomFit()" title="置中縮放" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+            <button onclick="zoomFit()" title="置中縮放"
+                class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-compress"></i><span>重設縮放</span>
             </button>
-            <button id="btn-expand-all" onclick="toggleExpandAll()" title="一鍵展開或一鍵收摺" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+            <button id="btn-expand-all" onclick="toggleExpandAll()" title="一鍵展開或一鍵收摺"
+                class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-angles-down"></i><span>一鍵展開</span>
             </button>
-            <button id="btn-toggle-line" onclick="toggleLineStyle()" title="切換折線/曲線樣式" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+            <button id="btn-toggle-line" onclick="toggleLineStyle()" title="切換折線/曲線樣式"
+                class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-route"></i><span>直角折線</span>
             </button>
-            <button onclick="exportMarkdown()" title="下載 Markdown" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+            <button onclick="exportMarkdown()" title="下載 Markdown"
+                class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-file-code"></i><span>匯出 .md</span>
             </button>
-            <button onclick="exportSVG()" title="下載 SVG" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-md">
+            <button onclick="exportSVG()" title="下載 SVG"
+                class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-md">
                 <i class="fa-solid fa-download"></i><span>下載 SVG 圖片</span>
             </button>
             <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-            <button id="btn-theme-toggle" onclick="toggleTheme()" title="切換深淺色" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-lg text-xs font-medium transition flex items-center justify-center shadow-sm">
+            <button id="btn-theme-toggle" onclick="toggleTheme()" title="切換深淺色"
+                class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-lg text-xs font-medium transition flex items-center justify-center shadow-sm">
                 <i class="fa-solid fa-sun text-sm dark:hidden"></i>
                 <i class="fa-solid fa-moon text-sm hidden dark:inline-block"></i>
             </button>
         </div>
         <!-- Hamburger Menu Button (Mobile only) -->
-        <button id="btn-mobile-menu" onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition">
+        <button id="btn-mobile-menu" onclick="toggleMobileMenu()"
+            class="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition">
             <i class="fa-solid fa-bars text-xl"></i>
         </button>
     </header>
     <main class="flex-1 flex overflow-hidden">
-        <section id="editor-container" style="width: 50%;" class="flex flex-col bg-white dark:bg-slate-950 shadow-inner transition-all duration-300">
-            <div class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 shrink-0">
-                <span class="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-pen-nib"></i> 結構文字編輯區 (Markdown 語法)</span>
+        <section id="editor-container" style="width: 50%;"
+            class="flex flex-col bg-white dark:bg-slate-950 shadow-inner transition-all duration-300">
+            <div
+                class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 shrink-0">
+                <span class="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400"><i
+                        class="fa-solid fa-pen-nib"></i> 結構文字編輯區 (Markdown 語法)</span>
                 <span class="text-slate-400 dark:text-slate-500 font-normal">直接編輯文字即可即時更新右側心智圖</span>
             </div>
-            <textarea id="editor" class="flex-1 w-full bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 p-5 font-sans text-2xl leading-relaxed resize-none focus:outline-none focus:ring-0 selection:bg-indigo-600 selection:text-white">
+            <textarea id="editor"
+                class="flex-1 w-full bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 p-5 font-sans text-2xl leading-relaxed resize-none focus:outline-none focus:ring-0 selection:bg-indigo-600 selection:text-white">
 # 身心健康產業行銷與變現課程
 ## 一、課程引言
 ### 1-1 課程定位
@@ -508,22 +552,36 @@
 - 分析AI量子儀器SWOT與PEST
 - 實踐5C思維：以客為尊，越簡單越好</textarea>
         </section>
-        <div id="drag-bar" class="w-1.5 hover:w-2 hover:bg-indigo-500/80 bg-slate-200 dark:bg-slate-700 cursor-col-resize shrink-0 transition-all duration-150 h-full flex items-center justify-center relative group z-20">
-            <div class="w-0.5 h-6 rounded-full bg-slate-400 dark:bg-slate-500 group-hover:bg-white transition-colors duration-150 pointer-events-none"></div>
+        <div id="drag-bar"
+            class="w-1.5 hover:w-2 hover:bg-indigo-500/80 bg-slate-200 dark:bg-slate-700 cursor-col-resize shrink-0 transition-all duration-150 h-full flex items-center justify-center relative group z-20">
+            <div
+                class="w-0.5 h-6 rounded-full bg-slate-400 dark:bg-slate-500 group-hover:bg-white transition-colors duration-150 pointer-events-none">
+            </div>
         </div>
-        <section id="map-container" style="width: 50%;" class="relative bg-slate-50 dark:bg-slate-900 flex flex-col h-full transition-all duration-300 overflow-hidden">
-            <svg id="markmap" class="w-full flex-1 cursor-move" style="height: 100%; width: 100%; min-height: 500px;"></svg>
-            <div class="absolute bottom-6 right-6 flex space-x-2 bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl shadow-xl backdrop-blur-md z-10">
-                <button onclick="zoomIn()" title="放大" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i class="fa-solid fa-plus text-sm"></i></button>
-                <button onclick="zoomOut()" title="縮小" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i class="fa-solid fa-minus text-sm"></i></button>
-                <button onclick="zoomFit()" title="適合螢幕" class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow"><i class="fa-solid fa-expand text-sm"></i></button>
+        <section id="map-container" style="width: 50%;"
+            class="relative bg-slate-50 dark:bg-slate-900 flex flex-col h-full transition-all duration-300 overflow-hidden">
+            <svg id="markmap" class="w-full flex-1 cursor-move"
+                style="height: 100%; width: 100%; min-height: 500px;"></svg>
+            <div
+                class="absolute bottom-6 right-6 flex space-x-2 bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl shadow-xl backdrop-blur-md z-10">
+                <button onclick="zoomIn()" title="放大"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i
+                        class="fa-solid fa-plus text-sm"></i></button>
+                <button onclick="zoomOut()" title="縮小"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i
+                        class="fa-solid fa-minus text-sm"></i></button>
+                <button onclick="zoomFit()" title="適合螢幕"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow"><i
+                        class="fa-solid fa-expand text-sm"></i></button>
             </div>
             <!-- 可點擊展開的資訊提示按鈕與面版 -->
             <div class="absolute top-4 left-4 z-30 flex items-start">
-                <button id="btn-info-toggle" onclick="toggleInfoTooltip()" class="w-9 h-9 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg transition">
+                <button id="btn-info-toggle" onclick="toggleInfoTooltip()"
+                    class="w-9 h-9 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg transition">
                     <i class="fa-solid fa-circle-info text-lg"></i>
                 </button>
-                <div id="info-tooltip" class="hidden ml-2 bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 shadow-2xl max-w-[240px] md:max-w-sm pointer-events-auto transition-all">
+                <div id="info-tooltip"
+                    class="hidden ml-2 bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 shadow-2xl max-w-[240px] md:max-w-sm pointer-events-auto transition-all">
                     <div class="hidden md:block">
                         <strong class="text-indigo-600 dark:text-indigo-400 block mb-0.5">電腦版操作說明：</strong>
                         滑鼠拖曳畫布移動，滾輪縮放，單擊節點展開/收合，雙擊編輯節點，右鍵選單管理。
@@ -535,34 +593,42 @@
                 </div>
             </div>
             <!-- 浮動右鍵選單 -->
-            <div id="context-menu" class="hidden absolute bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-md z-50 text-xs font-medium">
-                <button onclick="menuEditNode()" class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+            <div id="context-menu"
+                class="hidden absolute bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-md z-50 text-xs font-medium">
+                <button onclick="menuEditNode()"
+                    class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
                     <i class="fa-solid fa-pen text-slate-400 dark:text-slate-500"></i> 編輯節點文字
                 </button>
-                <button onclick="menuAddChild()" class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+                <button onclick="menuAddChild()"
+                    class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
                     <i class="fa-solid fa-plus text-slate-400 dark:text-slate-500"></i> 新增子節點
                 </button>
-                <button onclick="menuAddSibling()" class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
-                    <i class="fa-solid fa-square-plus text-slate-400 dark:text-slate-500"></i> 新增兄弟節點
+                <button onclick="menuAddSibling()"
+                    class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+                    <i class="fa-solid fa-square-plus text-slate-400 dark:text-slate-500"></i> 新增同層節點
                 </button>
                 <div class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
-                <button onclick="menuDeleteNode()" class="w-full text-left px-4 py-2 hover:bg-rose-600 hover:text-white flex items-center gap-2 text-rose-500 dark:text-rose-400 hover:text-white transition duration-150">
+                <button onclick="menuDeleteNode()"
+                    class="w-full text-left px-4 py-2 hover:bg-rose-600 hover:text-white flex items-center gap-2 text-rose-500 dark:text-rose-400 hover:text-white transition duration-150">
                     <i class="fa-solid fa-trash"></i> 刪除此節點
                 </button>
             </div>
             <!-- 行內編輯器 -->
             <div id="inline-editor-container" class="hidden absolute z-50">
-                <input type="text" id="inline-editor" class="bg-white dark:bg-slate-800 border-2 border-indigo-500 text-slate-800 dark:text-slate-100 px-3 py-1.5 rounded-lg shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-xs font-semibold min-w-[150px]">
+                <input type="text" id="inline-editor"
+                    class="bg-white dark:bg-slate-800 border-2 border-indigo-500 text-slate-800 dark:text-slate-100 px-3 py-1.5 rounded-lg shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-xs font-semibold min-w-[150px]">
             </div>
         </section>
     </main>
 
     <!-- Mobile Menu Panel -->
-    <div id="mobile-menu-panel" class="hidden fixed inset-y-0 right-0 w-64 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-2xl z-50 flex flex-col transition-transform duration-300 transform translate-x-full">
+    <div id="mobile-menu-panel"
+        class="hidden fixed inset-y-0 right-0 w-64 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-2xl z-50 flex flex-col transition-transform duration-300 transform translate-x-full">
         <!-- Close button & title -->
         <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
             <span class="font-bold text-sm text-slate-800 dark:text-slate-200">選單功能</span>
-            <button onclick="toggleMobileMenu()" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+            <button onclick="toggleMobileMenu()"
+                class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
@@ -571,14 +637,18 @@
             <!-- View Mode selection -->
             <div class="space-y-2">
                 <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檢視模式</span>
-                <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <button id="mobile-btn-view-split" onclick="switchView('split'); toggleMobileMenu();" class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+                <div
+                    class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <button id="mobile-btn-view-split" onclick="switchView('split'); toggleMobileMenu();"
+                        class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
                         <i class="fa-solid fa-columns mb-0.5"></i>雙欄
                     </button>
-                    <button id="mobile-btn-view-edit" onclick="switchView('edit'); toggleMobileMenu();" class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+                    <button id="mobile-btn-view-edit" onclick="switchView('edit'); toggleMobileMenu();"
+                        class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
                         <i class="fa-solid fa-file-pen mb-0.5"></i>編輯
                     </button>
-                    <button id="mobile-btn-view-map" onclick="switchView('map'); toggleMobileMenu();" class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+                    <button id="mobile-btn-view-map" onclick="switchView('map'); toggleMobileMenu();"
+                        class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
                         <i class="fa-solid fa-expand mb-0.5"></i>心智圖
                     </button>
                 </div>
@@ -587,13 +657,16 @@
             <!-- Markmap operations -->
             <div class="space-y-3">
                 <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">心智圖操作</span>
-                <button onclick="zoomFit(); toggleMobileMenu();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                <button onclick="zoomFit(); toggleMobileMenu();"
+                    class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
                     <i class="fa-solid fa-compress w-4"></i><span>重設縮放</span>
                 </button>
-                <button id="mobile-btn-expand-all" onclick="toggleExpandAll(); toggleMobileMenu();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                <button id="mobile-btn-expand-all" onclick="toggleExpandAll(); toggleMobileMenu();"
+                    class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
                     <i class="fa-solid fa-angles-down w-4"></i><span>一鍵展開</span>
                 </button>
-                <button id="mobile-btn-toggle-line" onclick="toggleLineStyle(); toggleMobileMenu();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                <button id="mobile-btn-toggle-line" onclick="toggleLineStyle(); toggleMobileMenu();"
+                    class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
                     <i class="fa-solid fa-route w-4"></i><span>直角折線</span>
                 </button>
             </div>
@@ -601,10 +674,12 @@
             <!-- File actions -->
             <div class="space-y-3">
                 <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檔案匯出</span>
-                <button onclick="exportMarkdown(); toggleMobileMenu();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                <button onclick="exportMarkdown(); toggleMobileMenu();"
+                    class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
                     <i class="fa-solid fa-file-code w-4"></i><span>匯出 .md</span>
                 </button>
-                <button onclick="exportSVG(); toggleMobileMenu();" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5 shadow-md">
+                <button onclick="exportSVG(); toggleMobileMenu();"
+                    class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5 shadow-md">
                     <i class="fa-solid fa-download w-4"></i><span>下載 SVG 圖片</span>
                 </button>
             </div>
@@ -612,7 +687,8 @@
             <!-- Theme toggle -->
             <div class="space-y-3">
                 <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">主題設定</span>
-                <button onclick="toggleTheme();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                <button onclick="toggleTheme();"
+                    class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
                     <i class="fa-solid fa-sun w-4 dark:hidden"></i>
                     <i class="fa-solid fa-moon w-4 hidden dark:inline-block"></i>
                     <span>切換深淺色</span>
@@ -621,7 +697,9 @@
         </div>
     </div>
     <!-- Mobile Menu Backdrop -->
-    <div id="mobile-menu-backdrop" onclick="toggleMobileMenu()" class="hidden fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 z-40 transition-opacity duration-300 opacity-0"></div>
+    <div id="mobile-menu-backdrop" onclick="toggleMobileMenu()"
+        class="hidden fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 z-40 transition-opacity duration-300 opacity-0">
+    </div>
 
     <script>
         var transformer, mm;
@@ -679,16 +757,16 @@
         function alignNodesWithLines(root, markdown) {
             const lines = markdown.split('\n');
             const nodeLines = [];
-            
+
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const trimmed = line.trim();
                 if (!trimmed) continue;
-                
+
                 const isHeading = trimmed.match(/^(#{1,6})\s+/);
                 const isBullet = trimmed.match(/^[-*]\s+/);
                 const isIndentedBullet = line.match(/^(\s+)[-*]\s+/);
-                
+
                 if (isHeading || isBullet || isIndentedBullet) {
                     nodeLines.push({
                         lineIndex: i,
@@ -696,7 +774,7 @@
                     });
                 }
             }
-            
+
             const treeNodes = [];
             function traverse(node) {
                 if (!node) return;
@@ -709,9 +787,9 @@
                     node.children.forEach(traverse);
                 }
             }
-            
+
             traverse(root);
-            
+
             const limit = Math.min(treeNodes.length, nodeLines.length);
             for (let i = 0; i < limit; i++) {
                 treeNodes[i].lineIndex = nodeLines[i].lineIndex;
@@ -760,7 +838,7 @@
         function resetExpandButton() {
             const btn = document.querySelector('#btn-expand-all');
             const mobileBtn = document.querySelector('#mobile-btn-expand-all');
-            
+
             const updateBtnState = (b) => {
                 if (!b) return;
                 const icon = b.querySelector('i');
@@ -768,7 +846,7 @@
                 icon.className = "fa-solid fa-angles-down";
                 span.innerText = "一鍵展開";
             };
-            
+
             updateBtnState(btn);
             updateBtnState(mobileBtn);
             isAllExpanded = false;
@@ -777,7 +855,7 @@
         function toggleExpandAll() {
             const btn = document.querySelector('#btn-expand-all');
             const mobileBtn = document.querySelector('#mobile-btn-expand-all');
-            
+
             const setExpandState = (b, expanded) => {
                 if (!b) return;
                 const icon = b.querySelector('i');
@@ -1068,10 +1146,10 @@
                         }
                         editor.focus();
                         editor.setSelectionRange(charIndex, charIndex + lines[d.lineIndex].length);
-                        
-                        const lineHeight = 24; 
+
+                        const lineHeight = 24;
                         editor.scrollTop = d.lineIndex * lineHeight - editor.clientHeight / 2;
-                        
+
                         mm.setHighlight(d);
                     }
                 }
@@ -1091,7 +1169,7 @@
             inlineEditorContainer.classList.remove('hidden');
             inlineEditor.focus();
             inlineEditor.select();
-            
+
             document.querySelector('#context-menu').classList.add('hidden');
         }
 
@@ -1111,7 +1189,7 @@
             const headingMatch = trimmed.match(/^(#{1,6})\s+/);
             const indentedBulletMatch = line.match(/^(\s+)[-*]\s+/);
             const bulletMatch = trimmed.match(/^[-*]\s+/);
-            
+
             if (headingMatch) {
                 return headingMatch[1].length;
             } else if (indentedBulletMatch) {
@@ -1146,7 +1224,7 @@
             const originalLine = lines[lineIndex];
             const match = originalLine.match(/^(\s*(?:#{1,6}|[-*])\s+)/);
             const prefix = match ? match[1] : '';
-            
+
             lines[lineIndex] = prefix + newText;
             editor.value = lines.join('\n');
             updateMarkmap();
@@ -1271,7 +1349,7 @@
             const panel = document.querySelector('#mobile-menu-panel');
             const backdrop = document.querySelector('#mobile-menu-backdrop');
             if (!panel || !backdrop) return;
-            
+
             if (panel.classList.contains('hidden')) {
                 panel.classList.remove('hidden');
                 backdrop.classList.remove('hidden');
@@ -1296,7 +1374,7 @@
             const editorCol = document.querySelector('#editor-container');
             const mapCol = document.querySelector('#map-container');
             const main = document.querySelector('main');
-            
+
             if (!dragBar) return;
 
             let isDragging = false;
@@ -1311,12 +1389,12 @@
             function onDragMove(e) {
                 if (!isDragging) return;
                 if (e.cancelable) e.preventDefault();
-                
+
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                
+
                 const mainRect = main.getBoundingClientRect();
-                
+
                 if (isMobileView()) {
                     const offsetY = clientY - mainRect.top;
                     const percentage = (offsetY / mainRect.height) * 100;
@@ -1366,7 +1444,7 @@
             const editorCol = document.querySelector('#editor-container');
             const mapCol = document.querySelector('#map-container');
             const dragBar = document.querySelector('#drag-bar');
-            
+
             // Sync buttons for desktop
             const btns = {
                 split: document.querySelector('#btn-view-split'),
@@ -1376,7 +1454,7 @@
             Object.values(btns).forEach(btn => {
                 if (btn) btn.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1";
             });
-            
+
             // Sync buttons for mobile
             const mobileBtns = {
                 split: document.querySelector('#mobile-btn-view-split'),
@@ -1386,15 +1464,15 @@
             Object.values(mobileBtns).forEach(btn => {
                 if (btn) btn.className = "py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center";
             });
-            
+
             if (mode === 'split') {
                 if (btns.split) btns.split.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
                 if (mobileBtns.split) mobileBtns.split.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
-                
+
                 editorCol.style.display = "flex";
                 mapCol.style.display = "flex";
                 if (dragBar) dragBar.style.display = "flex";
-                
+
                 if (isMobileView()) {
                     editorCol.style.width = '100%';
                     editorCol.style.height = `${lastSplitPercentMobile}%`;
@@ -1409,7 +1487,7 @@
             } else if (mode === 'edit') {
                 if (btns.edit) btns.edit.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
                 if (mobileBtns.edit) mobileBtns.edit.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
-                
+
                 editorCol.style.display = "flex";
                 editorCol.style.width = "100%";
                 editorCol.style.height = "100%";
@@ -1418,7 +1496,7 @@
             } else if (mode === 'map') {
                 if (btns.map) btns.map.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
                 if (mobileBtns.map) mobileBtns.map.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
-                
+
                 editorCol.style.display = "none";
                 mapCol.style.display = "flex";
                 mapCol.style.width = "100%";
@@ -1473,7 +1551,7 @@
             clone.style.backgroundColor = document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc';
             const serializer = new XMLSerializer();
             let source = serializer.serializeToString(clone);
-            if(!source.match(/^<\?xml/)){
+            if (!source.match(/^<\?xml/)) {
                 source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
             }
             const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
@@ -1523,4 +1601,5 @@
         };
     </script>
 </body>
+
 </html>
