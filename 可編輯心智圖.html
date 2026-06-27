@@ -20,16 +20,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script>
-        // Override d3.linkHorizontal to draw straight lines with right angles
+        // Override d3.linkHorizontal to support toggling between straight lines and curves
         (function() {
             const originalLinkHorizontal = d3.linkHorizontal;
+            window.useStraightLines = true; // Default to straight lines with right angles
+
             d3.linkHorizontal = function() {
+                const originalGenerator = originalLinkHorizontal();
                 let sourceAccessor = d => d.source;
                 let targetAccessor = d => d.target;
                 let xAccessor = d => d[0];
                 let yAccessor = d => d[1];
 
                 const generator = function(d) {
+                    if (!window.useStraightLines) {
+                        return originalGenerator(d);
+                    }
                     const s = sourceAccessor(d);
                     const t = targetAccessor(d);
                     const x0 = xAccessor(s);
@@ -41,16 +47,36 @@
                 };
 
                 generator.source = function(_) {
-                    return arguments.length ? (sourceAccessor = _, generator) : sourceAccessor;
+                    if (arguments.length) {
+                        sourceAccessor = _;
+                        originalGenerator.source(_);
+                        return generator;
+                    }
+                    return sourceAccessor;
                 };
                 generator.target = function(_) {
-                    return arguments.length ? (targetAccessor = _, generator) : targetAccessor;
+                    if (arguments.length) {
+                        targetAccessor = _;
+                        originalGenerator.target(_);
+                        return generator;
+                    }
+                    return targetAccessor;
                 };
                 generator.x = function(_) {
-                    return arguments.length ? (xAccessor = _, generator) : xAccessor;
+                    if (arguments.length) {
+                        xAccessor = _;
+                        originalGenerator.x(_);
+                        return generator;
+                    }
+                    return xAccessor;
                 };
                 generator.y = function(_) {
-                    return arguments.length ? (yAccessor = _, generator) : yAccessor;
+                    if (arguments.length) {
+                        yAccessor = _;
+                        originalGenerator.y(_);
+                        return generator;
+                    }
+                    return yAccessor;
                 };
 
                 return generator;
@@ -107,7 +133,10 @@
                 <i class="fa-solid fa-compress"></i><span>重設縮放</span>
             </button>
             <button id="btn-expand-all" onclick="toggleExpandAll()" title="一鍵展開或一鍵收摺" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-angles-up"></i><span>一鍵收摺</span>
+                <i class="fa-solid fa-angles-down"></i><span>一鍵展開</span>
+            </button>
+            <button id="btn-toggle-line" onclick="toggleLineStyle()" title="切換折線/曲線樣式" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-route"></i><span>直角折線</span>
             </button>
             <button onclick="exportMarkdown()" title="下載 Markdown" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-file-code"></i><span>匯出 .md</span>
@@ -592,7 +621,7 @@
             .${id} circle { fill: #ffffff; }
         `;
 
-        let isAllExpanded = true;
+        let isAllExpanded = false;
 
         function setAllNodesFold(node, foldVal) {
             if (!node) return;
@@ -621,10 +650,10 @@
             if (btn) {
                 const icon = btn.querySelector('i');
                 const span = btn.querySelector('span');
-                icon.className = "fa-solid fa-angles-up";
-                span.innerText = "一鍵收摺";
+                icon.className = "fa-solid fa-angles-down";
+                span.innerText = "一鍵展開";
             }
-            isAllExpanded = true;
+            isAllExpanded = false;
         }
 
         function toggleExpandAll() {
@@ -644,6 +673,25 @@
                 icon.className = "fa-solid fa-angles-up";
                 span.innerText = "一鍵收摺";
                 isAllExpanded = true;
+            }
+        }
+
+        function toggleLineStyle() {
+            const btn = document.querySelector('#btn-toggle-line');
+            const icon = btn.querySelector('i');
+            const span = btn.querySelector('span');
+
+            window.useStraightLines = !window.useStraightLines;
+
+            if (window.useStraightLines) {
+                icon.className = "fa-solid fa-route";
+                span.innerText = "直角折線";
+            } else {
+                icon.className = "fa-solid fa-bezier-curve";
+                span.innerText = "曲線連結";
+            }
+            if (mm) {
+                mm.renderData();
             }
         }
 
@@ -727,7 +775,7 @@
                 lastActiveNode = activeNode;
                 const wasFolded = unfoldAncestors(activeNode);
                 if (wasFolded) {
-                    mm.setData(mm.state.data).then(() => {
+                    mm.renderData().then(() => {
                         mm.setHighlight(activeNode);
                         mm.centerNode(activeNode);
                     });
@@ -748,7 +796,7 @@
             mm = Markmap.create(svgEl, {
                 zoom: true,
                 pan: true,
-                initialExpandLevel: -1,
+                initialExpandLevel: 2,
                 spacingVertical: 15,
                 color: (node) => {
                     const depth = node.state ? node.state.depth : (node.depth || 0);
