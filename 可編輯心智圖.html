@@ -106,8 +106,8 @@
             <button onclick="zoomFit()" title="置中縮放" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-compress"></i><span>重設縮放</span>
             </button>
-            <button id="btn-expand-all" onclick="toggleExpandAll()" title="一鍵展開或恢復預設" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-angles-down"></i><span>一鍵展開</span>
+            <button id="btn-expand-all" onclick="toggleExpandAll()" title="一鍵展開或一鍵收摺" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-angles-up"></i><span>一鍵收摺</span>
             </button>
             <button onclick="exportMarkdown()" title="下載 Markdown" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-file-code"></i><span>匯出 .md</span>
@@ -592,7 +592,7 @@
             .${id} circle { fill: #ffffff; }
         `;
 
-        let isAllExpanded = false;
+        let isAllExpanded = true;
 
         function setAllNodesFold(node, foldVal) {
             if (!node) return;
@@ -603,48 +603,7 @@
             }
         }
 
-        function clearAllNodesFold(node) {
-            if (!node) return;
-            if (node.payload) {
-                delete node.payload.fold;
-            }
-            if (node.children) {
-                node.children.forEach(clearAllNodesFold);
-            }
-        }
-
-        function resetExpandButton() {
-            const btn = document.querySelector('#btn-expand-all');
-            if (btn) {
-                const icon = btn.querySelector('i');
-                const span = btn.querySelector('span');
-                icon.className = "fa-solid fa-angles-down";
-                span.innerText = "一鍵展開";
-            }
-            isAllExpanded = false;
-        }
-
-        function toggleExpandAll() {
-            const btn = document.querySelector('#btn-expand-all');
-            const icon = btn.querySelector('i');
-            const span = btn.querySelector('span');
-
-            if (!isAllExpanded) {
-                setAllNodesFold(mm.state.data, 0);
-                mm.renderData();
-                icon.className = "fa-solid fa-rotate-left";
-                span.innerText = "恢復預設";
-                isAllExpanded = true;
-            } else {
-                restoreDefaultFold(mm.state.data);
-                mm.setData(mm.state.data);
-                icon.className = "fa-solid fa-angles-down";
-                span.innerText = "一鍵展開";
-                isAllExpanded = false;
-            }
-        }
-
-        function restoreDefaultFold(node, depth = 1) {
+        function collapseAllNodes(node, depth = 1) {
             if (!node) return;
             if (!node.payload) node.payload = {};
             if (depth > 2) {
@@ -653,7 +612,38 @@
                 delete node.payload.fold;
             }
             if (node.children) {
-                node.children.forEach(child => restoreDefaultFold(child, depth + 1));
+                node.children.forEach(child => collapseAllNodes(child, depth + 1));
+            }
+        }
+
+        function resetExpandButton() {
+            const btn = document.querySelector('#btn-expand-all');
+            if (btn) {
+                const icon = btn.querySelector('i');
+                const span = btn.querySelector('span');
+                icon.className = "fa-solid fa-angles-up";
+                span.innerText = "一鍵收摺";
+            }
+            isAllExpanded = true;
+        }
+
+        function toggleExpandAll() {
+            const btn = document.querySelector('#btn-expand-all');
+            const icon = btn.querySelector('i');
+            const span = btn.querySelector('span');
+
+            if (isAllExpanded) {
+                collapseAllNodes(mm.state.data);
+                mm.setData(mm.state.data);
+                icon.className = "fa-solid fa-angles-down";
+                span.innerText = "一鍵展開";
+                isAllExpanded = false;
+            } else {
+                setAllNodesFold(mm.state.data, 0);
+                mm.renderData();
+                icon.className = "fa-solid fa-angles-up";
+                span.innerText = "一鍵收摺";
+                isAllExpanded = true;
             }
         }
 
@@ -758,7 +748,7 @@
             mm = Markmap.create(svgEl, {
                 zoom: true,
                 pan: true,
-                initialExpandLevel: 2,
+                initialExpandLevel: -1,
                 spacingVertical: 15,
                 color: (node) => {
                     const depth = node.state ? node.state.depth : (node.depth || 0);
