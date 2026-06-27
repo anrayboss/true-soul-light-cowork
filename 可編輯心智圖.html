@@ -101,22 +101,47 @@
         ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
         .markmap-node { cursor: pointer; }
+
+        @media (max-width: 767px) {
+            main {
+                flex-direction: column !important;
+            }
+            #drag-bar {
+                width: 100% !important;
+                height: 6px !important;
+                cursor: row-resize !important;
+                border-top: 1px solid rgba(226, 232, 240, 0.8);
+                border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            }
+            .dark #drag-bar {
+                border-top: 1px solid rgba(51, 65, 85, 0.8);
+                border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+            }
+            #drag-bar > div {
+                width: 24px !important;
+                height: 3px !important;
+            }
+            #editor-container, #map-container {
+                border-right: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
-    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between shadow-lg shrink-0">
-        <div class="flex items-center space-x-3">
-            <div class="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2.5 rounded-xl shadow-md">
-                <i class="fa-solid fa-sitemap text-xl text-white"></i>
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3 flex items-center justify-between shadow-lg shrink-0">
+        <div class="flex items-center space-x-2 md:space-x-3">
+            <div class="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2 md:p-2.5 rounded-xl shadow-md shrink-0">
+                <i class="fa-solid fa-sitemap text-lg md:text-xl text-white"></i>
             </div>
             <div>
-                <h1 class="text-lg font-bold tracking-wide text-slate-900 dark:text-white flex items-center gap-2">
-                    AWAKEN THE HEALING POWER <span class="text-xs bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/50 px-2 py-0.5 rounded-full font-normal">陳仲豪身心健康行銷變現</span>
+                <h1 class="text-base md:text-lg font-bold tracking-wide text-slate-900 dark:text-white flex flex-wrap items-center gap-1 md:gap-2">
+                    AWAKEN THE HEALING POWER <span class="text-[10px] md:text-xs bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/50 px-2 py-0.5 rounded-full font-normal">陳仲豪身心健康行銷變現</span>
                 </h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400">可即時編輯、縮放與匯出的動態心智圖系統</p>
+                <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400">可即時編輯、縮放與匯出的動態心智圖系統</p>
             </div>
         </div>
-        <div class="flex items-center space-x-3">
+        <!-- Desktop Toolbar (Hidden on Mobile) -->
+        <div class="hidden md:flex items-center space-x-3">
             <div class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center space-x-1">
                 <button id="btn-view-split" onclick="switchView('split')" title="分割模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1">
                     <i class="fa-solid fa-columns"></i><span>雙欄</span>
@@ -150,6 +175,10 @@
                 <i class="fa-solid fa-moon text-sm hidden dark:inline-block"></i>
             </button>
         </div>
+        <!-- Hamburger Menu Button (Mobile only) -->
+        <button id="btn-mobile-menu" onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition">
+            <i class="fa-solid fa-bars text-xl"></i>
+        </button>
     </header>
     <main class="flex-1 flex overflow-hidden">
         <section id="editor-container" style="width: 50%;" class="flex flex-col bg-white dark:bg-slate-950 shadow-inner transition-all duration-300">
@@ -489,8 +518,21 @@
                 <button onclick="zoomOut()" title="縮小" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i class="fa-solid fa-minus text-sm"></i></button>
                 <button onclick="zoomFit()" title="適合螢幕" class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow"><i class="fa-solid fa-expand text-sm"></i></button>
             </div>
-            <div class="absolute top-4 left-4 bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 px-3 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-400 backdrop-blur-sm pointer-events-none shadow-sm z-10">
-                <i class="fa-solid fa-circle-info text-indigo-600 dark:text-indigo-400 mr-1"></i> 滑鼠拖曳畫布移動，滾輪縮放，點擊節點展開/收合，雙擊編輯節點，右鍵選單管理
+            <!-- 可點擊展開的資訊提示按鈕與面版 -->
+            <div class="absolute top-4 left-4 z-30 flex items-start">
+                <button id="btn-info-toggle" onclick="toggleInfoTooltip()" class="w-9 h-9 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg transition">
+                    <i class="fa-solid fa-circle-info text-lg"></i>
+                </button>
+                <div id="info-tooltip" class="hidden ml-2 bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 shadow-2xl max-w-[240px] md:max-w-sm pointer-events-auto transition-all">
+                    <div class="hidden md:block">
+                        <strong class="text-indigo-600 dark:text-indigo-400 block mb-0.5">電腦版操作說明：</strong>
+                        滑鼠拖曳畫布移動，滾輪縮放，單擊節點展開/收合，雙擊編輯節點，右鍵選單管理。
+                    </div>
+                    <div class="block md:hidden">
+                        <strong class="text-indigo-600 dark:text-indigo-400 block mb-0.5">手機版操作說明：</strong>
+                        單指拖曳畫布移動，雙指捏合縮放，單擊節點展開/收合，雙擊編輯節點，長按或點選右鍵選單管理。
+                    </div>
+                </div>
             </div>
             <!-- 浮動右鍵選單 -->
             <div id="context-menu" class="hidden absolute bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-md z-50 text-xs font-medium">
@@ -514,6 +556,73 @@
             </div>
         </section>
     </main>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobile-menu-panel" class="hidden fixed inset-y-0 right-0 w-64 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-2xl z-50 flex flex-col transition-transform duration-300 transform translate-x-full">
+        <!-- Close button & title -->
+        <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+            <span class="font-bold text-sm text-slate-800 dark:text-slate-200">選單功能</span>
+            <button onclick="toggleMobileMenu()" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <!-- Menu actions -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- View Mode selection -->
+            <div class="space-y-2">
+                <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檢視模式</span>
+                <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <button id="mobile-btn-view-split" onclick="switchView('split'); toggleMobileMenu();" class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-columns mb-0.5"></i>雙欄
+                    </button>
+                    <button id="mobile-btn-view-edit" onclick="switchView('edit'); toggleMobileMenu();" class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-file-pen mb-0.5"></i>編輯
+                    </button>
+                    <button id="mobile-btn-view-map" onclick="switchView('map'); toggleMobileMenu();" class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-expand mb-0.5"></i>心智圖
+                    </button>
+                </div>
+            </div>
+            <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+            <!-- Markmap operations -->
+            <div class="space-y-3">
+                <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">心智圖操作</span>
+                <button onclick="zoomFit(); toggleMobileMenu();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                    <i class="fa-solid fa-compress w-4"></i><span>重設縮放</span>
+                </button>
+                <button id="mobile-btn-expand-all" onclick="toggleExpandAll(); toggleMobileMenu();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                    <i class="fa-solid fa-angles-down w-4"></i><span>一鍵展開</span>
+                </button>
+                <button id="mobile-btn-toggle-line" onclick="toggleLineStyle(); toggleMobileMenu();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                    <i class="fa-solid fa-route w-4"></i><span>直角折線</span>
+                </button>
+            </div>
+            <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+            <!-- File actions -->
+            <div class="space-y-3">
+                <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檔案匯出</span>
+                <button onclick="exportMarkdown(); toggleMobileMenu();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                    <i class="fa-solid fa-file-code w-4"></i><span>匯出 .md</span>
+                </button>
+                <button onclick="exportSVG(); toggleMobileMenu();" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5 shadow-md">
+                    <i class="fa-solid fa-download w-4"></i><span>下載 SVG 圖片</span>
+                </button>
+            </div>
+            <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+            <!-- Theme toggle -->
+            <div class="space-y-3">
+                <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">主題設定</span>
+                <button onclick="toggleTheme();" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+                    <i class="fa-solid fa-sun w-4 dark:hidden"></i>
+                    <i class="fa-solid fa-moon w-4 hidden dark:inline-block"></i>
+                    <span>切換深淺色</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Mobile Menu Backdrop -->
+    <div id="mobile-menu-backdrop" onclick="toggleMobileMenu()" class="hidden fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 z-40 transition-opacity duration-300 opacity-0"></div>
+
     <script>
         var transformer, mm;
         let activeNodeData = null;
@@ -650,49 +759,75 @@
 
         function resetExpandButton() {
             const btn = document.querySelector('#btn-expand-all');
-            if (btn) {
-                const icon = btn.querySelector('i');
-                const span = btn.querySelector('span');
+            const mobileBtn = document.querySelector('#mobile-btn-expand-all');
+            
+            const updateBtnState = (b) => {
+                if (!b) return;
+                const icon = b.querySelector('i');
+                const span = b.querySelector('span');
                 icon.className = "fa-solid fa-angles-down";
                 span.innerText = "一鍵展開";
-            }
+            };
+            
+            updateBtnState(btn);
+            updateBtnState(mobileBtn);
             isAllExpanded = false;
         }
 
         function toggleExpandAll() {
             const btn = document.querySelector('#btn-expand-all');
-            const icon = btn.querySelector('i');
-            const span = btn.querySelector('span');
+            const mobileBtn = document.querySelector('#mobile-btn-expand-all');
+            
+            const setExpandState = (b, expanded) => {
+                if (!b) return;
+                const icon = b.querySelector('i');
+                const span = b.querySelector('span');
+                if (expanded) {
+                    icon.className = "fa-solid fa-rotate-left";
+                    span.innerText = "恢復預設";
+                } else {
+                    icon.className = "fa-solid fa-angles-down";
+                    span.innerText = "一鍵展開";
+                }
+            };
 
             if (isAllExpanded) {
                 collapseAllNodes(mm.state.data);
                 mm.setData(mm.state.data);
-                icon.className = "fa-solid fa-angles-down";
-                span.innerText = "一鍵展開";
+                setExpandState(btn, false);
+                setExpandState(mobileBtn, false);
                 isAllExpanded = false;
             } else {
                 setAllNodesFold(mm.state.data, 0);
                 mm.renderData();
-                icon.className = "fa-solid fa-angles-up";
-                span.innerText = "一鍵收摺";
+                setExpandState(btn, true);
+                setExpandState(mobileBtn, true);
                 isAllExpanded = true;
             }
         }
 
         function toggleLineStyle() {
             const btn = document.querySelector('#btn-toggle-line');
-            const icon = btn.querySelector('i');
-            const span = btn.querySelector('span');
+            const mobileBtn = document.querySelector('#mobile-btn-toggle-line');
 
             window.useStraightLines = !window.useStraightLines;
 
-            if (window.useStraightLines) {
-                icon.className = "fa-solid fa-route";
-                span.innerText = "直角折線";
-            } else {
-                icon.className = "fa-solid fa-bezier-curve";
-                span.innerText = "曲線連結";
-            }
+            const updateStyleState = (b) => {
+                if (!b) return;
+                const icon = b.querySelector('i');
+                const span = b.querySelector('span');
+                if (window.useStraightLines) {
+                    icon.className = "fa-solid fa-route";
+                    span.innerText = "直角折線";
+                } else {
+                    icon.className = "fa-solid fa-bezier-curve";
+                    span.innerText = "曲線連結";
+                }
+            };
+
+            updateStyleState(btn);
+            updateStyleState(mobileBtn);
+
             if (mm) {
                 mm.renderData();
             }
@@ -1125,6 +1260,36 @@
         });
 
         let lastSplitPercent = 50;
+        let lastSplitPercentMobile = 50;
+        let activeViewMode = 'split';
+
+        function isMobileView() {
+            return window.innerWidth < 768;
+        }
+
+        function toggleMobileMenu() {
+            const panel = document.querySelector('#mobile-menu-panel');
+            const backdrop = document.querySelector('#mobile-menu-backdrop');
+            if (!panel || !backdrop) return;
+            
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => {
+                    panel.classList.remove('translate-x-full');
+                    backdrop.classList.remove('opacity-0');
+                    backdrop.classList.add('opacity-100');
+                }, 10);
+            } else {
+                panel.classList.add('translate-x-full');
+                backdrop.classList.remove('opacity-100');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => {
+                    panel.classList.add('hidden');
+                    backdrop.classList.add('hidden');
+                }, 300);
+            }
+        }
 
         function setupDragBar() {
             const dragBar = document.querySelector('#drag-bar');
@@ -1136,28 +1301,46 @@
 
             let isDragging = false;
 
-            dragBar.addEventListener('mousedown', (e) => {
+            function onDragStart(e) {
                 isDragging = true;
                 mapCol.style.pointerEvents = 'none';
-                document.body.style.cursor = 'col-resize';
+                document.body.style.cursor = isMobileView() ? 'row-resize' : 'col-resize';
                 document.body.style.userSelect = 'none';
-            });
+            }
 
-            document.addEventListener('mousemove', (e) => {
+            function onDragMove(e) {
                 if (!isDragging) return;
+                if (e.cancelable) e.preventDefault();
+                
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 
                 const mainRect = main.getBoundingClientRect();
-                const offsetX = e.clientX - mainRect.left;
                 
-                const percentage = (offsetX / mainRect.width) * 100;
-                if (percentage >= 20 && percentage <= 80) {
-                    lastSplitPercent = percentage;
-                    editorCol.style.width = `${percentage}%`;
-                    mapCol.style.width = `${100 - percentage}%`;
+                if (isMobileView()) {
+                    const offsetY = clientY - mainRect.top;
+                    const percentage = (offsetY / mainRect.height) * 100;
+                    if (percentage >= 15 && percentage <= 85) {
+                        lastSplitPercentMobile = percentage;
+                        editorCol.style.height = `${percentage}%`;
+                        editorCol.style.width = '100%';
+                        mapCol.style.height = `${100 - percentage}%`;
+                        mapCol.style.width = '100%';
+                    }
+                } else {
+                    const offsetX = clientX - mainRect.left;
+                    const percentage = (offsetX / mainRect.width) * 100;
+                    if (percentage >= 20 && percentage <= 80) {
+                        lastSplitPercent = percentage;
+                        editorCol.style.width = `${percentage}%`;
+                        editorCol.style.height = '100%';
+                        mapCol.style.width = `${100 - percentage}%`;
+                        mapCol.style.height = '100%';
+                    }
                 }
-            });
+            }
 
-            document.addEventListener('mouseup', () => {
+            function onDragEnd() {
                 if (isDragging) {
                     isDragging = false;
                     mapCol.style.pointerEvents = 'auto';
@@ -1165,45 +1348,102 @@
                     document.body.style.userSelect = '';
                     if (mm) mm.fit();
                 }
-            });
+            }
+
+            // Mouse Events
+            dragBar.addEventListener('mousedown', onDragStart);
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('mouseup', onDragEnd);
+
+            // Touch Events (Mobile)
+            dragBar.addEventListener('touchstart', onDragStart, { passive: true });
+            document.addEventListener('touchmove', onDragMove, { passive: false });
+            document.addEventListener('touchend', onDragEnd);
         }
 
         function switchView(mode) {
+            activeViewMode = mode;
             const editorCol = document.querySelector('#editor-container');
             const mapCol = document.querySelector('#map-container');
             const dragBar = document.querySelector('#drag-bar');
+            
+            // Sync buttons for desktop
             const btns = {
                 split: document.querySelector('#btn-view-split'),
                 edit: document.querySelector('#btn-view-edit'),
                 map: document.querySelector('#btn-view-map')
             };
             Object.values(btns).forEach(btn => {
-                btn.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1";
+                if (btn) btn.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1";
             });
+            
+            // Sync buttons for mobile
+            const mobileBtns = {
+                split: document.querySelector('#mobile-btn-view-split'),
+                edit: document.querySelector('#mobile-btn-view-edit'),
+                map: document.querySelector('#mobile-btn-view-map')
+            };
+            Object.values(mobileBtns).forEach(btn => {
+                if (btn) btn.className = "py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center";
+            });
+            
             if (mode === 'split') {
-                btns.split.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+                if (btns.split) btns.split.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+                if (mobileBtns.split) mobileBtns.split.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+                
                 editorCol.style.display = "flex";
-                editorCol.style.width = `${lastSplitPercent}%`;
                 mapCol.style.display = "flex";
-                mapCol.style.width = `${100 - lastSplitPercent}%`;
                 if (dragBar) dragBar.style.display = "flex";
+                
+                if (isMobileView()) {
+                    editorCol.style.width = '100%';
+                    editorCol.style.height = `${lastSplitPercentMobile}%`;
+                    mapCol.style.width = '100%';
+                    mapCol.style.height = `${100 - lastSplitPercentMobile}%`;
+                } else {
+                    editorCol.style.width = `${lastSplitPercent}%`;
+                    editorCol.style.height = '100%';
+                    mapCol.style.width = `${100 - lastSplitPercent}%`;
+                    mapCol.style.height = '100%';
+                }
             } else if (mode === 'edit') {
-                btns.edit.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+                if (btns.edit) btns.edit.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+                if (mobileBtns.edit) mobileBtns.edit.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+                
                 editorCol.style.display = "flex";
                 editorCol.style.width = "100%";
+                editorCol.style.height = "100%";
                 mapCol.style.display = "none";
                 if (dragBar) dragBar.style.display = "none";
             } else if (mode === 'map') {
-                btns.map.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+                if (btns.map) btns.map.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+                if (mobileBtns.map) mobileBtns.map.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+                
                 editorCol.style.display = "none";
                 mapCol.style.display = "flex";
                 mapCol.style.width = "100%";
+                mapCol.style.height = "100%";
                 if (dragBar) dragBar.style.display = "none";
             }
             setTimeout(() => { if (mm && mode !== 'edit') { mm.fit(); } }, 300);
         }
 
         window.addEventListener('resize', () => {
+            if (activeViewMode === 'split') {
+                const editorCol = document.querySelector('#editor-container');
+                const mapCol = document.querySelector('#map-container');
+                if (isMobileView()) {
+                    editorCol.style.width = '100%';
+                    editorCol.style.height = `${lastSplitPercentMobile}%`;
+                    mapCol.style.width = '100%';
+                    mapCol.style.height = `${100 - lastSplitPercentMobile}%`;
+                } else {
+                    editorCol.style.width = `${lastSplitPercent}%`;
+                    editorCol.style.height = '100%';
+                    mapCol.style.width = `${100 - lastSplitPercent}%`;
+                    mapCol.style.height = '100%';
+                }
+            }
             if (mm && document.querySelector('#map-container').style.display !== 'none') { mm.fit(); }
         });
 
@@ -1259,6 +1499,22 @@
             }
             editor.value = formatted.join('\n');
         }
+
+        function toggleInfoTooltip() {
+            const tooltip = document.querySelector('#info-tooltip');
+            if (tooltip) {
+                tooltip.classList.toggle('hidden');
+            }
+        }
+
+        // 點擊空白處自動收合提示
+        document.addEventListener('click', (e) => {
+            const container = document.querySelector('#btn-info-toggle')?.parentElement;
+            const tooltip = document.querySelector('#info-tooltip');
+            if (container && tooltip && !container.contains(e.target) && !tooltip.classList.contains('hidden')) {
+                tooltip.classList.add('hidden');
+            }
+        });
 
         window.onload = () => {
             formatEditorHeadings();
