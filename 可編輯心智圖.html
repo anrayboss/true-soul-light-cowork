@@ -1,66 +1,134 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>陳仲豪行銷課程大綱 - 可編輯心智圖</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+        // Set theme on load based on preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script>
+        // Override d3.linkHorizontal to draw straight lines with right angles
+        (function() {
+            const originalLinkHorizontal = d3.linkHorizontal;
+            d3.linkHorizontal = function() {
+                let sourceAccessor = d => d.source;
+                let targetAccessor = d => d.target;
+                let xAccessor = d => d[0];
+                let yAccessor = d => d[1];
+
+                const generator = function(d) {
+                    const s = sourceAccessor(d);
+                    const t = targetAccessor(d);
+                    const x0 = xAccessor(s);
+                    const y0 = yAccessor(s);
+                    const x1 = xAccessor(t);
+                    const y1 = yAccessor(t);
+                    const x_mid = (x0 + x1) / 2;
+                    return `M${x0},${y0} L${x_mid},${y0} L${x_mid},${y1} L${x1},${y1}`;
+                };
+
+                generator.source = function(_) {
+                    return arguments.length ? (sourceAccessor = _, generator) : sourceAccessor;
+                };
+                generator.target = function(_) {
+                    return arguments.length ? (targetAccessor = _, generator) : targetAccessor;
+                };
+                generator.x = function(_) {
+                    return arguments.length ? (xAccessor = _, generator) : xAccessor;
+                };
+                generator.y = function(_) {
+                    return arguments.length ? (yAccessor = _, generator) : yAccessor;
+                };
+
+                return generator;
+            };
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
     <script src="https://cdn.jsdelivr.net/npm/markmap-lib/dist/browser/index.iife.js"></script>
     <style>
+        :root {
+            --scrollbar-track: #f1f5f9;
+            --scrollbar-thumb: #cbd5e1;
+            --scrollbar-thumb-hover: #94a3b8;
+        }
+        .dark {
+            --scrollbar-track: #1e293b;
+            --scrollbar-thumb: #475569;
+            --scrollbar-thumb-hover: #64748b;
+        }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
         .markmap-node { cursor: pointer; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
-    <header class="bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between shadow-lg shrink-0">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between shadow-lg shrink-0">
         <div class="flex items-center space-x-3">
             <div class="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2.5 rounded-xl shadow-md">
                 <i class="fa-solid fa-sitemap text-xl text-white"></i>
             </div>
             <div>
-                <h1 class="text-lg font-bold tracking-wide text-white flex items-center gap-2">
-                    AWAKEN THE HEALING POWER <span class="text-xs bg-indigo-500/30 text-indigo-300 border border-indigo-500/50 px-2 py-0.5 rounded-full font-normal">陳仲豪身心健康行銷變現</span>
+                <h1 class="text-lg font-bold tracking-wide text-slate-900 dark:text-white flex items-center gap-2">
+                    AWAKEN THE HEALING POWER <span class="text-xs bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/50 px-2 py-0.5 rounded-full font-normal">陳仲豪身心健康行銷變現</span>
                 </h1>
-                <p class="text-xs text-slate-400">可即時編輯、縮放與匯出的動態心智圖系統</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">可即時編輯、縮放與匯出的動態心智圖系統</p>
             </div>
         </div>
         <div class="flex items-center space-x-3">
-            <div class="bg-slate-900/80 p-1 rounded-lg border border-slate-700 flex items-center space-x-1">
+            <div class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center space-x-1">
                 <button id="btn-view-split" onclick="switchView('split')" title="分割模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1">
                     <i class="fa-solid fa-columns"></i><span>雙欄</span>
                 </button>
-                <button id="btn-view-edit" onclick="switchView('edit')" title="純編輯模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1">
+                <button id="btn-view-edit" onclick="switchView('edit')" title="純編輯模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
                     <i class="fa-solid fa-file-pen"></i><span>編輯</span>
                 </button>
-                <button id="btn-view-map" onclick="switchView('map')" title="純心智圖模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1">
+                <button id="btn-view-map" onclick="switchView('map')" title="純心智圖模式" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
                     <i class="fa-solid fa-expand"></i><span>心智圖</span>
                 </button>
             </div>
-            <div class="h-6 w-px bg-slate-700"></div>
-            <button onclick="zoomFit()" title="置中縮放" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+            <button onclick="zoomFit()" title="置中縮放" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-compress"></i><span>重設縮放</span>
             </button>
-            <button onclick="exportMarkdown()" title="下載 Markdown" class="bg-slate-800 hover:bg-slate-700 border border-slate-6E00 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+            <button id="btn-expand-all" onclick="toggleExpandAll()" title="一鍵展開或恢復預設" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-angles-down"></i><span>一鍵展開</span>
+            </button>
+            <button onclick="exportMarkdown()" title="下載 Markdown" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-file-code"></i><span>匯出 .md</span>
             </button>
             <button onclick="exportSVG()" title="下載 SVG" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-md">
                 <i class="fa-solid fa-download"></i><span>下載 SVG 圖片</span>
             </button>
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+            <button id="btn-theme-toggle" onclick="toggleTheme()" title="切換深淺色" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-lg text-xs font-medium transition flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-sun text-sm dark:hidden"></i>
+                <i class="fa-solid fa-moon text-sm hidden dark:inline-block"></i>
+            </button>
         </div>
     </header>
     <main class="flex-1 flex overflow-hidden">
-        <section id="editor-container" class="w-1/2 flex flex-col border-r border-slate-700 bg-slate-950 shadow-inner transition-all duration-300">
-            <div class="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between text-xs font-semibold text-slate-300 shrink-0">
-                <span class="flex items-center gap-1.5 text-indigo-400"><i class="fa-solid fa-pen-nib"></i> 結構文字編輯區 (Markdown 語法)</span>
-                <span class="text-slate-500 font-normal">直接編輯文字即可即時更新右側心智圖</span>
+        <section id="editor-container" class="w-1/2 flex flex-col border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-inner transition-all duration-300">
+            <div class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 shrink-0">
+                <span class="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-pen-nib"></i> 結構文字編輯區 (Markdown 語法)</span>
+                <span class="text-slate-400 dark:text-slate-500 font-normal">直接編輯文字即可即時更新右側心智圖</span>
             </div>
-            <textarea id="editor" class="flex-1 w-full bg-slate-950 text-slate-200 p-5 font-mono text-sm leading-relaxed resize-none focus:outline-none focus:ring-0 selection:bg-indigo-600 selection:text-white">
+            <textarea id="editor" class="flex-1 w-full bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 p-5 font-mono text-sm leading-relaxed resize-none focus:outline-none focus:ring-0 selection:bg-indigo-600 selection:text-white">
 # 身心健康產業行銷與變現課程
 ## 一、課程引言
 ### 1-1 課程定位
@@ -382,35 +450,35 @@
 - 分析AI量子儀器SWOT與PEST
 - 實踐5C思維：以客為尊，越簡單越好</textarea>
         </section>
-        <section id="map-container" class="w-1/2 relative bg-slate-900 flex flex-col h-full transition-all duration-300 overflow-hidden">
+        <section id="map-container" class="w-1/2 relative bg-slate-50 dark:bg-slate-900 flex flex-col h-full transition-all duration-300 overflow-hidden">
             <svg id="markmap" class="w-full flex-1 cursor-move" style="height: 100%; width: 100%; min-height: 500px;"></svg>
-            <div class="absolute bottom-6 right-6 flex space-x-2 bg-slate-800/90 border border-slate-700 p-1.5 rounded-xl shadow-xl backdrop-blur-md z-10">
-                <button onclick="zoomIn()" title="放大" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition shadow"><i class="fa-solid fa-plus text-sm"></i></button>
-                <button onclick="zoomOut()" title="縮小" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition shadow"><i class="fa-solid fa-minus text-sm"></i></button>
+            <div class="absolute bottom-6 right-6 flex space-x-2 bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl shadow-xl backdrop-blur-md z-10">
+                <button onclick="zoomIn()" title="放大" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i class="fa-solid fa-plus text-sm"></i></button>
+                <button onclick="zoomOut()" title="縮小" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i class="fa-solid fa-minus text-sm"></i></button>
                 <button onclick="zoomFit()" title="適合螢幕" class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow"><i class="fa-solid fa-expand text-sm"></i></button>
             </div>
-            <div class="absolute top-4 left-4 bg-slate-800/80 border border-slate-700/80 px-3 py-1.5 rounded-lg text-xs text-slate-400 backdrop-blur-sm pointer-events-none shadow-sm z-10">
-                <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> 滑鼠拖曳畫布移動，滾輪縮放，點擊節點展開/收合，雙擊編輯節點，右鍵選單管理
+            <div class="absolute top-4 left-4 bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 px-3 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-400 backdrop-blur-sm pointer-events-none shadow-sm z-10">
+                <i class="fa-solid fa-circle-info text-indigo-600 dark:text-indigo-400 mr-1"></i> 滑鼠拖曳畫布移動，滾輪縮放，點擊節點展開/收合，雙擊編輯節點，右鍵選單管理
             </div>
             <!-- 浮動右鍵選單 -->
-            <div id="context-menu" class="hidden absolute bg-slate-800/95 border border-slate-700 text-slate-100 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-md z-50 text-xs font-medium">
+            <div id="context-menu" class="hidden absolute bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-md z-50 text-xs font-medium">
                 <button onclick="menuEditNode()" class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
-                    <i class="fa-solid fa-pen text-slate-400"></i> 編輯節點文字
+                    <i class="fa-solid fa-pen text-slate-400 dark:text-slate-500"></i> 編輯節點文字
                 </button>
                 <button onclick="menuAddChild()" class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
-                    <i class="fa-solid fa-plus text-slate-400"></i> 新增子節點
+                    <i class="fa-solid fa-plus text-slate-400 dark:text-slate-500"></i> 新增子節點
                 </button>
                 <button onclick="menuAddSibling()" class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
-                    <i class="fa-solid fa-square-plus text-slate-400"></i> 新增兄弟節點
+                    <i class="fa-solid fa-square-plus text-slate-400 dark:text-slate-500"></i> 新增兄弟節點
                 </button>
-                <div class="h-px bg-slate-700 my-1"></div>
-                <button onclick="menuDeleteNode()" class="w-full text-left px-4 py-2 hover:bg-rose-600 hover:text-white flex items-center gap-2 text-rose-400 hover:text-white transition duration-150">
+                <div class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
+                <button onclick="menuDeleteNode()" class="w-full text-left px-4 py-2 hover:bg-rose-600 hover:text-white flex items-center gap-2 text-rose-500 dark:text-rose-400 hover:text-white transition duration-150">
                     <i class="fa-solid fa-trash"></i> 刪除此節點
                 </button>
             </div>
             <!-- 行內編輯器 -->
             <div id="inline-editor-container" class="hidden absolute z-50">
-                <input type="text" id="inline-editor" class="bg-slate-850 border-2 border-indigo-500 text-slate-100 px-3 py-1.5 rounded-lg shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-xs font-semibold min-w-[150px]">
+                <input type="text" id="inline-editor" class="bg-white dark:bg-slate-800 border-2 border-indigo-500 text-slate-800 dark:text-slate-100 px-3 py-1.5 rounded-lg shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-xs font-semibold min-w-[150px]">
             </div>
         </section>
     </main>
@@ -509,23 +577,194 @@
             }
         }
 
+        const darkColors = ['#818cf8', '#c084fc', '#2dd4bf', '#fbbf24', '#f472b6', '#60a5fa', '#f87171', '#a3e635', '#22d3ee'];
+        const lightColors = ['#4f46e5', '#9333ea', '#0d9488', '#d97706', '#db2777', '#2563eb', '#dc2626', '#65a30d', '#0891b2'];
+
+        const darkStyle = (id) => `
+            .${id} g { fill: #ffffff; font-weight: 500; font-family: ui-sans-serif, system-ui, sans-serif; }
+            .${id} foreignObject { color: #ffffff; }
+            .${id} circle { fill: #0f172a; }
+        `;
+
+        const lightStyle = (id) => `
+            .${id} g { fill: #0f172a; font-weight: 500; font-family: ui-sans-serif, system-ui, sans-serif; }
+            .${id} foreignObject { color: #0f172a; }
+            .${id} circle { fill: #ffffff; }
+        `;
+
+        let isAllExpanded = false;
+
+        function setAllNodesFold(node, foldVal) {
+            if (!node) return;
+            if (!node.payload) node.payload = {};
+            node.payload.fold = foldVal;
+            if (node.children) {
+                node.children.forEach(child => setAllNodesFold(child, foldVal));
+            }
+        }
+
+        function clearAllNodesFold(node) {
+            if (!node) return;
+            if (node.payload) {
+                delete node.payload.fold;
+            }
+            if (node.children) {
+                node.children.forEach(clearAllNodesFold);
+            }
+        }
+
+        function resetExpandButton() {
+            const btn = document.querySelector('#btn-expand-all');
+            if (btn) {
+                const icon = btn.querySelector('i');
+                const span = btn.querySelector('span');
+                icon.className = "fa-solid fa-angles-down";
+                span.innerText = "一鍵展開";
+            }
+            isAllExpanded = false;
+        }
+
+        function toggleExpandAll() {
+            const btn = document.querySelector('#btn-expand-all');
+            const icon = btn.querySelector('i');
+            const span = btn.querySelector('span');
+
+            if (!isAllExpanded) {
+                setAllNodesFold(mm.state.data, 0);
+                mm.renderData();
+                icon.className = "fa-solid fa-rotate-left";
+                span.innerText = "恢復預設";
+                isAllExpanded = true;
+            } else {
+                restoreDefaultFold(mm.state.data);
+                mm.setData(mm.state.data);
+                icon.className = "fa-solid fa-angles-down";
+                span.innerText = "一鍵展開";
+                isAllExpanded = false;
+            }
+        }
+
+        function restoreDefaultFold(node, depth = 1) {
+            if (!node) return;
+            if (!node.payload) node.payload = {};
+            if (depth > 2) {
+                node.payload.fold = 1;
+            } else {
+                delete node.payload.fold;
+            }
+            if (node.children) {
+                node.children.forEach(child => restoreDefaultFold(child, depth + 1));
+            }
+        }
+
+        function decodeHTMLEntities(text) {
+            const textArea = document.createElement('textarea');
+            textArea.innerHTML = text;
+            return textArea.value;
+        }
+
+        let lastActiveNode = null;
+
+        function findActiveNodeForLine(lineIndex) {
+            if (!mm || !mm.state.data) return null;
+            let closestNode = null;
+            let maxLine = -1;
+
+            function walk(node) {
+                if (!node) return;
+                if (node.lineIndex !== undefined && node.lineIndex <= lineIndex && node.lineIndex > maxLine) {
+                    maxLine = node.lineIndex;
+                    closestNode = node;
+                }
+                if (node.children) {
+                    node.children.forEach(walk);
+                }
+            }
+
+            walk(mm.state.data);
+            return closestNode;
+        }
+
+        function unfoldAncestors(targetNode) {
+            if (!mm || !mm.state.data) return false;
+            let path = [];
+            let found = false;
+
+            function findPath(node, currentPath) {
+                if (!node || found) return;
+                currentPath.push(node);
+                if (node === targetNode) {
+                    path = [...currentPath];
+                    found = true;
+                    return;
+                }
+                if (node.children) {
+                    node.children.forEach(child => findPath(child, currentPath));
+                }
+                currentPath.pop();
+            }
+
+            findPath(mm.state.data, []);
+
+            let updated = false;
+            for (let i = 0; i < path.length - 1; i++) {
+                if (!path[i].payload) path[i].payload = {};
+                if (path[i].payload.fold !== 0) {
+                    path[i].payload.fold = 0;
+                    updated = true;
+                }
+            }
+            return updated;
+        }
+
+        function syncMapWithEditorCursor() {
+            if (!mm || !mm.state.data) return;
+            const editor = document.querySelector('#editor');
+            const cursorPos = editor.selectionStart;
+            const textBefore = editor.value.substring(0, cursorPos);
+            const lineIndex = textBefore.split('\n').length - 1;
+
+            const activeNode = findActiveNodeForLine(lineIndex);
+            if (!activeNode) {
+                if (lastActiveNode !== null) {
+                    lastActiveNode = null;
+                    mm.setHighlight(null);
+                }
+                return;
+            }
+
+            if (activeNode !== lastActiveNode) {
+                lastActiveNode = activeNode;
+                const wasFolded = unfoldAncestors(activeNode);
+                if (wasFolded) {
+                    mm.setData(mm.state.data).then(() => {
+                        mm.setHighlight(activeNode);
+                        mm.centerNode(activeNode);
+                    });
+                } else {
+                    mm.setHighlight(activeNode);
+                    mm.centerNode(activeNode);
+                }
+            }
+        }
+
         function initMarkmap() {
             const { Markmap } = window.markmap;
             const svgEl = document.querySelector('#markmap');
+            const isDark = document.documentElement.classList.contains('dark');
+            const currentColors = isDark ? darkColors : lightColors;
+            const currentStyle = isDark ? darkStyle : lightStyle;
 
             mm = Markmap.create(svgEl, {
                 zoom: true,
                 pan: true,
                 initialExpandLevel: 2,
+                spacingVertical: 15,
                 color: (node) => {
-                    const colors = ['#6366f1', '#a855f7', '#14b8a6', '#f59e0b', '#ec4899', '#3b82f6', '#ef4444', '#84cc16', '#06b6d4'];
-                    return colors[node.depth % colors.length];
+                    const depth = node.state ? node.state.depth : (node.depth || 0);
+                    return currentColors[depth % currentColors.length];
                 },
-                style: (id) => `
-                    .${id} g { fill: #f1f5f9; font-weight: 500; font-family: ui-sans-serif, system-ui, sans-serif; }
-                    .${id} line { stroke: #64748b !important; }
-                    .${id} circle { stroke: #6366f1; fill: #1e293b; }
-                `
+                style: currentStyle
             });
 
             // Try to get Transformer from markmap-lib
@@ -538,6 +777,25 @@
 
             setTimeout(() => { updateMarkmap(); }, 100);
             setupEditEvents();
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            if (mm) {
+                const currentColors = isDark ? darkColors : lightColors;
+                const currentStyle = isDark ? darkStyle : lightStyle;
+                mm.setOptions({
+                    color: (node) => {
+                        const depth = node.state ? node.state.depth : (node.depth || 0);
+                        return currentColors[depth % currentColors.length];
+                    },
+                    style: currentStyle
+                });
+                mm.updateStyle();
+                mm.renderData();
+            }
         }
 
         function updateMarkmap() {
@@ -553,8 +811,10 @@
             }
 
             alignNodesWithLines(root, markdown);
+            lastActiveNode = null;
             mm.setData(root);
             mm.fit();
+            resetExpandButton();
         }
 
         function setupEditEvents() {
@@ -593,7 +853,7 @@
                 if (!activeNodeData || activeNodeData.lineIndex === undefined) return;
 
                 showInlineEditor();
-            });
+            }, true);
 
             document.addEventListener('click', (e) => {
                 if (!contextMenu.contains(e.target)) {
@@ -611,6 +871,35 @@
                     inlineEditorContainer.classList.add('hidden');
                 }
             });
+
+            const editor = document.querySelector('#editor');
+            editor.addEventListener('click', syncMapWithEditorCursor);
+            editor.addEventListener('keyup', (e) => {
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+                    syncMapWithEditorCursor();
+                }
+            });
+
+            svgEl.addEventListener('click', (event) => {
+                const nodeEl = event.target.closest('.markmap-node');
+                if (nodeEl) {
+                    const d = nodeEl.__data__;
+                    if (d && d.lineIndex !== undefined) {
+                        const lines = editor.value.split('\n');
+                        let charIndex = 0;
+                        for (let i = 0; i < d.lineIndex; i++) {
+                            charIndex += lines[i].length + 1;
+                        }
+                        editor.focus();
+                        editor.setSelectionRange(charIndex, charIndex + lines[d.lineIndex].length);
+                        
+                        const lineHeight = 24; 
+                        editor.scrollTop = d.lineIndex * lineHeight - editor.clientHeight / 2;
+                        
+                        mm.setHighlight(d);
+                    }
+                }
+            }, true);
         }
 
         function showInlineEditor() {
@@ -619,7 +908,7 @@
             const containerRect = document.querySelector('#map-container').getBoundingClientRect();
             const nodeRect = activeNodeEl.getBoundingClientRect();
 
-            inlineEditor.value = activeNodeData.content;
+            inlineEditor.value = decodeHTMLEntities(activeNodeData.content);
             inlineEditorContainer.style.left = `${nodeRect.left - containerRect.left}px`;
             inlineEditorContainer.style.top = `${nodeRect.top - containerRect.top - 5}px`;
             inlineEditorContainer.style.width = `${Math.max(nodeRect.width + 10, 160)}px`;
@@ -803,7 +1092,7 @@
                 map: document.querySelector('#btn-view-map')
             };
             Object.values(btns).forEach(btn => {
-                btn.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1";
+                btn.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1";
             });
             if (mode === 'split') {
                 btns.split.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
@@ -852,7 +1141,7 @@
             clone.setAttribute('viewBox', `${bbox.x - 50} ${bbox.y - 50} ${bbox.width + 100} ${bbox.height + 100}`);
             clone.setAttribute('width', bbox.width + 100);
             clone.setAttribute('height', bbox.height + 100);
-            clone.style.backgroundColor = '#0f172a';
+            clone.style.backgroundColor = document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc';
             const serializer = new XMLSerializer();
             let source = serializer.serializeToString(clone);
             if(!source.match(/^<\?xml/)){
