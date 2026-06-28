@@ -469,20 +469,24 @@
             <!-- 浮動右鍵選單 -->
             <div id="context-menu"
                 class="hidden absolute bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-md z-50 text-xs font-medium">
-                <button onclick="menuEditNode()"
+                <button id="menu-opt-edit" onclick="menuEditNode()"
                     class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
                     <i class="fa-solid fa-pen text-slate-400 dark:text-slate-500"></i> 編輯節點文字
                 </button>
-                <button onclick="menuAddChild()"
+                <button id="menu-opt-child" onclick="menuAddChild()"
                     class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
                     <i class="fa-solid fa-plus text-slate-400 dark:text-slate-500"></i> 新增子節點
                 </button>
-                <button onclick="menuAddSibling()"
+                <button id="menu-opt-sibling" onclick="menuAddSibling()"
                     class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
                     <i class="fa-solid fa-square-plus text-slate-400 dark:text-slate-500"></i> 新增同層節點
                 </button>
-                <div class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
-                <button onclick="menuDeleteNode()"
+                <button id="menu-opt-parent" onclick="menuAddParentTheme()"
+                    class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+                    <i class="fa-solid fa-folder-plus text-slate-400 dark:text-slate-500"></i> 新增獨立根主題
+                </button>
+                <div id="menu-opt-sep" class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
+                <button id="menu-opt-delete" onclick="menuDeleteNode()"
                     class="w-full text-left px-4 py-2 hover:bg-rose-600 hover:text-white flex items-center gap-2 text-rose-500 dark:text-rose-400 hover:text-white transition duration-150">
                     <i class="fa-solid fa-trash"></i> 刪除此節點
                 </button>

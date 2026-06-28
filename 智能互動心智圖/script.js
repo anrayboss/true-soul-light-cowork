@@ -468,19 +468,45 @@ function setupEditEvents() {
     const inlineEditor = document.querySelector('#inline-editor');
 
     svgEl.addEventListener('contextmenu', (e) => {
-        const nodeEl = e.target.closest('.markmap-node');
-        if (!nodeEl) return;
         e.preventDefault();
         e.stopPropagation();
 
-        activeNodeEl = nodeEl;
-        activeNodeData = nodeEl.__data__;
-
-        if (!activeNodeData || activeNodeData.lineIndex === undefined) return;
-
+        const nodeEl = e.target.closest('.markmap-node');
         const containerRect = document.querySelector('#map-container').getBoundingClientRect();
         contextMenu.style.left = `${e.clientX - containerRect.left}px`;
         contextMenu.style.top = `${e.clientY - containerRect.top}px`;
+
+        const optEdit = document.querySelector('#menu-opt-edit');
+        const optChild = document.querySelector('#menu-opt-child');
+        const optSibling = document.querySelector('#menu-opt-sibling');
+        const optParent = document.querySelector('#menu-opt-parent');
+        const optSep = document.querySelector('#menu-opt-sep');
+        const optDelete = document.querySelector('#menu-opt-delete');
+
+        if (nodeEl) {
+            // Clicked on a node
+            activeNodeEl = nodeEl;
+            activeNodeData = nodeEl.__data__;
+
+            if (optEdit) optEdit.style.display = 'flex';
+            if (optChild) optChild.style.display = 'flex';
+            if (optSibling) optSibling.style.display = 'flex';
+            if (optParent) optParent.style.display = 'none';
+            if (optSep) optSep.style.display = 'block';
+            if (optDelete) optDelete.style.display = 'flex';
+        } else {
+            // Clicked on empty space
+            activeNodeEl = null;
+            activeNodeData = null;
+
+            if (optEdit) optEdit.style.display = 'none';
+            if (optChild) optChild.style.display = 'none';
+            if (optSibling) optSibling.style.display = 'none';
+            if (optParent) optParent.style.display = 'flex';
+            if (optSep) optSep.style.display = 'none';
+            if (optDelete) optDelete.style.display = 'none';
+        }
+
         contextMenu.classList.remove('hidden');
         inlineEditorContainer.classList.add('hidden');
     });
@@ -622,6 +648,40 @@ function updateMarkdownLine(lineIndex, newText) {
     lines[lineIndex] = prefix + newText;
     editor.value = lines.join('\n');
     updateMarkmap(false);
+}
+
+function menuAddParentTheme() {
+    document.querySelector('#context-menu').classList.add('hidden');
+
+    const editor = document.querySelector('#editor');
+    let insertText = '# 新獨立主題';
+
+    editor.value = editor.value.trimEnd() + '\n\n' + insertText;
+    updateMarkmap(false);
+
+    // Scroll to the bottom of the editor
+    editor.scrollTop = editor.scrollHeight;
+
+    setTimeout(() => {
+        const svgEl = document.querySelector('#markmap');
+        const nodeEls = svgEl.querySelectorAll('.markmap-node');
+        const newLines = editor.value.split('\n');
+        const newIndex = newLines.length - 1;
+        
+        for (const el of nodeEls) {
+            if (el.__data__ && el.__data__.lineIndex === newIndex) {
+                activeNodeEl = el;
+                activeNodeData = el.__data__;
+                
+                // Highlight and center on the new root node
+                mm.setHighlight(activeNodeData);
+                mm.centerNode(activeNodeData);
+                
+                showInlineEditor();
+                break;
+            }
+        }
+    }, 400);
 }
 
 function menuEditNode() {
