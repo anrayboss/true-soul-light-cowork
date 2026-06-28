@@ -388,7 +388,7 @@ function initMarkmap() {
         console.log('Transformer not available, using built-in parser');
     }
 
-    setTimeout(() => { updateMarkmap(); }, 100);
+    setTimeout(() => { updateMarkmap(true); }, 100);
     setupEditEvents();
 }
 
@@ -411,9 +411,34 @@ function toggleTheme() {
     }
 }
 
-function updateMarkmap() {
+function saveFoldState(node, map = {}) {
+    if (!node) return map;
+    if (node.content !== undefined) {
+        const decodedKey = decodeHTMLEntities(node.content);
+        map[decodedKey] = node.payload?.fold ?? null;
+    }
+    (node.children || []).forEach(c => saveFoldState(c, map));
+    return map;
+}
+
+function restoreFoldState(node, map) {
+    if (!node) return;
+    if (node.content !== undefined) {
+        const decodedKey = decodeHTMLEntities(node.content);
+        if (map[decodedKey] !== undefined && map[decodedKey] !== null) {
+            if (!node.payload) node.payload = {};
+            node.payload.fold = map[decodedKey];
+        }
+    }
+    (node.children || []).forEach(c => restoreFoldState(c, map));
+}
+
+function updateMarkmap(isFirstLoad = false) {
     if (!mm) return;
     const markdown = document.querySelector('#editor').value;
+
+    // 編輯時快照現有折疊狀態，稍後還原
+    const foldSnapshot = (!isFirstLoad && mm.state.data) ? saveFoldState(mm.state.data) : {};
 
     let root;
     if (transformer) {
@@ -425,8 +450,17 @@ function updateMarkmap() {
 
     alignNodesWithLines(root, markdown);
     lastActiveNode = null;
+
+    // 將快照的折疊狀態還原到新 root（首次載入時略過，使用預設 initialExpandLevel）
+    if (!isFirstLoad) {
+        restoreFoldState(root, foldSnapshot);
+    }
+
     mm.setData(root);
-    mm.fit();
+
+    // 只在首次載入時 fit，避免編輯時視角跳動
+    if (isFirstLoad) mm.fit();
+
     resetExpandButton();
 }
 
@@ -494,7 +528,7 @@ function setupEditEvents() {
     });
     editor.addEventListener('input', () => {
         clearTimeout(timeout);
-        timeout = setTimeout(updateMarkmap, 300);
+        timeout = setTimeout(() => updateMarkmap(false), 300);
     });
 
     svgEl.addEventListener('click', (event) => {
@@ -541,7 +575,7 @@ function commitInlineEdit() {
     if (inlineEditorContainer.classList.contains('hidden') || !activeNodeData) return;
 
     const newValue = document.querySelector('#inline-editor').value.trim();
-    if (newValue && newValue !== activeNodeData.content) {
+    if (newValue && newValue !== decodeHTMLEntities(activeNodeData.content)) {
         updateMarkdownLine(activeNodeData.lineIndex, newValue);
     }
     inlineEditorContainer.classList.add('hidden');
@@ -590,7 +624,7 @@ function updateMarkdownLine(lineIndex, newText) {
 
     lines[lineIndex] = prefix + newText;
     editor.value = lines.join('\n');
-    updateMarkmap();
+    updateMarkmap(false);
 }
 
 function menuEditNode() {
@@ -628,7 +662,7 @@ function menuAddChild() {
 
     lines.splice(lineIndex + 1, 0, childPrefix + '新子節點');
     editor.value = lines.join('\n');
-    updateMarkmap();
+    updateMarkmap(false);
 
     setTimeout(() => {
         const svgEl = document.querySelector('#markmap');
@@ -661,7 +695,7 @@ function menuAddSibling() {
 
     lines.splice(insertIndex, 0, prefix + '新節點');
     editor.value = lines.join('\n');
-    updateMarkmap();
+    updateMarkmap(false);
 
     setTimeout(() => {
         const svgEl = document.querySelector('#markmap');
@@ -691,7 +725,7 @@ function menuDeleteNode() {
     lines.splice(lineIndex, endIndex - lineIndex);
 
     editor.value = lines.join('\n');
-    updateMarkmap();
+    updateMarkmap(false);
 }
 
 let timeout;
