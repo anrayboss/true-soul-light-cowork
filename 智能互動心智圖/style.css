@@ -1,0 +1,62 @@
+:root {
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-thumb-hover: #94a3b8;
+}
+
+.dark {
+    --scrollbar-track: #1e293b;
+    --scrollbar-thumb: #475569;
+    --scrollbar-thumb-hover: #64748b;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+.markmap-node {
+    cursor: pointer;
+}
+
+@media (max-width: 767px) {
+    main {
+        flex-direction: column !important;
+    }
+
+    #drag-bar {
+        width: 100% !important;
+        height: 6px !important;
+        cursor: row-resize !important;
+        border-top: 1px solid rgba(226, 232, 240, 0.8);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .dark #drag-bar {
+        border-top: 1px solid rgba(51, 65, 85, 0.8);
+        border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+    }
+
+    #drag-bar>div {
+        width: 24px !important;
+        height: 3px !important;
+    }
+
+    #editor-container,
+    #map-container {
+        border-right: none !important;
+    }
+}
