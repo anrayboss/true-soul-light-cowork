@@ -414,8 +414,7 @@ function toggleTheme() {
 function saveFoldState(node, map = {}) {
     if (!node) return map;
     if (node.content !== undefined) {
-        const decodedKey = decodeHTMLEntities(node.content);
-        map[decodedKey] = node.payload?.fold ?? null;
+        map[node.content] = node.payload?.fold ?? null;
     }
     (node.children || []).forEach(c => saveFoldState(c, map));
     return map;
@@ -423,12 +422,9 @@ function saveFoldState(node, map = {}) {
 
 function restoreFoldState(node, map) {
     if (!node) return;
-    if (node.content !== undefined) {
-        const decodedKey = decodeHTMLEntities(node.content);
-        if (map[decodedKey] !== undefined && map[decodedKey] !== null) {
-            if (!node.payload) node.payload = {};
-            node.payload.fold = map[decodedKey];
-        }
+    if (node.content !== undefined && map[node.content] !== undefined && map[node.content] !== null) {
+        if (!node.payload) node.payload = {};
+        node.payload.fold = map[node.content];
     }
     (node.children || []).forEach(c => restoreFoldState(c, map));
 }
@@ -451,12 +447,13 @@ function updateMarkmap(isFirstLoad = false) {
     alignNodesWithLines(root, markdown);
     lastActiveNode = null;
 
-    // 將快照的折疊狀態還原到新 root（首次載入時略過，使用預設 initialExpandLevel）
-    if (!isFirstLoad) {
-        restoreFoldState(root, foldSnapshot);
-    }
-
     mm.setData(root);
+
+    // 將快照的折疊狀態還原到實際的 state.data 中，並重新渲染
+    if (!isFirstLoad) {
+        restoreFoldState(mm.state.data, foldSnapshot);
+        mm.renderData();
+    }
 
     // 只在首次載入時 fit，避免編輯時視角跳動
     if (isFirstLoad) mm.fit();
@@ -575,7 +572,7 @@ function commitInlineEdit() {
     if (inlineEditorContainer.classList.contains('hidden') || !activeNodeData) return;
 
     const newValue = document.querySelector('#inline-editor').value.trim();
-    if (newValue && newValue !== decodeHTMLEntities(activeNodeData.content)) {
+    if (newValue && newValue !== activeNodeData.content) {
         updateMarkdownLine(activeNodeData.lineIndex, newValue);
     }
     inlineEditorContainer.classList.add('hidden');
