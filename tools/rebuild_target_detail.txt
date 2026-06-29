@@ -1,0 +1,89 @@
+Detailed Inspection of: 真靈光企劃書所有資訊(線上共編處)\重製.pptx
+Total slides: 2
+Slide Size: Width=13.333", Height=7.500"
+
+--- Slide 1 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;327;p7', Type: PLACEHOLDER (14), Pos: L=0.43", T=0.04", W=11.17", H=1.22" | Texts: 半自動化循環流程
+  Shape: 'Google Shape;328;p7', Type: GROUP (6), Pos: L=1.65", T=1.69", W=8.32", H=5.23"
+    Shape: 'Google Shape;329;p7', Type: AUTO_SHAPE (1), Pos: L=7.07", T=3.56", W=2.58", H=1.67" | Texts: 
+    Shape: 'Google Shape;330;p7', Type: TEXT_BOX (17), Pos: L=7.88", T=4.01", W=1.73", H=1.18" | Texts: 儀器 / 課程 / 諮詢
+    Shape: 'Google Shape;331;p7', Type: AUTO_SHAPE (1), Pos: L=1.65", T=2.72", W=4.16", H=1.67" | Texts: 
+    Shape: 'Google Shape;332;p7', Type: TEXT_BOX (17), Pos: L=1.69", T=3.17", W=2.84", H=1.18" | Texts: 健康食品 / 美容 / 保養品 / 能量產品 / 炁的食衣住行育樂 / 代餐 咖啡 / 日常用品
+    Shape: 'Google Shape;333;p7', Type: AUTO_SHAPE (1), Pos: L=6.76", T=0.00", W=3.21", H=1.67" | Texts: 
+    Shape: 'Google Shape;334;p7', Type: TEXT_BOX (17), Pos: L=7.76", T=0.04", W=2.17", H=1.18" | Texts: 量測 / 量測後分類
+    Shape: 'Google Shape;335;p7', Type: AUTO_SHAPE (1), Pos: L=2.81", T=0.00", W=2.68", H=1.67" | Texts: 
+    Shape: 'Google Shape;336;p7', Type: TEXT_BOX (17), Pos: L=2.84", T=0.04", W=1.81", H=1.18" | Texts: 自媒體 / IP / 實體宣傳
+    Shape: 'Google Shape;337;p7', Type: FREEFORM (5), Pos: L=3.70", T=0.30", W=2.26", H=2.26" | Texts: 
+    Shape: 'Google Shape;338;p7', Type: TEXT_BOX (17), Pos: L=4.37", T=0.96", W=1.60", H=1.60" | Texts: 宣傳
+    Shape: 'Google Shape;339;p7', Type: FREEFORM (5), Pos: L=6.07", T=0.30", W=2.26", H=2.26" | Texts: 
+    Shape: 'Google Shape;340;p7', Type: TEXT_BOX (17), Pos: L=6.07", T=0.96", W=1.60", H=1.60" | Texts: 量測
+    Shape: 'Google Shape;341;p7', Type: FREEFORM (5), Pos: L=6.07", T=2.67", W=2.26", H=2.26" | Texts: 
+    Shape: 'Google Shape;342;p7', Type: TEXT_BOX (17), Pos: L=6.07", T=2.67", W=1.60", H=1.60" | Texts: 課程
+    Shape: 'Google Shape;343;p7', Type: FREEFORM (5), Pos: L=3.70", T=2.67", W=2.26", H=2.26" | Texts: 
+    Shape: 'Google Shape;344;p7', Type: TEXT_BOX (17), Pos: L=4.37", T=2.67", W=1.60", H=1.60" | Texts: 產品
+    Shape: 'Google Shape;345;p7', Type: FREEFORM (5), Pos: L=5.63", T=2.14", W=0.78", H=0.68" | Texts: 
+    Shape: 'Google Shape;346;p7', Type: FREEFORM (5), Pos: L=5.63", T=2.41", W=0.78", H=0.68" | Texts: 
+  Shape: 'Google Shape;347;p7', Type: PICTURE (13), Pos: L=9.56", T=4.44", W=2.45", H=2.59"
+  Shape: 'Google Shape;348;p7', Type: PICTURE (13), Pos: L=10.15", T=0.85", W=1.10", H=3.12"
+  Shape: 'Google Shape;349;p7', Type: PICTURE (13), Pos: L=0.23", T=1.23", W=2.31", H=0.94"
+  Shape: 'Google Shape;350;p7', Type: PICTURE (13), Pos: L=0.23", T=2.31", W=1.55", H=1.55"
+  Shape: 'Google Shape;351;p7', Type: PICTURE (13), Pos: L=0.30", T=5.87", W=0.70", H=0.77"
+  Shape: 'Google Shape;352;p7', Type: PICTURE (13), Pos: L=0.23", T=3.99", W=1.20", H=1.60"
+  Shape: 'Google Shape;353;p7', Type: PICTURE (13), Pos: L=3.50", T=5.59", W=1.87", H=1.28"
+  Shape: 'Google Shape;354;p7', Type: PICTURE (13), Pos: L=11.79", T=4.32", W=1.55", H=2.32"
+  Shape: 'Google Shape;355;p7', Type: PICTURE (13), Pos: L=11.43", T=1.26", W=3.46", H=2.59"
+
+--- Slide 2 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;360;p8', Type: PLACEHOLDER (14), Pos: L=0.21", T=0.00", W=13.33", H=1.36" | Texts: 身心靈一站式服務培訓系統
+  Shape: 'Google Shape;361;p8', Type: GROUP (6), Pos: L=1.25", T=2.05", W=11.75", H=4.36"
+    Shape: 'Google Shape;362;p8', Type: FREEFORM (5), Pos: L=10.65", T=3.70", W=0.10", H=0.59" | Texts: 
+    Shape: 'Google Shape;363;p8', Type: FREEFORM (5), Pos: L=6.00", T=2.10", W=4.70", H=0.59" | Texts: 
+    Shape: 'Google Shape;364;p8', Type: FREEFORM (5), Pos: L=7.62", T=3.70", W=0.10", H=0.59" | Texts: 
+    Shape: 'Google Shape;365;p8', Type: FREEFORM (5), Pos: L=6.00", T=2.10", W=1.67", H=0.59" | Texts: 
+    Shape: 'Google Shape;366;p8', Type: FREEFORM (5), Pos: L=4.13", T=3.70", W=0.10", H=0.59" | Texts: 
+    Shape: 'Google Shape;367;p8', Type: FREEFORM (5), Pos: L=4.18", T=2.10", W=1.82", H=0.59" | Texts: 
+    Shape: 'Google Shape;368;p8', Type: FREEFORM (5), Pos: L=1.05", T=3.70", W=0.10", H=0.59" | Texts: 
+    Shape: 'Google Shape;369;p8', Type: FREEFORM (5), Pos: L=1.10", T=2.10", W=4.90", H=0.59" | Texts: 
+    Shape: 'Google Shape;370;p8', Type: AUTO_SHAPE (1), Pos: L=4.70", T=1.09", W=2.60", H=1.01" | Texts: 
+    Shape: 'Google Shape;371;p8', Type: TEXT_BOX (17), Pos: L=4.70", T=1.09", W=2.60", H=1.01" | Texts: 身心靈整合平台
+    Shape: 'Google Shape;372;p8', Type: AUTO_SHAPE (1), Pos: L=5.41", T=1.88", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;373;p8', Type: TEXT_BOX (17), Pos: L=5.41", T=1.88", W=1.76", H=0.34" | Texts: 整合一致性
+    Shape: 'Google Shape;374;p8', Type: AUTO_SHAPE (1), Pos: L=0.12", T=2.69", W=1.96", H=1.01" | Texts: 
+    Shape: 'Google Shape;375;p8', Type: TEXT_BOX (17), Pos: L=0.12", T=2.69", W=1.96", H=1.01" | Texts: 宣傳
+    Shape: 'Google Shape;376;p8', Type: AUTO_SHAPE (1), Pos: L=0.41", T=3.45", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;377;p8', Type: TEXT_BOX (17), Pos: L=0.41", T=3.45", W=1.76", H=0.34" | Texts: 流量
+    Shape: 'Google Shape;378;p8', Type: AUTO_SHAPE (1), Pos: L=0.12", T=4.29", W=1.96", H=1.01" | Texts: 
+    Shape: 'Google Shape;379;p8', Type: TEXT_BOX (17), Pos: L=0.12", T=4.29", W=1.96", H=1.01" | Texts: 行銷與業務培訓
+    Shape: 'Google Shape;380;p8', Type: AUTO_SHAPE (1), Pos: L=0.51", T=5.08", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;381;p8', Type: TEXT_BOX (17), Pos: L=0.51", T=5.08", W=1.76", H=0.34" | Texts: 流量變現
+    Shape: 'Google Shape;382;p8', Type: AUTO_SHAPE (1), Pos: L=3.20", T=2.69", W=1.96", H=1.01" | Texts: 
+    Shape: 'Google Shape;383;p8', Type: TEXT_BOX (17), Pos: L=3.20", T=2.69", W=1.96", H=1.01" | Texts: 量測
+    Shape: 'Google Shape;384;p8', Type: AUTO_SHAPE (1), Pos: L=3.59", T=3.48", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;385;p8', Type: TEXT_BOX (17), Pos: L=3.59", T=3.48", W=1.76", H=0.34" | Texts: 可數據化
+    Shape: 'Google Shape;386;p8', Type: AUTO_SHAPE (1), Pos: L=2.75", T=4.29", W=3.06", H=1.01" | Texts: 
+    Shape: 'Google Shape;387;p8', Type: TEXT_BOX (17), Pos: L=2.75", T=4.29", W=3.06", H=1.01" | Texts: AI身心靈檢測
+    Shape: 'Google Shape;388;p8', Type: AUTO_SHAPE (1), Pos: L=3.69", T=5.08", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;389;p8', Type: TEXT_BOX (17), Pos: L=3.69", T=5.08", W=1.76", H=0.34" | Texts: 身心靈量測
+    Shape: 'Google Shape;390;p8', Type: AUTO_SHAPE (1), Pos: L=6.69", T=2.69", W=1.96", H=1.01" | Texts: 
+    Shape: 'Google Shape;391;p8', Type: TEXT_BOX (17), Pos: L=6.69", T=2.69", W=1.96", H=1.01" | Texts: 諮詢/課程
+    Shape: 'Google Shape;392;p8', Type: AUTO_SHAPE (1), Pos: L=7.08", T=3.48", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;393;p8', Type: TEXT_BOX (17), Pos: L=7.08", T=3.48", W=1.76", H=0.34" | Texts: 獨特技術諮詢
+    Shape: 'Google Shape;394;p8', Type: AUTO_SHAPE (1), Pos: L=6.28", T=4.29", W=2.97", H=1.09" | Texts: 
+    Shape: 'Google Shape;395;p8', Type: TEXT_BOX (17), Pos: L=6.28", T=4.29", W=2.97", H=1.09" | Texts: 身心靈老師培訓
+    Shape: 'Google Shape;396;p8', Type: AUTO_SHAPE (1), Pos: L=7.18", T=5.12", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;397;p8', Type: TEXT_BOX (17), Pos: L=7.18", T=5.12", W=1.76", H=0.34" | Texts: 可複製靈性提升
+    Shape: 'Google Shape;398;p8', Type: AUTO_SHAPE (1), Pos: L=9.72", T=2.69", W=1.96", H=1.01" | Texts: 
+    Shape: 'Google Shape;399;p8', Type: TEXT_BOX (17), Pos: L=9.72", T=2.69", W=1.96", H=1.01" | Texts: 產品
+    Shape: 'Google Shape;400;p8', Type: AUTO_SHAPE (1), Pos: L=10.11", T=3.48", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;401;p8', Type: TEXT_BOX (17), Pos: L=10.11", T=3.48", W=1.76", H=0.34" | Texts: 建議顧客所需
+    Shape: 'Google Shape;402;p8', Type: AUTO_SHAPE (1), Pos: L=9.72", T=4.29", W=1.96", H=1.01" | Texts: 
+    Shape: 'Google Shape;403;p8', Type: TEXT_BOX (17), Pos: L=9.72", T=4.29", W=1.96", H=1.01" | Texts: 產品培訓
+    Shape: 'Google Shape;404;p8', Type: AUTO_SHAPE (1), Pos: L=10.11", T=5.08", W=1.76", H=0.34" | Texts: 
+    Shape: 'Google Shape;405;p8', Type: TEXT_BOX (17), Pos: L=10.11", T=5.08", W=1.76", H=0.34" | Texts: 獨特產品
+  Shape: 'Google Shape;406;p8', Type: AUTO_SHAPE (1), Pos: L=6.69", T=3.95", W=0.69", H=0.51" | Texts: 
+  Shape: 'Google Shape;407;p8', Type: AUTO_SHAPE (1), Pos: L=10.01", T=3.87", W=0.82", H=0.47" | Texts: 
+  Shape: 'Google Shape;408;p8', Type: AUTO_SHAPE (1), Pos: L=-0.03", T=2.41", W=2.31", H=1.08" | Texts: 客戶流程
+  Shape: 'Google Shape;409;p8', Type: AUTO_SHAPE (1), Pos: L=0.00", T=6.41", W=2.42", H=1.00" | Texts: 培訓系統
+  Shape: 'Google Shape;410;p8', Type: AUTO_SHAPE (1), Pos: L=3.38", T=3.87", W=0.69", H=0.51" | Texts: 

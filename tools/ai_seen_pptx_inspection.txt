@@ -1,0 +1,133 @@
+Inspecting PPTX: 真靈光企劃書所有資訊(線上共編處)\真靈光企劃書_給 AI 看的.pptx
+Total slides: 20
+Slide Size: Width=13.333", Height=7.500"
+
+--- Slide 1 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;282;p1', Type: PLACEHOLDER (14), Pos: L=0.61", T=0.14", W=6.72", H=7.04" | Texts: 陳仲豪 / 經歷： / 學習身心健康30年 / 身心靈健康產業21年 / 身心靈相關花超過400萬 / 台灣六萬名經銷商推薦第一名 / 拿過三家身心健康產業第一名 / 拿過20個以上銷售冠軍 / 經營過14家身心健康相關實體店， / 學員超過10000人
+  Shape: 'Google Shape;283;p1', Type: PICTURE (13), Pos: L=6.79", T=0.14", W=6.55", H=7.04"
+
+--- Slide 2 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;288;p2', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.00", W=13.33", H=1.29" | Texts: 18歲上心靈課程訂下人生目標
+  Shape: 'Google Shape;289;p2', Type: PLACEHOLDER (14), Pos: L=0.00", T=2.39", W=12.73", H=3.53" | Texts: 一、身心靈健康整合平台(亞健康) / 二、身心靈療癒中心(重症) / 三、身心靈學校&養生村(根本解)
+  Shape: 'Google Shape;290;p2', Type: PICTURE (13), Pos: L=7.43", T=3.25", W=5.90", H=3.53"
+
+--- Slide 3 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;295;p3', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.00", W=13.33", H=1.36" | Texts: 平台創立動機
+  Shape: 'Google Shape;296;p3', Type: PLACEHOLDER (14), Pos: L=0.67", T=1.75", W=12.00", H=5.75" | Texts: 消費者:幫助更多人身心靈的健康 快樂 / 從業者:幫助從業者安身立命,進而幫助更多人 / 核心:身心靈一站式的服務 / 包含診所 運動教室 諮詢室 整脊室
+
+--- Slide 4 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;301;p5', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.00", W=13.33", H=1.36" | Texts: 遇到大師指點 做出規劃
+  Shape: 'Google Shape;302;p5', Type: PLACEHOLDER (14), Pos: L=0.17", T=1.59", W=13.00", H=5.91" | Texts: 身心靈界的嚴選蝦皮， / 身心靈界的全聯/SOGO / 身心靈一站式的服務(諮詢 課程 產品)-定心 定靈 / /發掘天賦 / 業力處理/ 前世回溯/ 身體處理/ / 靈性定位，處理靈的問題 / 真正幫助更多人身心靈的提升 / 靈魂導引/接引，連接主神，身心靈老師提升靈性
+  Shape: 'Google Shape;303;p5', Type: PICTURE (13), Pos: L=8.90", T=1.59", W=3.76", H=1.50"
+  Shape: 'Google Shape;304;p5', Type: PICTURE (13), Pos: L=9.14", T=3.24", W=3.76", H=2.82"
+
+--- Slide 5 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;309;p6', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.00", W=13.33", H=1.36" | Texts: 身心靈流程
+  Shape: 'Google Shape;310;p6', Type: GROUP (6), Pos: L=0.39", T=1.36", W=12.25", H=5.96"
+
+--- Slide 6 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;327;p7', Type: PLACEHOLDER (14), Pos: L=0.43", T=0.04", W=11.17", H=1.22" | Texts: 半自動化循環流程
+  Shape: 'Google Shape;328;p7', Type: GROUP (6), Pos: L=1.65", T=1.69", W=8.32", H=5.23"
+  Shape: 'Google Shape;347;p7', Type: PICTURE (13), Pos: L=9.56", T=4.44", W=2.45", H=2.59"
+  Shape: 'Google Shape;348;p7', Type: PICTURE (13), Pos: L=10.15", T=0.85", W=1.10", H=3.12"
+  Shape: 'Google Shape;349;p7', Type: PICTURE (13), Pos: L=0.23", T=1.23", W=2.31", H=0.94"
+  Shape: 'Google Shape;350;p7', Type: PICTURE (13), Pos: L=0.23", T=2.31", W=1.55", H=1.55"
+  Shape: 'Google Shape;351;p7', Type: PICTURE (13), Pos: L=0.30", T=5.87", W=0.70", H=0.77"
+  Shape: 'Google Shape;352;p7', Type: PICTURE (13), Pos: L=0.23", T=3.99", W=1.20", H=1.60"
+  Shape: 'Google Shape;353;p7', Type: PICTURE (13), Pos: L=3.50", T=5.59", W=1.87", H=1.28"
+  Shape: 'Google Shape;354;p7', Type: PICTURE (13), Pos: L=11.79", T=4.32", W=1.55", H=2.32"
+  Shape: 'Google Shape;355;p7', Type: PICTURE (13), Pos: L=11.43", T=1.26", W=3.46", H=2.59"
+
+--- Slide 7 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;360;p8', Type: PLACEHOLDER (14), Pos: L=0.21", T=0.00", W=13.33", H=1.36" | Texts: 身心靈一站式服務培訓系統
+  Shape: 'Google Shape;361;p8', Type: GROUP (6), Pos: L=1.25", T=2.05", W=11.75", H=4.36"
+  Shape: 'Google Shape;406;p8', Type: AUTO_SHAPE (1), Pos: L=6.69", T=3.95", W=0.69", H=0.51" | Texts: 
+  Shape: 'Google Shape;407;p8', Type: AUTO_SHAPE (1), Pos: L=10.01", T=3.87", W=0.82", H=0.47" | Texts: 
+  Shape: 'Google Shape;408;p8', Type: AUTO_SHAPE (1), Pos: L=-0.03", T=2.41", W=2.31", H=1.08" | Texts: 客戶流程
+  Shape: 'Google Shape;409;p8', Type: AUTO_SHAPE (1), Pos: L=0.00", T=6.41", W=2.42", H=1.00" | Texts: 培訓系統
+  Shape: 'Google Shape;410;p8', Type: AUTO_SHAPE (1), Pos: L=3.38", T=3.87", W=0.69", H=0.51" | Texts: 
+
+--- Slide 8 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;415;p9', Type: PLACEHOLDER (14), Pos: L=0.15", T=0.36", W=13.00", H=1.00" | Texts: 代理商的收入來源
+  Shape: 'Google Shape;416;p9', Type: PLACEHOLDER (14), Pos: L=0.68", T=1.62", W=12.04", H=5.23" | Texts: 
+  Shape: 'Google Shape;417;p9', Type: TABLE (19), Pos: L=0.53", T=1.23", W=3.28", H=3.28"
+
+--- Slide 9 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;422;p10', Type: PLACEHOLDER (14), Pos: L=1.08", T=0.43", W=11.17", H=1.22" | Texts: 三年計畫
+  Shape: 'Google Shape;423;p10', Type: PLACEHOLDER (14), Pos: L=0.67", T=1.75", W=12.00", H=5.75" | Texts: 第一年,培訓,練兵練功,就像培養一個身心靈老師偶像團體一樣 / 第二年,培訓+產品, 賺錢 開說明會 / 第三年,培訓+產品+大量開店
+
+--- Slide 10 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;428;p11', Type: GROUP (6), Pos: L=0.14", T=0.60", W=13.21", H=4.40"
+  Shape: 'Google Shape;467;p11', Type: AUTO_SHAPE (1), Pos: L=2.68", T=4.15", W=0.58", H=0.32" | Texts: 
+  Shape: 'Google Shape;468;p11', Type: AUTO_SHAPE (1), Pos: L=5.07", T=4.08", W=0.68", H=0.39" | Texts: 
+  Shape: 'Google Shape;469;p11', Type: AUTO_SHAPE (1), Pos: L=2.84", T=5.28", W=2.30", H=1.19" | Texts: 存量
+  Shape: 'Google Shape;470;p11', Type: AUTO_SHAPE (1), Pos: L=0.37", T=5.97", W=2.30", H=1.19" | Texts: 流量
+  Shape: 'Google Shape;471;p11', Type: AUTO_SHAPE (1), Pos: L=7.92", T=4.95", W=2.30", H=1.19" | Texts: 能量
+  Shape: 'Google Shape;472;p11', Type: AUTO_SHAPE (1), Pos: L=5.30", T=6.06", W=2.30", H=1.19" | Texts: 大量
+  Shape: 'Google Shape;473;p11', Type: AUTO_SHAPE (1), Pos: L=10.81", T=5.50", W=2.30", H=1.19" | Texts: 使用量
+
+--- Slide 11 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;478;p12', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 企業架構
+  Shape: 'Google Shape;479;p12', Type: GROUP (6), Pos: L=0.30", T=1.58", W=12.73", H=4.66"
+
+--- Slide 12 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;558;p13', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 
+  Shape: 'Google Shape;559;p13', Type: TABLE (19), Pos: L=0.34", T=0.49", W=3.28", H=3.28"
+
+--- Slide 13 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;564;p14', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 我們在徵的人才
+  Shape: 'Google Shape;565;p14', Type: PLACEHOLDER (14), Pos: L=0.68", T=1.62", W=12.04", H=5.23" | Texts: 1、身心靈老師或想學習的人(透過座談會) / 2、特助(細心 ) / 3、財稅相關專業(會計師) / 4、醫療相關專業(醫師/護理師/營養師/醫檢師/藥師 心理師) / 5、行銷相關專業(小編/拍攝/剪片/經紀人) / 6、法律相關專業
+
+--- Slide 14 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;570;p15', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 實體
+  Shape: 'Google Shape;571;p15', Type: PLACEHOLDER (14), Pos: L=0.68", T=1.62", W=12.04", H=5.23" | Texts: 一樓：咖啡廳+茶飲 / 二樓：運動教室 身心靈 / 三樓：諮詢室/整脊/調理 / 四樓：診所 / 或者一層有兩個功能也可
+
+--- Slide 15 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;576;p16', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 咖啡廳外觀示意圖
+  Shape: 'Google Shape;577;p16', Type: PLACEHOLDER (14), Pos: L=0.52", T=1.36", W=5.09", H=2.86"
+  Shape: 'Google Shape;578;p16', Type: PICTURE (13), Pos: L=8.68", T=2.44", W=5.17", H=5.17"
+  Shape: 'Google Shape;579;p16', Type: PICTURE (13), Pos: L=6.09", T=0.94", W=5.39", H=2.94"
+  Shape: 'Google Shape;580;p16', Type: PICTURE (13), Pos: L=1.29", T=4.23", W=3.27", H=3.27"
+
+--- Slide 16 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;585;p17', Type: PICTURE (13), Pos: L=0.37", T=2.58", W=5.87", H=3.91"
+  Shape: 'Google Shape;586;p17', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 運動教室示意圖
+  Shape: 'Google Shape;587;p17', Type: PICTURE (13), Pos: L=7.40", T=3.01", W=5.23", H=3.48"
+
+--- Slide 17 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;592;p18', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 美容/身心靈教室外觀示意圖
+  Shape: 'Google Shape;593;p18', Type: PLACEHOLDER (14), Pos: L=0.79", T=1.91", W=5.88", H=3.92"
+  Shape: 'Google Shape;594;p18', Type: PICTURE (13), Pos: L=7.41", T=1.53", W=5.76", H=5.76"
+
+--- Slide 18 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;599;p19', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 辦公室示意圖
+  Shape: 'Google Shape;600;p19', Type: PLACEHOLDER (14), Pos: L=1.90", T=1.54", W=9.75", H=5.31"
+
+--- Slide 19 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;605;p20', Type: PLACEHOLDER (14), Pos: L=0.00", T=0.36", W=13.00", H=1.00" | Texts: 分租模式的行銷優勢
+  Shape: 'Google Shape;606;p20', Type: PLACEHOLDER (14), Pos: L=0.48", T=1.64", W=12.04", H=5.23" | Texts: 交叉引流 / 櫃台協助檢測 服務與成交 / 讓老師做本來在做的事情 / 吧檯飲品與點心可增加公司收益
+  Shape: 'Google Shape;607;p20', Type: PICTURE (13), Pos: L=8.45", T=2.18", W=3.89", H=3.89"
+  Shape: 'Google Shape;608;p20', Type: PICTURE (13), Pos: L=7.79", T=2.12", W=5.21", H=4.51"
+
+--- Slide 20 ---
+  Background Fill Type: BACKGROUND (5)
+  Shape: 'Google Shape;613;p21', Type: TABLE (19), Pos: L=0.00", T=0.00", W=3.28", H=3.28"
