@@ -46,3 +46,5 @@ python "tools/transcribe.py" "<檔案絕對路徑>" --model small --device cpu
 - 儲存路徑：`<檔案所在的資料夾>\<檔名>_大綱.md`
 
 完成後，向使用者回報工作成果，並提供產出檔案的點擊連結。
+
+#真靈光
