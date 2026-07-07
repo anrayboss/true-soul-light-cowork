@@ -22,6 +22,9 @@ def parse_markdown_to_slides(filepath):
     for line in lines:
         stripped = line.strip()
         
+        if re.match(r'^##\s*(整理版|完整)?逐字稿', stripped) or re.match(r'^##\s*逐字稿', stripped):
+            break
+            
         is_separator = re.match(r'^\s*---\s*$', stripped)
         is_h1 = stripped.startswith('#') and not stripped.startswith('##')
         is_h2 = stripped.startswith('##') and not stripped.startswith('###')
