@@ -1,0 +1,3855 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雲端硬碟檔案結構圖 - 可編輯心智圖</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+    // Set theme on load based on preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+    // Override d3.linkHorizontal to support toggling between straight lines and curves
+    (function () {
+      const originalLinkHorizontal = d3.linkHorizontal;
+      window.useStraightLines = true; // Default to straight lines with right angles
+
+      d3.linkHorizontal = function () {
+        const originalGenerator = originalLinkHorizontal();
+        let sourceAccessor = d => d.source;
+        let targetAccessor = d => d.target;
+        let xAccessor = d => d[0];
+        let yAccessor = d => d[1];
+
+        const generator = function (d) {
+          if (!window.useStraightLines) {
+            return originalGenerator(d);
+          }
+          const s = sourceAccessor(d);
+          const t = targetAccessor(d);
+          const x0 = xAccessor(s);
+          const y0 = yAccessor(s);
+          const x1 = xAccessor(t);
+          const y1 = yAccessor(t);
+          const x_mid = (x0 + x1) / 2;
+          return `M${x0},${y0} L${x_mid},${y0} L${x_mid},${y1} L${x1},${y1}`;
+        };
+
+        generator.source = function (_) {
+          if (arguments.length) {
+            sourceAccessor = _;
+            originalGenerator.source(_);
+            return generator;
+          }
+          return sourceAccessor;
+        };
+        generator.target = function (_) {
+          if (arguments.length) {
+            targetAccessor = _;
+            originalGenerator.target(_);
+            return generator;
+          }
+          return targetAccessor;
+        };
+        generator.x = function (_) {
+          if (arguments.length) {
+            xAccessor = _;
+            originalGenerator.x(_);
+            return generator;
+          }
+          return xAccessor;
+        };
+        generator.y = function (_) {
+          if (arguments.length) {
+            yAccessor = _;
+            originalGenerator.y(_);
+            return generator;
+          }
+          return yAccessor;
+        };
+
+        return generator;
+      };
+    })();
+
+    var transformer, mm;
+    let activeNodeData = null;
+    let activeNodeEl = null;
+
+    // Simple markdown to tree parser (fallback if Transformer unavailable)
+    function parseMarkdown(md) {
+      const lines = md.split('\n');
+      const root = { content: '', children: [], depth: 0 };
+      const stack = [root];
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        let depth, content;
+        const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)/);
+        const bulletMatch = trimmed.match(/^[-*]\s+(.*)/);
+        const indentedBulletMatch = line.match(/^(\s+)[-*]\s+(.*)/);
+
+        if (headingMatch) {
+          depth = headingMatch[1].length;
+          content = headingMatch[2];
+        } else if (indentedBulletMatch) {
+          const indent = indentedBulletMatch[1].length;
+          depth = 7 + Math.floor(indent / 2);
+          content = indentedBulletMatch[2];
+        } else if (bulletMatch) {
+          depth = 7;
+          content = bulletMatch[1];
+        } else {
+          continue;
+        }
+
+        const node = { content, children: [], depth };
+
+        while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
+          stack.pop();
+        }
+        stack[stack.length - 1].children.push(node);
+        stack.push(node);
+      }
+
+      return root.children.length === 1 ? root.children[0] : root;
+    }
+
+    function buildMarkmapData(node) {
+      return {
+        content: node.content,
+        children: (node.children || []).map(buildMarkmapData)
+      };
+    }
+
+    function alignNodesWithLines(root, markdown) {
+      const lines = markdown.split('\n');
+      const nodeLines = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        const isHeading = trimmed.match(/^(#{1,6})\s+/);
+        const isBullet = trimmed.match(/^[-*]\s+/);
+        const isIndentedBullet = line.match(/^(\s+)[-*]\s+/);
+
+        if (isHeading || isBullet || isIndentedBullet) {
+          nodeLines.push({
+            lineIndex: i,
+            lineContent: line
+          });
+        }
+      }
+
+      const treeNodes = [];
+      function traverse(node) {
+        if (!node) return;
+        if (node.depth === 0 && !node.content && node.children && node.children.length > 0) {
+          // Virtual root
+        } else {
+          treeNodes.push(node);
+        }
+        if (node.children) {
+          node.children.forEach(traverse);
+        }
+      }
+
+      traverse(root);
+
+      const limit = Math.min(treeNodes.length, nodeLines.length);
+      for (let i = 0; i < limit; i++) {
+        treeNodes[i].lineIndex = nodeLines[i].lineIndex;
+      }
+    }
+
+    const darkColors = ['#818cf8', '#c084fc', '#2dd4bf', '#fbbf24', '#f472b6', '#60a5fa', '#f87171', '#a3e635', '#22d3ee'];
+    const lightColors = ['#4f46e5', '#9333ea', '#0d9488', '#d97706', '#db2777', '#2563eb', '#dc2626', '#65a30d', '#0891b2'];
+
+    const darkStyle = (id) => `
+    .${id} g { fill: #ffffff; font-weight: 500; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .${id} foreignObject { color: #ffffff; }
+    .${id} circle { fill: #0f172a; }
+`;
+
+    const lightStyle = (id) => `
+    .${id} g { fill: #0f172a; font-weight: 500; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .${id} foreignObject { color: #0f172a; }
+    .${id} circle { fill: #ffffff; }
+`;
+
+    let isAllExpanded = false;
+
+    function setAllNodesFold(node, foldVal) {
+      if (!node) return;
+      if (!node.payload) node.payload = {};
+      node.payload.fold = foldVal;
+      if (node.children) {
+        node.children.forEach(child => setAllNodesFold(child, foldVal));
+      }
+    }
+
+    function collapseAllNodes(node, depth = 1) {
+      if (!node) return;
+      if (!node.payload) node.payload = {};
+      if (depth > 2) {
+        node.payload.fold = 1;
+      } else {
+        delete node.payload.fold;
+      }
+      if (node.children) {
+        node.children.forEach(child => collapseAllNodes(child, depth + 1));
+      }
+    }
+
+    function resetExpandButton() {
+      const btn = document.querySelector('#btn-expand-all');
+      const mobileBtn = document.querySelector('#mobile-btn-expand-all');
+
+      const updateBtnState = (b) => {
+        if (!b) return;
+        const icon = b.querySelector('i');
+        const span = b.querySelector('span');
+        icon.className = "fa-solid fa-angles-down";
+        span.innerText = "一鍵展開";
+      };
+
+      updateBtnState(btn);
+      updateBtnState(mobileBtn);
+      isAllExpanded = false;
+    }
+
+    function toggleExpandAll() {
+      const btn = document.querySelector('#btn-expand-all');
+      const mobileBtn = document.querySelector('#mobile-btn-expand-all');
+
+      const setExpandState = (b, expanded) => {
+        if (!b) return;
+        const icon = b.querySelector('i');
+        const span = b.querySelector('span');
+        if (expanded) {
+          icon.className = "fa-solid fa-rotate-left";
+          span.innerText = "恢復預設";
+        } else {
+          icon.className = "fa-solid fa-angles-down";
+          span.innerText = "一鍵展開";
+        }
+      };
+
+      if (isAllExpanded) {
+        collapseAllNodes(mm.state.data);
+        mm.setData(mm.state.data);
+        setExpandState(btn, false);
+        setExpandState(mobileBtn, false);
+        isAllExpanded = false;
+      } else {
+        setAllNodesFold(mm.state.data, 0);
+        mm.renderData();
+        setExpandState(btn, true);
+        setExpandState(mobileBtn, true);
+        isAllExpanded = true;
+      }
+      pushState();
+    }
+
+    function toggleLineStyle() {
+      const btn = document.querySelector('#btn-toggle-line');
+      const mobileBtn = document.querySelector('#mobile-btn-toggle-line');
+
+      window.useStraightLines = !window.useStraightLines;
+
+      const updateStyleState = (b) => {
+        if (!b) return;
+        const icon = b.querySelector('i');
+        const span = b.querySelector('span');
+        if (window.useStraightLines) {
+          icon.className = "fa-solid fa-route";
+          span.innerText = "直角折線";
+        } else {
+          icon.className = "fa-solid fa-bezier-curve";
+          span.innerText = "曲線連結";
+        }
+      };
+
+      updateStyleState(btn);
+      updateStyleState(mobileBtn);
+
+      if (mm) {
+        mm.renderData();
+      }
+    }
+
+    function decodeHTMLEntities(text) {
+      const textArea = document.createElement('textarea');
+      textArea.innerHTML = text;
+      return textArea.value;
+    }
+
+    let lastActiveNode = null;
+
+    function findActiveNodeForLine(lineIndex) {
+      if (!mm || !mm.state.data) return null;
+      let closestNode = null;
+      let maxLine = -1;
+
+      function walk(node) {
+        if (!node) return;
+        if (node.lineIndex !== undefined && node.lineIndex <= lineIndex && node.lineIndex > maxLine) {
+          maxLine = node.lineIndex;
+          closestNode = node;
+        }
+        if (node.children) {
+          node.children.forEach(walk);
+        }
+      }
+
+      walk(mm.state.data);
+      return closestNode;
+    }
+
+    function unfoldAncestors(targetNode) {
+      if (!mm || !mm.state.data) return false;
+      let path = [];
+      let found = false;
+
+      function findPath(node, currentPath) {
+        if (!node || found) return;
+        currentPath.push(node);
+        if (node === targetNode) {
+          path = [...currentPath];
+          found = true;
+          return;
+        }
+        if (node.children) {
+          node.children.forEach(child => findPath(child, currentPath));
+        }
+        currentPath.pop();
+      }
+
+      findPath(mm.state.data, []);
+
+      let updated = false;
+      for (let i = 0; i < path.length - 1; i++) {
+        if (!path[i].payload) path[i].payload = {};
+        if (path[i].payload.fold !== 0) {
+          path[i].payload.fold = 0;
+          updated = true;
+        }
+      }
+      return updated;
+    }
+
+    function syncMapWithEditorCursor() {
+      if (!mm || !mm.state.data) return;
+      const editor = document.querySelector('#editor');
+      const cursorPos = editor.selectionStart;
+      const textBefore = editor.value.substring(0, cursorPos);
+      const lineIndex = textBefore.split('\n').length - 1;
+
+      const activeNode = findActiveNodeForLine(lineIndex);
+      if (!activeNode) {
+        if (lastActiveNode !== null) {
+          lastActiveNode = null;
+          mm.setHighlight(null);
+        }
+        return;
+      }
+
+      if (activeNode !== lastActiveNode) {
+        lastActiveNode = activeNode;
+        const wasFolded = unfoldAncestors(activeNode);
+        if (wasFolded) {
+          mm.renderData().then(() => {
+            mm.setHighlight(activeNode);
+            mm.centerNode(activeNode);
+          });
+        } else {
+          mm.setHighlight(activeNode);
+          mm.centerNode(activeNode);
+        }
+      }
+    }
+
+
+    // --- 歷程控制與分類排序優化程式碼 ---
+    let historyStack = [];
+    let historyIndex = -1;
+    let isApplyingHistory = false;
+
+    function sortFolderAndFiles(node, depth = 0) {
+      if (!node || !node.children || node.children.length === 0) return;
+
+      // 從第三層（depth >= 1）開始進行分類排序：資料夾置頂、檔案置底，內部按拼音字母排序
+      if (depth >= 1) {
+        node.children.sort((a, b) => {
+          const isDirA = a.content.includes('📂');
+          const isDirB = b.content.includes('📂');
+
+          if (isDirA && !isDirB) return -1;
+          if (!isDirA && isDirB) return 1;
+
+          return a.content.localeCompare(b.content, 'zh-Hant');
+        });
+      }
+
+      node.children.forEach(child => sortFolderAndFiles(child, depth + 1));
+    }
+
+    function pushState() {
+      if (!mm || !mm.state.data || isApplyingHistory) return;
+
+      const text = document.querySelector('#editor').value;
+      const folds = saveFoldState(mm.state.data);
+      const newState = { text, folds: JSON.parse(JSON.stringify(folds)) };
+
+      if (historyIndex >= 0 && statesAreEqual(historyStack[historyIndex], newState)) {
+        return;
+      }
+
+      historyStack = historyStack.slice(0, historyIndex + 1);
+      historyStack.push(newState);
+      historyIndex = historyStack.length - 1;
+
+      updateUndoRedoButtons();
+    }
+
+    function statesAreEqual(s1, s2) {
+      if (!s1 || !s2) return false;
+      if (s1.text !== s2.text) return false;
+      const keys1 = Object.keys(s1.folds);
+      const keys2 = Object.keys(s2.folds);
+      if (keys1.length !== keys2.length) return false;
+      for (const k of keys1) {
+        if (s1.folds[k] !== s2.folds[k]) return false;
+      }
+      return true;
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        restoreHistoryState(historyStack[historyIndex]);
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        restoreHistoryState(historyStack[historyIndex]);
+      }
+    }
+
+    function restoreHistoryState(state) {
+      if (!state) return;
+      isApplyingHistory = true;
+
+      const editor = document.querySelector('#editor');
+      if (editor.value !== state.text) {
+        editor.value = state.text;
+        updateMarkmapWithFolds(state.folds);
+      } else {
+        restoreFoldState(mm.state.data, state.folds);
+        mm.renderData();  // 用 renderData 而非 setData，避免 _initializeData 重置折疊狀態
+        updateUndoRedoButtons();
+        isApplyingHistory = false;
+      }
+    }
+
+    function updateMarkmapWithFolds(folds) {
+      if (!mm) return;
+      const markdown = document.querySelector('#editor').value;
+      let root;
+      if (transformer) {
+        const result = transformer.transform(markdown);
+        root = result.root;
+      } else {
+        root = buildMarkmapData(parseMarkdown(markdown));
+      }
+      sortFolderAndFiles(root, 0);
+      alignNodesWithLines(root, markdown);
+      lastActiveNode = null;
+
+      mm.setData(root);
+      restoreFoldState(mm.state.data, folds);
+      mm.renderData();
+
+      updateUndoRedoButtons();
+      isApplyingHistory = false;
+    }
+
+    function updateUndoRedoButtons() {
+      const btnUndo = document.getElementById('btn-undo');
+      const btnRedo = document.getElementById('btn-redo');
+      const mobUndo = document.getElementById('mobile-btn-undo');
+      const mobRedo = document.getElementById('mobile-btn-redo');
+
+      const canUndo = historyIndex > 0;
+      const canRedo = historyIndex < historyStack.length - 1;
+
+      if (btnUndo) btnUndo.disabled = !canUndo;
+      if (btnRedo) btnRedo.disabled = !canRedo;
+
+      if (mobUndo) {
+        mobUndo.disabled = !canUndo;
+        mobUndo.style.opacity = canUndo ? "1" : "0.4";
+      }
+      if (mobRedo) {
+        mobRedo.disabled = !canRedo;
+        mobRedo.style.opacity = canRedo ? "1" : "0.4";
+      }
+    }
+
+    function checkAndPushFoldChange() {
+      if (!mm || !mm.state.data || isApplyingHistory) return;
+      const currentFolds = saveFoldState(mm.state.data);
+      const lastFolds = historyIndex >= 0 ? historyStack[historyIndex].folds : {};
+      if (JSON.stringify(currentFolds) !== JSON.stringify(lastFolds)) {
+        pushState();
+      }
+    }
+    // -----------------------------------------------------
+
+    function initMarkmap() {
+      const { Markmap } = window.markmap;
+      const svgEl = document.querySelector('#markmap');
+      const isDark = document.documentElement.classList.contains('dark');
+      const currentColors = isDark ? darkColors : lightColors;
+      const currentStyle = isDark ? darkStyle : lightStyle;
+
+      mm = Markmap.create(svgEl, {
+        zoom: true,
+        pan: true,
+        initialExpandLevel: 2,
+        spacingVertical: 10,
+        spacingHorizontal: 80,
+        color: (node) => {
+          const depth = node.state ? node.state.depth : (node.depth || 0);
+          return currentColors[depth % currentColors.length];
+        },
+        style: currentStyle
+      });
+
+      // 覆寫 _relayout：
+      //   Step 1 - 重新分配 Y 座標為均勻間距（消除 D3 flextree 因 subtree 高度撐開垂直的副作用）
+      //   Step 2 - 只把 X 軸向右拉伸到指定 gap
+      const _origRelayout = mm._relayout.bind(mm);
+      mm._relayout = function () {
+        _origRelayout();
+        if (!this.state.data) return;
+        const spacingV = this.options.spacingVertical || 10;
+
+        // Step 1: 均勻重排 Y，每個節點的子節點以固定間距排列在父節點上下
+        const redistributeY = (node) => {
+          if (!node || !node.state || !node.state.rect) return;
+          const children = node.children || [];
+          if (!children.length) return;
+          // 取出節點高度（state.size[1] 是節點本身的高，fallback 20px）
+          const nodeH = (node.state.size && node.state.size[1]) ? node.state.size[1] : 20;
+          const step = nodeH + spacingV;
+          const parentY = node.state.rect.y;
+          const totalSpan = (children.length - 1) * step;
+          const startY = parentY - totalSpan / 2;
+          children.forEach((child, i) => {
+            if (child.state && child.state.rect) child.state.rect.y = startY + i * step;
+            redistributeY(child);
+          });
+        };
+        redistributeY(this.state.data);
+
+        // Step 2: 固定 gap 拉伸 X 軸
+        const GAP_L1 = 180;  // root → 第一層
+        const GAP_DEEP = 1000; // 第二層以下
+        const adjustX = (node, depth, parentRightX) => {
+          if (!node || !node.state || !node.state.rect) return;
+          const gap = depth === 0 ? 0 : (depth === 1 ? GAP_L1 : GAP_DEEP);
+          if (depth > 0) node.state.rect.x = parentRightX + gap;
+          const rightX = node.state.rect.x + node.state.rect.width;
+          (node.children || []).forEach(c => adjustX(c, depth + 1, rightX));
+        };
+        adjustX(this.state.data, 0, 0);
+
+        // Step 3: 重新計算 bounding box 讓 fit() 正確
+        const allNodes = [];
+        const collect = n => { if (n) { allNodes.push(n); (n.children || []).forEach(collect); } };
+        collect(this.state.data);
+        const rects = allNodes.map(n => n.state && n.state.rect).filter(Boolean);
+        if (rects.length) this.state.rect = {
+          x1: Math.min(...rects.map(r => r.x)),
+          y1: Math.min(...rects.map(r => r.y)),
+          x2: Math.max(...rects.map(r => r.x + r.width)),
+          y2: Math.max(...rects.map(r => r.y + r.height))
+        };
+      };
+
+      // Try to get Transformer from markmap-lib
+      if (window.markmap && window.markmap.Transformer) {
+        transformer = new window.markmap.Transformer();
+        console.log('Using markmap Transformer');
+      } else {
+        console.log('Transformer not available, using built-in parser');
+      }
+
+      setTimeout(() => { updateMarkmap(true); }, 100);
+      setupEditEvents();
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      if (mm) {
+        const currentColors = isDark ? darkColors : lightColors;
+        const currentStyle = isDark ? darkStyle : lightStyle;
+        mm.setOptions({
+          color: (node) => {
+            const depth = node.state ? node.state.depth : (node.depth || 0);
+            return currentColors[depth % currentColors.length];
+          },
+          style: currentStyle
+        });
+        mm.updateStyle();
+        mm.renderData();
+      }
+    }
+
+    function saveFoldState(node, map = {}) {
+      if (!node) return map;
+      if (node.content !== undefined) {
+        map[node.content] = node.payload?.fold ?? null;
+      }
+      (node.children || []).forEach(c => saveFoldState(c, map));
+      return map;
+    }
+
+    function restoreFoldState(node, map) {
+      if (!node) return;
+      if (node.content !== undefined && map[node.content] !== undefined && map[node.content] !== null) {
+        if (!node.payload) node.payload = {};
+        node.payload.fold = map[node.content];
+      }
+      (node.children || []).forEach(c => restoreFoldState(c, map));
+    }
+
+    function updateMarkmap(isFirstLoad = false) {
+      if (!mm) return;
+      const markdown = document.querySelector('#editor').value;
+
+      // 編輯時快照現有折疊狀態，稍後還原
+      const foldSnapshot = (!isFirstLoad && mm.state.data) ? saveFoldState(mm.state.data) : {};
+
+      let root;
+      if (transformer) {
+        const result = transformer.transform(markdown);
+        root = result.root;
+      } else {
+        root = buildMarkmapData(parseMarkdown(markdown));
+      }
+
+      alignNodesWithLines(root, markdown);
+      lastActiveNode = null;
+      sortFolderAndFiles(root, 0);
+      mm.setData(root);
+
+      // 將快照的折疊狀態還原到實際的 state.data 中，並重新渲染
+      if (!isFirstLoad) {
+        restoreFoldState(mm.state.data, foldSnapshot);
+        mm.renderData();
+        // 文字編輯才推歷史（折疊操作由 checkAndPushFoldChange 負責）
+        pushState();
+      }
+
+      // 只在首次載入時 fit，避免編輯時視角跳動
+      if (isFirstLoad) mm.fit();
+
+      resetExpandButton();
+    }
+
+    function setupEditEvents() {
+      const svgEl = document.querySelector('#markmap');
+      const contextMenu = document.querySelector('#context-menu');
+      const inlineEditorContainer = document.querySelector('#inline-editor-container');
+      const inlineEditor = document.querySelector('#inline-editor');
+
+      svgEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const nodeEl = e.target.closest('.markmap-node');
+        const containerRect = document.querySelector('#map-container').getBoundingClientRect();
+        contextMenu.style.left = `${e.clientX - containerRect.left}px`;
+        contextMenu.style.top = `${e.clientY - containerRect.top}px`;
+
+        const optEdit = document.querySelector('#menu-opt-edit');
+        const optChild = document.querySelector('#menu-opt-child');
+        const optSibling = document.querySelector('#menu-opt-sibling');
+        const optParent = document.querySelector('#menu-opt-parent');
+        const optSep = document.querySelector('#menu-opt-sep');
+        const optDelete = document.querySelector('#menu-opt-delete');
+
+        if (nodeEl) {
+          // Clicked on a node
+          activeNodeEl = nodeEl;
+          activeNodeData = nodeEl.__data__;
+
+          if (optEdit) optEdit.style.display = 'flex';
+          if (optChild) optChild.style.display = 'flex';
+          if (optSibling) optSibling.style.display = 'flex';
+          if (optParent) optParent.style.display = 'none';
+          if (optSep) optSep.style.display = 'block';
+          if (optDelete) optDelete.style.display = 'flex';
+        } else {
+          // Clicked on empty space
+          activeNodeEl = null;
+          activeNodeData = null;
+
+          if (optEdit) optEdit.style.display = 'none';
+          if (optChild) optChild.style.display = 'none';
+          if (optSibling) optSibling.style.display = 'none';
+          if (optParent) optParent.style.display = 'flex';
+          if (optSep) optSep.style.display = 'none';
+          if (optDelete) optDelete.style.display = 'none';
+        }
+
+        contextMenu.classList.remove('hidden');
+        inlineEditorContainer.classList.add('hidden');
+      });
+
+      svgEl.addEventListener('dblclick', (e) => {
+        const nodeEl = e.target.closest('.markmap-node');
+        if (!nodeEl) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        activeNodeEl = nodeEl;
+        activeNodeData = nodeEl.__data__;
+
+        if (!activeNodeData || activeNodeData.lineIndex === undefined) return;
+
+        showInlineEditor();
+      }, true);
+
+      document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) {
+          contextMenu.classList.add('hidden');
+        }
+        if (!inlineEditorContainer.contains(e.target) && !e.target.closest('.markmap-node')) {
+          commitInlineEdit();
+        }
+      });
+
+      inlineEditor.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          commitInlineEdit();
+        } else if (e.key === 'Escape') {
+          inlineEditorContainer.classList.add('hidden');
+        }
+      });
+
+      const editor = document.querySelector('#editor');
+      editor.addEventListener('click', syncMapWithEditorCursor);
+      editor.addEventListener('keyup', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+          syncMapWithEditorCursor();
+        }
+      });
+      editor.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => updateMarkmap(false), 300);
+      });
+
+      svgEl.addEventListener('click', (event) => {
+        const nodeEl = event.target.closest('.markmap-node');
+        if (nodeEl) {
+          const d = nodeEl.__data__;
+          if (d && d.lineIndex !== undefined) {
+            const lines = editor.value.split('\n');
+            let charIndex = 0;
+            for (let i = 0; i < d.lineIndex; i++) {
+              charIndex += lines[i].length + 1;
+            }
+            editor.focus();
+            editor.setSelectionRange(charIndex, charIndex + lines[d.lineIndex].length);
+
+            const lineHeight = 24;
+            editor.scrollTop = d.lineIndex * lineHeight - editor.clientHeight / 2;
+
+            mm.setHighlight(d);
+          }
+        }
+        setTimeout(checkAndPushFoldChange, 150);
+      }, true);
+    }
+
+    function showInlineEditor() {
+      const inlineEditorContainer = document.querySelector('#inline-editor-container');
+      const inlineEditor = document.querySelector('#inline-editor');
+      const containerRect = document.querySelector('#map-container').getBoundingClientRect();
+      const nodeRect = activeNodeEl.getBoundingClientRect();
+
+      inlineEditor.value = decodeHTMLEntities(activeNodeData.content);
+      inlineEditorContainer.style.left = `${nodeRect.left - containerRect.left}px`;
+      inlineEditorContainer.style.top = `${nodeRect.top - containerRect.top - 5}px`;
+      inlineEditorContainer.style.width = `${Math.max(nodeRect.width + 10, 160)}px`;
+      inlineEditorContainer.classList.remove('hidden');
+      inlineEditor.focus();
+      inlineEditor.select();
+
+      document.querySelector('#context-menu').classList.add('hidden');
+    }
+
+    function commitInlineEdit() {
+      const inlineEditorContainer = document.querySelector('#inline-editor-container');
+      if (inlineEditorContainer.classList.contains('hidden') || !activeNodeData) return;
+
+      const newValue = document.querySelector('#inline-editor').value.trim();
+      if (newValue && newValue !== activeNodeData.content) {
+        updateMarkdownLine(activeNodeData.lineIndex, newValue);
+      }
+      inlineEditorContainer.classList.add('hidden');
+    }
+
+    function getLineDepth(line) {
+      const trimmed = line.trim();
+      const headingMatch = trimmed.match(/^(#{1,6})\s+/);
+      const indentedBulletMatch = line.match(/^(\s+)[-*]\s+/);
+      const bulletMatch = trimmed.match(/^[-*]\s+/);
+
+      if (headingMatch) {
+        return headingMatch[1].length;
+      } else if (indentedBulletMatch) {
+        const indent = indentedBulletMatch[1].length;
+        return 7 + Math.floor(indent / 2);
+      } else if (bulletMatch) {
+        return 7;
+      }
+      return 999;
+    }
+
+    function findDescendantEndIndex(lines, startIndex, baseDepth) {
+      let i = startIndex + 1;
+      while (i < lines.length) {
+        const line = lines[i];
+        if (!line.trim()) {
+          i++;
+          continue;
+        }
+        const depth = getLineDepth(line);
+        if (depth <= baseDepth) {
+          break;
+        }
+        i++;
+      }
+      return i;
+    }
+
+    function updateMarkdownLine(lineIndex, newText) {
+      const editor = document.querySelector('#editor');
+      const lines = editor.value.split('\n');
+      const originalLine = lines[lineIndex];
+      const match = originalLine.match(/^(\s*(?:#{1,6}|[-*])\s+)/);
+      const prefix = match ? match[1] : '';
+
+      lines[lineIndex] = prefix + newText;
+      editor.value = lines.join('\n');
+      updateMarkmap(false);
+      pushState();
+    }
+
+    function menuAddParentTheme() {
+      document.querySelector('#context-menu').classList.add('hidden');
+
+      const editor = document.querySelector('#editor');
+      let insertText = '# 新獨立主題';
+
+      editor.value = editor.value.trimEnd() + '\n\n' + insertText;
+      updateMarkmap(false);
+
+      // Scroll to the bottom of the editor
+      editor.scrollTop = editor.scrollHeight;
+
+      setTimeout(() => {
+        const svgEl = document.querySelector('#markmap');
+        const nodeEls = svgEl.querySelectorAll('.markmap-node');
+        const newLines = editor.value.split('\n');
+        const newIndex = newLines.length - 1;
+
+        for (const el of nodeEls) {
+          if (el.__data__ && el.__data__.lineIndex === newIndex) {
+            activeNodeEl = el;
+            activeNodeData = el.__data__;
+
+            // Highlight and center on the new root node
+            mm.setHighlight(activeNodeData);
+            mm.centerNode(activeNodeData);
+
+            showInlineEditor();
+            break;
+          }
+        }
+      }, 400);
+    }
+
+    function menuEditNode() {
+      document.querySelector('#context-menu').classList.add('hidden');
+      showInlineEditor();
+    }
+
+    function menuAddChild() {
+      document.querySelector('#context-menu').classList.add('hidden');
+      if (!activeNodeData) return;
+
+      const editor = document.querySelector('#editor');
+      const lines = editor.value.split('\n');
+      const lineIndex = activeNodeData.lineIndex;
+      const parentLine = lines[lineIndex];
+
+      const headingMatch = parentLine.match(/^(\s*)(#{1,6})\s+/);
+      const bulletMatch = parentLine.match(/^(\s*)([-*])\s+/);
+      let childPrefix = '';
+
+      if (headingMatch) {
+        const indent = headingMatch[1];
+        const hashes = headingMatch[2];
+        if (hashes.length < 6) {
+          childPrefix = indent + hashes + '# ';
+        } else {
+          childPrefix = indent + '- ';
+        }
+      } else if (bulletMatch) {
+        const indent = bulletMatch[1];
+        childPrefix = indent + '  - ';
+      } else {
+        childPrefix = '- ';
+      }
+
+      lines.splice(lineIndex + 1, 0, childPrefix + '新子節點');
+      editor.value = lines.join('\n');
+      updateMarkmap(false);
+
+      setTimeout(() => {
+        const svgEl = document.querySelector('#markmap');
+        const nodeEls = svgEl.querySelectorAll('.markmap-node');
+        for (const el of nodeEls) {
+          if (el.__data__ && el.__data__.lineIndex === lineIndex + 1) {
+            activeNodeEl = el;
+            activeNodeData = el.__data__;
+            showInlineEditor();
+            break;
+          }
+        }
+      }, 400);
+    }
+
+    function menuAddSibling() {
+      document.querySelector('#context-menu').classList.add('hidden');
+      if (!activeNodeData) return;
+
+      const editor = document.querySelector('#editor');
+      const lines = editor.value.split('\n');
+      const lineIndex = activeNodeData.lineIndex;
+      const currentLine = lines[lineIndex];
+      const baseDepth = getLineDepth(currentLine);
+
+      const match = currentLine.match(/^(\s*(?:#{1,6}|[-*])\s+)/);
+      const prefix = match ? match[1] : '- ';
+
+      const insertIndex = findDescendantEndIndex(lines, lineIndex, baseDepth);
+
+      lines.splice(insertIndex, 0, prefix + '新節點');
+      editor.value = lines.join('\n');
+      updateMarkmap(false);
+
+      setTimeout(() => {
+        const svgEl = document.querySelector('#markmap');
+        const nodeEls = svgEl.querySelectorAll('.markmap-node');
+        for (const el of nodeEls) {
+          if (el.__data__ && el.__data__.lineIndex === insertIndex) {
+            activeNodeEl = el;
+            activeNodeData = el.__data__;
+            showInlineEditor();
+            break;
+          }
+        }
+      }, 400);
+    }
+
+    function menuDeleteNode() {
+      document.querySelector('#context-menu').classList.add('hidden');
+      if (!activeNodeData) return;
+
+      const editor = document.querySelector('#editor');
+      const lines = editor.value.split('\n');
+      const lineIndex = activeNodeData.lineIndex;
+      const currentLine = lines[lineIndex];
+      const baseDepth = getLineDepth(currentLine);
+
+      const endIndex = findDescendantEndIndex(lines, lineIndex, baseDepth);
+      lines.splice(lineIndex, endIndex - lineIndex);
+
+      editor.value = lines.join('\n');
+      updateMarkmap(false);
+      pushState();
+    }
+
+    let timeout;
+
+    let lastSplitPercent = 50;
+    let lastSplitPercentMobile = 50;
+    let activeViewMode = 'split';
+
+    function isMobileView() {
+      return window.innerWidth < 768;
+    }
+
+    function toggleMobileMenu() {
+      const panel = document.querySelector('#mobile-menu-panel');
+      const backdrop = document.querySelector('#mobile-menu-backdrop');
+      if (!panel || !backdrop) return;
+
+      if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        backdrop.classList.remove('hidden');
+        setTimeout(() => {
+          panel.classList.remove('translate-x-full');
+          backdrop.classList.remove('opacity-0');
+          backdrop.classList.add('opacity-100');
+        }, 10);
+      } else {
+        panel.classList.add('translate-x-full');
+        backdrop.classList.remove('opacity-100');
+        backdrop.classList.add('opacity-0');
+        setTimeout(() => {
+          panel.classList.add('hidden');
+          backdrop.classList.add('hidden');
+        }, 300);
+      }
+    }
+
+    function setupDragBar() {
+      const dragBar = document.querySelector('#drag-bar');
+      const editorCol = document.querySelector('#editor-container');
+      const mapCol = document.querySelector('#map-container');
+      const main = document.querySelector('main');
+
+      if (!dragBar) return;
+
+      let isDragging = false;
+
+      function onDragStart(e) {
+        isDragging = true;
+        mapCol.style.pointerEvents = 'none';
+        document.body.style.cursor = isMobileView() ? 'row-resize' : 'col-resize';
+        document.body.style.userSelect = 'none';
+      }
+
+      function onDragMove(e) {
+        if (!isDragging) return;
+        if (e.cancelable) e.preventDefault();
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const mainRect = main.getBoundingClientRect();
+
+        if (isMobileView()) {
+          const offsetY = clientY - mainRect.top;
+          const percentage = (offsetY / mainRect.height) * 100;
+          if (percentage >= 15 && percentage <= 85) {
+            lastSplitPercentMobile = percentage;
+            editorCol.style.height = `${percentage}%`;
+            editorCol.style.width = '100%';
+            mapCol.style.height = `${100 - percentage}%`;
+            mapCol.style.width = '100%';
+          }
+        } else {
+          const offsetX = clientX - mainRect.left;
+          const percentage = (offsetX / mainRect.width) * 100;
+          if (percentage >= 20 && percentage <= 80) {
+            lastSplitPercent = percentage;
+            editorCol.style.width = `${percentage}%`;
+            editorCol.style.height = '100%';
+            mapCol.style.width = `${100 - percentage}%`;
+            mapCol.style.height = '100%';
+          }
+        }
+      }
+
+      function onDragEnd() {
+        if (isDragging) {
+          isDragging = false;
+          mapCol.style.pointerEvents = 'auto';
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          if (mm) mm.fit();
+        }
+      }
+
+      // Mouse Events
+      dragBar.addEventListener('mousedown', onDragStart);
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', onDragEnd);
+
+      // Touch Events (Mobile)
+      dragBar.addEventListener('touchstart', onDragStart, { passive: true });
+      document.addEventListener('touchmove', onDragMove, { passive: false });
+      document.addEventListener('touchend', onDragEnd);
+    }
+
+    function switchView(mode) {
+      activeViewMode = mode;
+      const editorCol = document.querySelector('#editor-container');
+      const mapCol = document.querySelector('#map-container');
+      const dragBar = document.querySelector('#drag-bar');
+
+      // Sync buttons for desktop
+      const btns = {
+        split: document.querySelector('#btn-view-split'),
+        edit: document.querySelector('#btn-view-edit'),
+        map: document.querySelector('#btn-view-map')
+      };
+      Object.values(btns).forEach(btn => {
+        if (btn) btn.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1";
+      });
+
+      // Sync buttons for mobile
+      const mobileBtns = {
+        split: document.querySelector('#mobile-btn-view-split'),
+        edit: document.querySelector('#mobile-btn-view-edit'),
+        map: document.querySelector('#mobile-btn-view-map')
+      };
+      Object.values(mobileBtns).forEach(btn => {
+        if (btn) btn.className = "py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center";
+      });
+
+      if (mode === 'split') {
+        if (btns.split) btns.split.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+        if (mobileBtns.split) mobileBtns.split.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+
+        editorCol.style.display = "flex";
+        mapCol.style.display = "flex";
+        if (dragBar) dragBar.style.display = "flex";
+
+        if (isMobileView()) {
+          editorCol.style.width = '100%';
+          editorCol.style.height = `${lastSplitPercentMobile}%`;
+          mapCol.style.width = '100%';
+          mapCol.style.height = `${100 - lastSplitPercentMobile}%`;
+        } else {
+          editorCol.style.width = `${lastSplitPercent}%`;
+          editorCol.style.height = '100%';
+          mapCol.style.width = `${100 - lastSplitPercent}%`;
+          mapCol.style.height = '100%';
+        }
+      } else if (mode === 'edit') {
+        if (btns.edit) btns.edit.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+        if (mobileBtns.edit) mobileBtns.edit.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+
+        editorCol.style.display = "flex";
+        editorCol.style.width = "100%";
+        editorCol.style.height = "100%";
+        mapCol.style.display = "none";
+        if (dragBar) dragBar.style.display = "none";
+      } else if (mode === 'map') {
+        if (btns.map) btns.map.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+        if (mobileBtns.map) mobileBtns.map.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+
+        editorCol.style.display = "none";
+        mapCol.style.display = "flex";
+        mapCol.style.width = "100%";
+        mapCol.style.height = "100%";
+        if (dragBar) dragBar.style.display = "none";
+      }
+      setTimeout(() => { if (mm && mode !== 'edit') { mm.fit(); } }, 300);
+    }
+
+    window.addEventListener('resize', () => {
+      if (activeViewMode === 'split') {
+        const editorCol = document.querySelector('#editor-container');
+        const mapCol = document.querySelector('#map-container');
+        if (isMobileView()) {
+          editorCol.style.width = '100%';
+          editorCol.style.height = `${lastSplitPercentMobile}%`;
+          mapCol.style.width = '100%';
+          mapCol.style.height = `${100 - lastSplitPercentMobile}%`;
+        } else {
+          editorCol.style.width = `${lastSplitPercent}%`;
+          editorCol.style.height = '100%';
+          mapCol.style.width = `${100 - lastSplitPercent}%`;
+          mapCol.style.height = '100%';
+        }
+      }
+      if (mm && document.querySelector('#map-container').style.display !== 'none') { mm.fit(); }
+    });
+
+    function zoomIn() { mm.rescale(1.25); }
+    function zoomOut() { mm.rescale(0.8); }
+    function zoomFit() { mm.fit(); }
+
+    function exportMarkdown() {
+      const text = document.querySelector('#editor').value;
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '雲端硬碟檔案結構圖.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportSVG() {
+      const svgEl = document.querySelector('#markmap');
+      const clone = svgEl.cloneNode(true);
+      const g = svgEl.querySelector('g');
+      const bbox = g.getBBox();
+      clone.setAttribute('viewBox', `${bbox.x - 50} ${bbox.y - 50} ${bbox.width + 100} ${bbox.height + 100}`);
+      clone.setAttribute('width', bbox.width + 100);
+      clone.setAttribute('height', bbox.height + 100);
+      clone.style.backgroundColor = document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc';
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(clone);
+      if (!source.match(/^<\?xml/)) {
+        source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+      }
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '雲端硬碟檔案結構圖_心智圖.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function formatEditorHeadings() {
+      const editor = document.querySelector('#editor');
+      if (!editor) return;
+      const lines = editor.value.split('\n');
+      const formatted = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.trim().startsWith('#') && i > 0 && lines[i - 1].trim() !== '') {
+          formatted.push('');
+        }
+        formatted.push(line);
+      }
+      editor.value = formatted.join('\n');
+    }
+
+    function toggleInfoTooltip() {
+      const tooltip = document.querySelector('#info-tooltip');
+      if (tooltip) {
+        tooltip.classList.toggle('hidden');
+      }
+    }
+
+    // 點擊空白處自動收合提示
+    document.addEventListener('click', (e) => {
+      const container = document.querySelector('#btn-info-toggle')?.parentElement;
+      const tooltip = document.querySelector('#info-tooltip');
+      if (container && tooltip && !container.contains(e.target) && !tooltip.classList.contains('hidden')) {
+        tooltip.classList.add('hidden');
+      }
+    });
+
+    window.onload = () => {
+      formatEditorHeadings();
+      initMarkmap();
+      setupDragBar();
+      setTimeout(pushState, 600); // 初始狀態記錄在 historyStack[0]，作為基線
+    };
+
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-lib/dist/browser/index.iife.js"></script>
+  <style>
+    :root {
+      --scrollbar-track: #f1f5f9;
+      --scrollbar-thumb: #cbd5e1;
+      --scrollbar-thumb-hover: #94a3b8;
+    }
+
+    .dark {
+      --scrollbar-track: #1e293b;
+      --scrollbar-thumb: #475569;
+      --scrollbar-thumb-hover: #64748b;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--scrollbar-thumb-hover);
+    }
+
+    .markmap-node {
+      cursor: pointer;
+    }
+
+    @media (max-width: 767px) {
+      main {
+        flex-direction: column !important;
+      }
+
+      #drag-bar {
+        width: 100% !important;
+        height: 6px !important;
+        cursor: row-resize !important;
+        border-top: 1px solid rgba(226, 232, 240, 0.8);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      }
+
+      .dark #drag-bar {
+        border-top: 1px solid rgba(51, 65, 85, 0.8);
+        border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+      }
+
+      #drag-bar>div {
+        width: 24px !important;
+        height: 3px !important;
+      }
+
+      #editor-container,
+      #map-container {
+        border-right: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
+  <header
+    class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3 flex items-center justify-between shadow-lg shrink-0">
+    <div class="flex items-center space-x-2 md:space-x-3">
+      <div class="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2 md:p-2.5 rounded-xl shadow-md shrink-0">
+        <i class="fa-solid fa-sitemap text-lg md:text-xl text-white"></i>
+      </div>
+      <div>
+        <h1
+          class="text-base md:text-lg font-bold tracking-wide text-slate-900 dark:text-white flex flex-wrap items-center gap-1 md:gap-2">
+          雲端硬碟檔案結構圖 <span
+            class="text-[10px] md:text-xs bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/50 px-2 py-0.5 rounded-full font-normal">Akasha
+            電腦急救中</span>
+        </h1>
+        <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400">可即時編輯、縮放與匯出的動態心智圖系統</p>
+      </div>
+    </div>
+    <!-- Desktop Toolbar (Hidden on Mobile) -->
+    <div class="hidden md:flex items-center space-x-3">
+      <div
+        class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center space-x-1">
+        <button id="btn-view-split" onclick="switchView('split')" title="分割模式"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1">
+          <i class="fa-solid fa-columns"></i><span>雙欄</span>
+        </button>
+        <button id="btn-view-edit" onclick="switchView('edit')" title="純編輯模式"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
+          <i class="fa-solid fa-file-pen"></i><span>編輯</span>
+        </button>
+        <button id="btn-view-map" onclick="switchView('map')" title="純心智圖模式"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
+          <i class="fa-solid fa-expand"></i><span>心智圖</span>
+        </button>
+      </div>
+      <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+      <button id="btn-undo" onclick="undo()" title="復原" disabled
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+        <i class="fa-solid fa-arrow-rotate-left"></i><span>復原</span>
+      </button>
+      <button id="btn-redo" onclick="redo()" title="重做" disabled
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+        <i class="fa-solid fa-arrow-rotate-right"></i><span>重做</span>
+      </button>
+      <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+      <button onclick="zoomFit()" title="置中縮放"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-compress"></i><span>重設縮放</span>
+      </button>
+      <button id="btn-expand-all" onclick="toggleExpandAll()" title="一鍵展開或一鍵收摺"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-angles-down"></i><span>一鍵展開</span>
+      </button>
+      <button id="btn-toggle-line" onclick="toggleLineStyle()" title="切換折線/曲線樣式"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-route"></i><span>直角折線</span>
+      </button>
+      <button onclick="exportMarkdown()" title="下載 Markdown"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-file-code"></i><span>匯出 .md</span>
+      </button>
+      <button onclick="exportSVG()" title="下載 SVG"
+        class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-md">
+        <i class="fa-solid fa-download"></i><span>下載 SVG 圖片</span>
+      </button>
+      <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+      <button id="btn-theme-toggle" onclick="toggleTheme()" title="切換深淺色"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-lg text-xs font-medium transition flex items-center justify-center shadow-sm">
+        <i class="fa-solid fa-sun text-sm dark:hidden"></i>
+        <i class="fa-solid fa-moon text-sm hidden dark:inline-block"></i>
+      </button>
+    </div>
+    <!-- Hamburger Menu Button (Mobile only) -->
+    <button id="btn-mobile-menu" onclick="toggleMobileMenu()"
+      class="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition">
+      <i class="fa-solid fa-bars text-xl"></i>
+    </button>
+  </header>
+  <main class="flex-1 flex overflow-hidden">
+    <section id="editor-container" style="width: 50%;"
+      class="flex flex-col bg-white dark:bg-slate-950 shadow-inner transition-all duration-300">
+      <div
+        class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 shrink-0">
+        <span class="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-pen-nib"></i>
+          結構文字編輯區 (Markdown 語法)</span>
+        <span class="text-slate-400 dark:text-slate-500 font-normal">直接編輯文字即可即時更新右側心智圖</span>
+      </div>
+      <textarea id="editor"
+        class="flex-1 w-full bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 p-5 font-sans text-2xl leading-relaxed resize-none focus:outline-none focus:ring-0 selection:bg-indigo-600 selection:text-white">
+# 我的雲端硬碟
+- 📂 01_療癒與課程/
+  - 📄 (老師版)新課企劃書.docx (30.1 KB)
+  - 📄 0.本系在職班研究生學位授予作業規定1121019-教育學院院務會議通過-公告版.pdf (68.0 KB)
+  - 📄 111年度-吳晅菱.NTX (974.0 B)
+  - 📄 113學年度碩士在職專班招生簡章.pdf (2.0 MB)
+  - 📂 AVS/
+    - 📄 愛聖思-20220708-後-照片.pdf (666.0 KB)
+    - 📄 愛聖思-20220708-後.pdf (2.0 MB)
+    - 📄 愛聖思-20220708.pdf (2.1 MB)
+  - 📄 Anders & Cacina 聲音與意識 - 2024-03-19 19-02-13.mp4 (7.1 GB)
+  - 📂 Healing Sounds Instructional/
+    - 📄 01 Vowels As Mantras.mp3 (70.2 MB)
+    - 📄 02 Vocal Harmonics.mp3 (20.7 MB)
+    - 📄 【ASMR 治愈失眠】磬缽連結天地人　頌缽樂手曾文通：一次體驗如睡十年 _ 01文化_Trim.mp4 (17.4 MB)
+  - 📂 sajeev 1-7 chakra/
+    - 📂 1-7 Chakra  dance Ravi/
+      - 📄 01 曲目 1.wma (5.9 MB)
+      - 📄 02 曲目 2.wma (5.6 MB)
+      - 📄 03 曲目 3 power dance.wma (5.9 MB)
+      - 📄 04 曲目 4.wma (5.9 MB)
+      - 📄 05 曲目 5.wma (6.9 MB)
+      - 📄 06 曲目 6.wma (6.2 MB)
+      - 📄 07 曲目 7.wma (6.3 MB)
+    - 📂 1-7 Chakra Breathing meditation/
+      - 📄 01 45 Minutes Chakra Breathing.mp3 (79.3 MB)
+      - 📄 02 15 Minutes Silence.mp3 (27.5 MB)
+      - 📄 03 Bell.mp3 (1.1 MB)
+    - 📂 1-7 Chakra Loop Meditation by Svaroup and Premartha/
+      - 📄 01-Track-01.mp3 (41.5 MB)
+      - 📄 02-Track-02.mp3 (118.7 KB)
+    - 📂 1-7 Osho Chakra Sounds meditation/
+      - 📄 01 Chakra Sounds Meditation.mp3 (100.1 MB)
+      - 📄 02 Silence.mp3 (34.9 MB)
+      - 📄 AlbumArtSmall.jpg (2.6 KB)
+      - 📄 AlbumArt_{871FCE4E-D351-4C83-BD2D-71CFF2BFA8D1}_Large.jpg (9.7 KB)
+      - 📄 AlbumArt_{871FCE4E-D351-4C83-BD2D-71CFF2BFA8D1}_Small.jpg (2.6 KB)
+      - 📄 Folder.jpg (9.7 KB)
+    - 📂 1-8 Milarepa Chakra healing Meditation/
+      - 📄 01 Chakra healing Meditation.mp3 (5.5 MB)
+      - 📄 02 Chakra healing Meditation.mp3 (5.7 MB)
+      - 📄 03 Chakra healing Meditation.mp3 (5.7 MB)
+      - 📄 04 Chakra healing Meditation.mp3 (5.9 MB)
+      - 📄 05 Chakra healing Meditation.mp3 (7.6 MB)
+      - 📄 06 Chakra healing Meditation.mp3 (8.3 MB)
+      - 📄 07 Chakra healing Meditation.mp3 (8.9 MB)
+      - 📄 08 Chakra healing Meditation.mp3 (14.3 MB)
+      - 📄 09 Chakra healing Meditation.mp3 (21.0 MB)
+    - 📂 Milarepa  Circle of love/
+      - 📄 01 曲目 1.wma (9.3 MB)
+      - 📄 02 曲目 2.wma (9.3 MB)
+      - 📄 03 曲目 3.wma (13.9 MB)
+      - 📄 04 曲目 4.wma (14.1 MB)
+    - 📂 Milarepa Lotus paradise mp3/
+      - 📄 01 Lovers Touch.mp3 (11.1 MB)
+      - 📄 02 Lotus Paradise.mp3 (14.4 MB)
+      - 📄 03 Love Vibration.mp3 (11.4 MB)
+      - 📄 04 This Day.mp3 (12.7 MB)
+      - 📄 05 Heart-Song.mp3 (10.8 MB)
+      - 📄 06 Wake Up.mp3 (9.3 MB)
+      - 📄 07 Valley Of Flowers.mp3 (17.0 MB)
+      - 📄 08 Lifted By Love.mp3 (13.8 MB)
+    - 📂 Osho ~Milarepa  Yin Yang meditation/
+      - 📄 01 曲目 1.wma (3.4 MB)
+      - 📄 02 曲目 2.wma (12.8 MB)
+      - 📄 03 曲目 3.wma (12.6 MB)
+      - 📄 04 曲目 4.wma (13.3 MB)
+    - 📂 心輪  Breathing in love meditation 在愛中呼吸/
+      - 📄 01 Seeing the Beauty.mp3 (27.2 MB)
+      - 📄 02 Dancing the Beauty.mp3 (27.6 MB)
+      - 📄 03 Watching the breath.mp3 (27.5 MB)
+    - 📂 心輪  Heart Chakra Meditation/
+      - 📄 AlbumArtSmall.jpg (2.3 KB)
+      - 📄 AlbumArt_{96B25C9A-297E-4F90-99EE-5E9E02FAED02}_Large.jpg (9.1 KB)
+      - 📄 AlbumArt_{96B25C9A-297E-4F90-99EE-5E9E02FAED02}_Small.jpg (2.3 KB)
+      - 📄 Circle [1].mp3 (7.2 MB)
+      - 📄 Circle.mp3 (7.2 MB)
+      - 📄 East + West [1].mp3 (5.9 MB)
+      - 📄 East + West.mp3 (5.9 MB)
+      - 📄 Folder.jpg (9.1 KB)
+      - 📄 North [1].mp3 (5.9 MB)
+      - 📄 North.mp3 (5.9 MB)
+      - 📄 South [1].mp3 (5.8 MB)
+      - 📄 South.mp3 (5.8 MB)
+      - 📄 The Inner Temple [1].mp3 (5.5 MB)
+      - 📄 The Inner Temple.mp3 (5.5 MB)
+      - 📄 Tibetan Sound Bowls [1].mp3 (13.5 MB)
+      - 📄 Tibetan Sound Bowls.mp3 (13.5 MB)
+    - 📂 心輪 煉金術 Osho heart transform meditation/
+      - 📄 01 Giants.wma (5.0 MB)
+      - 📄 02 Heartbeat of the Universe 2.wma (13.9 MB)
+      - 📄 03 Heartbeat of the Universe 3.wma (14.4 MB)
+      - 📄 04 [Untitled Track].wma (13.8 MB)
+      - 📄 05 [Untitled Track].wma (600.8 KB)
+    - 📄 心輪之歌  Home Is Where The Heart Is.wma (4.6 MB)
+    - 📂 海底輪 Dynamic/
+      - 📄 .DS_Store (6.0 KB)
+      - 📄 ._.DS_Store (4.0 KB)
+      - 📄 Track  1.mp3 (13.4 MB)
+      - 📄 Track  2.mp3 (13.9 MB)
+      - 📄 Track  3.mp3 (13.8 MB)
+      - 📄 Track  4.mp3 (20.4 MB)
+      - 📄 Track  5.mp3 (20.1 MB)
+    - 📂 獅子心/
+      - 📄 01 Instructions.mp3 (5.1 MB)
+      - 📄 02 Lion's Breath.mp3 (11.6 MB)
+      - 📄 03 Face Expressions.mp3 (11.5 MB)
+      - 📄 04 Arms Expressions.mp3 (11.4 MB)
+      - 📄 05 Lion's Roar.mp3 (11.4 MB)
+      - 📄 06 Dance of the Lion.mp3 (11.5 MB)
+      - 📄 07 Breathing from the Heart.mp3 (11.6 MB)
+      - 📄 08 Let Go - Sit down.mp3 (34.2 MB)
+      - 📄 09 Lay Down & Relax.mp3 (34.4 MB)
+    - 📂 眉心輪 Osho Gourishankar/
+      - 📄 01 1st Stage - 3rd Stage.mp3 (83.5 MB)
+      - 📄 02 4th Stage.mp3 (27.5 MB)
+      - 📄 03 Gong.mp3 (2.0 MB)
+    - 📄 脈輪綱要表.jpg (245.6 KB)
+    - 📂 臍輪 Hara Stop Meditation/
+      - 📄 01 Hara Stop Meditation01.wma (4.3 MB)
+      - 📄 02 Hara Stop Meditation02.wma (3.5 MB)
+      - 📄 03 Hara Stop Meditation03.wma (4.8 MB)
+      - 📄 04 Hara Stop Meditation04.wma (6.6 MB)
+      - 📄 05 Hara Stop Meditation05.wma (411.3 KB)
+      - 📄 06 曲目 6.wma (22.1 MB)
+  - 📄 《同一場域》電影 - 2 - 2024-10-30.mp4 (3.7 GB)
+  - 📄 《同一場域》電影 -1 - 2024-10-30.mp4 (2.3 GB)
+  - 📄 《家庭教育指导师》题库（高级）.pdf (666.4 KB)
+  - 📄 中國心理諮詢師證照說明會 - 2026.03.18.mp4 (481.0 MB)
+  - 📄 中國心理諮詢師證照說明會 - 2026.03.18.txt (409.0 B)
+  - 📂 五次元文化世界/
+    - 📄 五次元文化世界-靈魂藍圖-1.mp4 (10.8 MB)
+    - 📄 五次元文化世界-靈魂藍圖-2.mp4 (3.0 MB)
+    - 📄 五次元文化世界-靈魂藍圖-3.mp4 (4.2 GB)
+    - 📄 五次元文化世界-靈魂藍圖-4.mp4 (1.1 GB)
+    - 📄 五次元文化世界-頻率與能量如何影響命運-1.mp4 (3.5 GB)
+    - 📄 五次元文化世界-頻率與能量如何影響命運-2.mp4 (877.0 MB)
+  - 📂 亞特蘭提斯/
+    - 📄 185.m4a (930.8 KB)
+    - 📄 AUDIO-2023-12-13-13-26-47.m4a (9.2 MB)
+  - 📄 人體生物能場域地圖-正面-2023-07-28.jpg (314.0 KB)
+  - 📂 伍淑蘭/
+    - 📄 伍淑蘭心理師導引音頻-守衛你的情緒界限工作坊-20230429.mp3 (10.1 MB)
+    - 📄 原生家庭療法讀書會（一）.pdf (1.9 MB)
+    - 📄 原生家庭療法讀書會（三）.pdf (1.9 MB)
+    - 📄 原生家庭療法讀書會（二）.pdf (2.8 MB)
+    - 📄 原生家庭療法讀書會（五）.pdf (2.1 MB)
+    - 📄 原生家庭療法讀書會（四）.pdf (2.1 MB)
+    - 📄 反情緒勒索-守衛你的情緒界限工作坊.pdf (5.4 MB)
+    - 📄 自我療癒心理劇工作坊.pdf (3.1 MB)
+  - 📂 众曜教育/
+    - 📄 众曜教育 _ 【歌医音乐疗愈】学习会议 2025-06-16.mp4 (1008.2 MB)
+    - 📄 众曜教育 _ 線上討論会议 2026-04-02 (1).mp4 (3.8 MB)
+    - 📄 众曜教育 _ 線上討論会议 2026-04-02 (2).mp4 (24.9 MB)
+    - 📄 众曜教育 _ 線上討論会议 2026-04-02 (3).mp4 (639.9 MB)
+    - 📄 众曜教育 _ 線上討論会议 2026-04-02 (4).mp4 (230.8 MB)
+    - 📄 众曜教育-2026-04-02.mp4 (179.2 MB)
+  - 📂 你的錢，為什麼會卡住/
+    - 📄 你的錢，為什麼會卡住-1-2026-04-01.mp4 (2.9 GB)
+    - 📄 你的錢，為什麼會卡住-2-2026-04-02.mp4 (930.2 MB)
+    - 📄 金錢療癒課程_完整銷講版_生命故事逐頁備忘錄-2026-03-29.mp4 (764.7 MB)
+  - 📂 共創實力/
+    - 📄 荷蘭商倍報價單.xls (45.5 KB)
+  - 📂 創客邦2023/
+    - 📄 .9200749443015.tmp (33.2 KB)
+    - 📄 FRASSI202304截油槽報價單.xlsx (13.5 KB)
+    - 📄 ~WRL0001.tmp (62.5 KB)
+    - 📄 ~WRL0002.tmp (62.5 KB)
+    - 📄 ~WRL3030.tmp (31.2 KB)
+    - 📄 ~WRL3849.tmp (33.6 KB)
+    - 📄 人力派遣成本分析.xls (38.5 KB)
+    - 📄 創客邦人力派遣成本分析.xls (30.5 KB)
+    - 📄 參合院報價單成本分析.xls (75.5 KB)
+    - 📄 荷蘭商倍報價單.xls (45.5 KB)
+    - 📂 財稅/
+  - 📄 國立彰化師範大學輔導與諮商學系婚姻與家族治療碩士班研究生學位授予作業規定1120105院 (2).pdf (437.2 KB)
+  - 📄 國立彰化師範大學輔導與諮商學系婚姻與家族治療碩士班研究生學位授予作業規定1120105院.pdf (437.2 KB)
+  - 📂 外部課程與講義/
+    - 📄 Ancestral_Abundance.pdf (17.1 MB)
+    - 📄 Ancestral_Abundance.pptx (23.2 MB)
+    - 📄 Ancestral_Wealth_Awakening.pptx (33.3 MB)
+    - 📄 Ancestral_Wealth_Flow.pdf (18.0 MB)
+    - 📄 Ancestral_Wealth_Flow.pptx (24.9 MB)
+    - 📄 Ancestral_Wealth_Journey.pdf (14.1 MB)
+    - 📄 Ancestral_Wealth_Roots.pdf (25.4 MB)
+    - 📄 Ancestral_Wealth_Roots.pptx (36.0 MB)
+    - 📄 Ancestral_Wealth_Unlocked.pdf (18.9 MB)
+    - 📄 Ancestral_Wealth_Unlocked.pptx (25.1 MB)
+    - 📄 Floral Drawings Slides · SlidesCarnival (1).pptx (10.9 MB)
+    - 📄 Floral Drawings Slides · SlidesCarnival.pptx (21.2 MB)
+    - 📄 Gilded_Resilience.pptx (16.1 MB)
+    - 📄 Nell · SlidesCarnival.pptx (7.5 MB)
+    - 📄 Paris · SlidesCarnival.pptx (7.9 MB)
+    - 📄 SDT_吳晅菱.pptx (39.2 KB)
+    - 📄 家族系統排列_第一章_專業教學PPT.pptx (35.9 KB)
+    - 📄 家族系統排列_第一章_專業教學PPT_最終版.pptx (48.2 KB)
+    - 📄 家族系統排列_第一週專業教學PPT_完整優化版.pptx (48.6 KB)
+    - 📄 家族系統排列_第一週專業講義_含五大法則版.pptx (45.8 KB)
+    - 📄 實作練習：創作你人生劇本的三提問.pdf (212.1 KB)
+    - 📄 實作練習：認清你的價值與使命自我提問.pdf (233.6 KB)
+    - 📄 樂活養生方案實踐對身心靈覺察狀態影響.pdf (130.8 MB)
+    - 📄 結業照片-20231114T104023Z-001.zip (32.9 MB)
+    - 📄 論文寫作專題研討課程介紹_游慧茹_20230809.pdf (132.2 KB)
+    - 📄 踏上你的英雄之旅.pdf (437.7 KB)
+    - 📄 頌缽講義-20231114T104026Z-001.zip (4.0 MB)
+  - 📂 安德斯&卡西娜「唱出真實的自己」/
+    - 📄 安德斯&卡西娜「唱出真實的自己」線上課程：第一堂“歡迎來到人聲的世界”-2024-02-08.mp4 (8.1 GB)
+    - 📄 安德斯&卡西娜「唱出真實的自己」線上課程：第一堂“歡迎來到人聲的世界”-2024-03-14.mp4 (7.7 GB)
+    - 📄 安德斯&卡西娜「唱出真實的自己」線上課程：第二堂“聲音就是訊息”-2024-03-15.mp4 (3.5 GB)
+    - 📄 安德斯與卡西娜【聲音與意識的蛻變之旅】－03_22 聲音調頻與聲音的療癒力-2024-04-13.mp4 (8.6 GB)
+  - 📂 家族排列、系統排列/
+    - 📄 2025-03-13 線上家排讀書會第二章.pdf (224.6 KB)
+    - 📄 2025-06-05 第六章 案例解析.ppt (883.5 KB)
+    - 📄 Svagito Liebermeister - 2024-02-16 19-36-13.mp4 (8.1 GB)
+    - 📄 Svagito Liebermeister - 2024-04-21 15-59-33.mp4 (8.1 GB)
+    - 📄 Svagito Liebermeister - 2024-04-21 19-01-36.mp4 (9.0 GB)
+    - 📄 Svagito Liebermeister - 2024-04-25 20-10-55.mp4 (4.3 GB)
+    - 📄 如何提升感知力及觀察力.pdf (551.8 KB)
+    - 📄 家排學員間討論 2025-01-16.mp4 (3.8 GB)
+    - 📄 家族系統排列_第一章_專業教學PPT_最終版.pptx (1.3 MB)
+    - 📄 強化感知與描述練習.mp4 (16.5 MB)
+    - 📄 系統排列核心知識第三章.pdf (312.3 KB)
+  - 📂 寧芙/
+    - 📄 REC001.mp3 (80.0 MB)
+    - 📄 REC002.mp3 (53.1 MB)
+    - 📄 REC003.mp3 (27.7 MB)
+    - 📄 REC004.mp3 (72.5 MB)
+  - 📂 心流伴學營/
+    - 📄 心流伴學營 - 2024-12-20.mp4 (1.2 GB)
+    - 📄 心流伴學營 - 2025 08 19 19 18.mp4 (11.7 MB)
+    - 📄 心流伴學營 - 2025 08 19 19 35.mp4 (4.6 MB)
+    - 📄 心流伴學營 - 2025 08 19 19 46.mp4 (70.8 MB)
+    - 📄 心流伴學營 - 2026 01 08 08 45.mp4 (824.0 MB)
+    - 📄 心流伴學營 - 2026 01 22 09 54.mp4 (363.0 MB)
+    - 📄 心流伴學營 - 2026 01 29 09 50.mp4 (550.1 MB)
+    - 📄 心流伴學營 - 2026 01 29 12 07.mp4 (1.4 MB)
+    - 📄 心流伴學營 - 2026 01 29 18 37.mp4 (15.5 MB)
+    - 📄 心流伴學營 - 2026 01 29 22 00.mp4 (41.3 MB)
+    - 📄 心流伴學營 - 2026 02 05 09 59.mp4 (389.6 MB)
+    - 📄 心流伴學營 - 2026 02 26 10 03.mp4 (943.8 MB)
+    - 📄 心流伴學營 - 2026 03 01 15 27.mp4 (1.0 GB)
+    - 📄 心流伴學營 - 2026 03 05 09 47.mp4 (509.2 MB)
+    - 📄 心流伴學營 - 2026 03 12 09 50.mp4 (664.4 MB)
+    - 📄 心流伴學營 - 2026 03 13 20 18.mp4 (509.6 MB)
+    - 📄 心流伴學營 - 2026 04 01.mp4 (5.4 GB)
+    - 📄 心流伴學營 - 2026 04 29 20 59.mp4 (474.5 MB)
+    - 📄 心流伴學營 - 2026 07 02 09 49.mp4 (391.5 MB)
+    - 📄 心流伴學營 - 在愛中昇華 - 2025 12 18 09 43.mp4 (854.4 MB)
+    - 📄 心流伴學營 - 在愛中昇華 - 2025 12 18.mp4 (10.0 GB)
+  - 📄 心理遊戲轉換實戰班 5-2-2026-01-23.mp4 (1.3 GB)
+  - 📄 情緒密碼講義1.jpeg (130.8 KB)
+  - 📄 情緒密碼講義24.jpeg (174.1 KB)
+  - 📄 愛自己的奧秘工作坊-愛就在你心中.mp4 (5.9 GB)
+  - 📄 找回生命活力六大重點.pdf (10.1 MB)
+  - 📂 楊寧芙瑜珈/
+    - 📄 (1) Facebook Live _ Facebook 和其他 3 個頁面 - 個人 - Microsoft​ Edge 2023-11-03 16-29-51.mp4 (2.9 GB)
+    - 📄 (2) Facebook 和其他 3 個頁面 - 個人 - Microsoft​ Edge 2023-11-03 19-06-57.mp4 (8.8 MB)
+    - 📄 (3) Facebook 和其他 2 個頁面 - 個人 - Microsoft​ Edge 2023-11-05 23-03-33.mp4 (2.3 GB)
+    - 📄 (3) Facebook 和其他 2 個頁面 - 個人 - Microsoft​ Edge 2023-11-06 03-04-39.mp4 (8.6 GB)
+    - 📄 (3) Facebook 和其他 3 個頁面 - 個人 - Microsoft​ Edge 2023-11-03 17-16-34.mp4 (7.9 GB)
+    - 📄 (5) Facebook 和其他 2 個頁面 - 個人 - Microsoft​ Edge 2023-11-05 20-36-20.mp4 (8.7 GB)
+    - 📄 (5) Facebook 和其他 3 個頁面 - 個人 - Microsoft​ Edge 2023-11-03 19-48-01.mp4 (8.7 GB)
+    - 📄 Facebook - 個人 - Microsoft​ Edge 2024-05-16 14-02-14.mp4 (428.9 MB)
+    - 📄 Facebook - 個人 - Microsoft​ Edge 2024-05-16 14-08-18.mp4 (6.3 GB)
+    - 📄 Facebook Live _ Facebook - 個人 - Microsoft​ Edge 2024-05-09 14-05-49.mp4 (9.8 GB)
+    - 📄 Facebook Live _ Facebook 和其他 3 個頁面 - 個人 - Microsoft​ Edge 2023-11-03 14-31-12.mp4 (7.7 GB)
+    - 📄 Facebook 和其他 1 個頁面 - 個人 - Microsoft​ Edge 2023-11-06 00-33-41.mp4 (12.1 MB)
+    - 📄 Facebook 和其他 1 個頁面 - 個人 - Microsoft​ Edge 2023-11-06 00-34-05.mp4 (7.3 GB)
+    - 📄 Facebook 和其他 2 個頁面 - 個人 - Microsoft​ Edge 2023-11-06 02-16-52.mp4 (3.1 GB)
+    - 📄 Facebook 和其他 3 個頁面 - 個人 - Microsoft​ Edge 2023-11-03 22-07-33.mp4 (2.6 MB)
+    - 📄 Facebook 和其他 3 個頁面 - 個人 - Microsoft​ Edge 2023-11-03 22-08-53.mp4 (8.7 GB)
+    - 📄 Facebook 和其他 4 個頁面 - 個人 - Microsoft​ Edge 2023-11-04 00-14-28.mp4 (6.2 GB)
+  - 📂 水晶缽課程/
+    - 📄 DALL·E 2024-07-17 20.38.25 - A serene and inviting promotional poster for a one-day crystal bowl teaching workshop. The poster features a beautiful clear crystal bowl placed on a .webp (271.8 KB)
+    - 📄 水晶缽工作坊課程講義.pdf (3.9 MB)
+    - 📄 水晶缽工作坊課程講義.pptx (29.7 MB)
+    - 📄 水晶缽行銷文案.docx (14.8 KB)
+  - 📂 河流身心靈療癒誌-《走向父親》/
+    - 📄 河流身心靈療癒誌 - 沈慈龍老師 - 2024-12-19.mp4 (5.4 GB)
+    - 📄 河流身心靈療癒誌 2024-12-26 10-31-17.mp4 (2.9 GB)
+    - 📄 河流身心靈療癒誌-2025-11-26 14-59-10.mp4 (8.7 MB)
+    - 📄 河流身心靈療癒誌-2025-11-26.mp4 (5.4 MB)
+    - 📄 河流身心靈療癒誌-《走向父親》家族排列線上活動-1.mp4 (79.7 MB)
+    - 📄 河流身心靈療癒誌-《走向父親》家族排列線上活動-2.mp4 (1.2 GB)
+  - 📂 瑪哈坤達里尼/
+    - 📄 Dance_For_Robert.pdf (7.3 MB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_0.jpg (234.6 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_0_0.jpg (234.6 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_0_1.jpg (234.6 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_1.jpg (314.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_10.jpg (110.8 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_10_0.jpg (110.8 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_10_1.jpg (110.8 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_11.jpg (349.6 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_11_0.jpg (349.6 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_11_1.jpg (349.6 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_12.jpg (125.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_12_0.jpg (125.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_12_1.jpg (125.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_13.jpg (62.9 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_13_0.jpg (62.9 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_13_1.jpg (62.9 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_14.jpg (239.2 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_14_0.jpg (239.2 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_14_1.jpg (239.2 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_1_0.jpg (314.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_1_1.jpg (314.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_2.jpg (196.7 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_2_0.jpg (196.7 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_2_1.jpg (196.7 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_3.jpg (270.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_3_0.jpg (270.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_3_1.jpg (270.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_4.jpg (230.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_4_0.jpg (230.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_4_1.jpg (230.3 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_5.jpg (269.1 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_5_0.jpg (269.1 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_5_1.jpg (269.1 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_6.jpg (303.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_6_0.jpg (303.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_6_1.jpg (303.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_7.jpg (243.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_7_0.jpg (243.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_7_1.jpg (243.0 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_8.jpg (304.2 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_8_0.jpg (304.2 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_8_1.jpg (304.2 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_9.jpg (241.6 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_9_0.jpg (241.6 KB)
+    - 📄 LINE_ALBUM_瑪哈昆達里尼_231216_9_1.jpg (241.6 KB)
+    - 📄 VIDEO-2023-12-12-17-29-13.mp4 (2.1 MB)
+  - 📂 眾神/
+  - 📄 碩士班研究生修業流程 (1).pdf (96.9 KB)
+  - 📄 穎婕 Claire 為何走向母親如此重要 - 2024-05-04 19-30-52.mp4 (5.0 GB)
+  - 📂 竟文心理/
+    - 📄 竟文心理 Anna 小物件預備班兩日課程 - 2025-11-26 15-01-29.mp4 (7.7 GB)
+    - 📄 竟文心理 Anna 小物件預備班兩日課程 - 2025-11-26 16-57-18.mp4 (4.5 GB)
+    - 📄 竟文心理 Anna 小物件預備班兩日課程 - 2025-11-26 21-54-17.mp4 (8.0 GB)
+    - 📄 竟文心理 竟文老師工作坊 - 2025-11-28 19-34-12.mp4 (12.2 GB)
+    - 📄 竟文心理 竟文老師工作坊 - 2025-12-03 02-27-22.mp4 (10.3 GB)
+    - 📄 竟文心理 竟文老師工作坊 - 2025-12-03 23-12-38.mp4 (10.2 GB)
+    - 📄 竟文心理 竟文老師工作坊 - 2025-12-04 16-55-59.mp4 (11.7 GB)
+    - 📄 竟文心理 竟文老師工作坊 - 2025-12-04 19-57-12.mp4 (22.1 MB)
+    - 📄 竟文心理 竟文老師工作坊 - 2025-12-08 00-49-18.mp4 (2.3 GB)
+  - 📄 聲活美學 Master Acoustics - 2024-05-04 21-01-28.mp4 (3.6 GB)
+  - 📄 聲活美學 Master Acoustics - 2024-05-04 22-15-21.mp4 (6.3 GB)
+  - 📄 背縫_全球(專業實務報告)吳晅菱 (1).pdf (118.0 KB)
+  - 📄 論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.docx.pdf (14.9 MB)
+  - 📂 論文歷程備份/
+    - 📄 個人品牌蒼穹元音 (1).docx (601.4 KB)
+    - 📄 個人品牌蒼穹元音 (2).docx (601.4 KB)
+    - 📄 個人品牌蒼穹元音 的論文 的副本 (1).docx (462.3 KB)
+    - 📄 個人品牌蒼穹元音.docx (601.3 KB)
+    - 📄 吳晅菱個人品牌商業模式之探討-以音療蒼穹元音為例－ (1).docx (595.8 KB)
+    - 📄 吳晅菱個人品牌商業模式之探討-以音療蒼穹元音為例－ (2).docx (595.8 KB)
+    - 📄 吳晅菱個人品牌商業模式之探討-以音療蒼穹元音為例－.docx (595.4 KB)
+    - 📄 回條_論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.docx (1).pdf (259.4 KB)
+    - 📄 回條_論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.docx.pdf (259.4 KB)
+    - 📄 回條_論文｜格式 晅菱A.docx.pdf (249.4 KB)
+    - 📄 校正後的論文.docx (39.2 KB)
+    - 📄 背縫_全球(專業實務報告).doc (35.5 KB)
+    - 📄 背縫_全球(專業實務報告)吳晅菱.pdf (117.6 KB)
+    - 📄 論文個人品牌商業模式之探討-以蒼穹元音為例晅菱 (1).docx (655.2 KB)
+    - 📄 論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.docx (655.2 KB)
+    - 📄 論文封面_全球(專業實務報告)吳晅菱.pdf (201.6 KB)
+    - 📄 論文封面格式_全球(專業實務報告) (2).doc (38.0 KB)
+    - 📄 論文封面格式_全球(專業實務報告) (3).doc (38.0 KB)
+    - 📄 論文封面格式_全球(專業實務報告).doc (38.0 KB)
+    - 📄 論文封面格式_全球(專業實務報告)吳晅菱 (1).pdf (147.7 KB)
+    - 📄 論文封面格式_全球(專業實務報告)吳晅菱.pdf (147.7 KB)
+  - 📂 論文簡報/
+    - 📂 小船/
+    - 📂 簡報樣式/
+    - 📂 論文/
+      - 📄 TIIBS期刊長篇摘要_Shuanling.doc (63.0 KB)
+      - 📄 ~WRL2679.tmp (983.1 KB)
+      - 📂 參考/
+      - 📂 文大相關/
+        - 📄 0730論文封面格式_全球(專業實務報告).doc (35.5 KB)
+        - 📂 封面相關/
+        - 📄 論文封面格式_全球(專業實務報告) (1).doc (38.0 KB)
+    - 📂 雅雯/
+  - 📄 論文｜格式 晅菱A.docx (651.7 KB)
+  - 📄 身心靈的健康 從傾聽身體的聲音開始 - 不具名男性主講者 - 2024-07-23 20-10-29.mp4 (1.0 GB)
+  - 📂 連結祖先財富/
+    - 📄 學員的金錢豐盛案例.docx (17.3 KB)
+    - 📄 自我介紹-胡.docx (19.8 KB)
+    - 📄 連結祖先財富二日工作坊3.1.pptx (8.8 MB)
+    - 📄 連結祖先財富二日工作坊5.0.pptx.pdf (68.0 MB)
+    - 📄 體驗課0313.pdf (24.1 MB)
+    - 📄 體驗課0313.pptx (33.3 MB)
+    - 📄 體驗課簡報1.0.pptx (14.0 MB)
+    - 📄 體驗課簡報2.0 感恩源頭.pdf (5.2 MB)
+    - 📄 體驗課簡報2.0 感恩源頭.pptx (11.9 MB)
+    - 📄 體驗課簡報2.0.pptx (15.9 MB)
+    - 📄 體驗課簡報5.0.pptx (15.2 MB)
+    - 📄 體驗課簡報6.0.pptx (16.2 MB)
+  - 📄 達菲老師金錢潛意識信念轉化 - 2026-01-30 20-24-28.mp4 (1.5 GB)
+  - 📄 靈性良知_伴學營簡報.pptx (48.8 KB)
+  - 📂 靈魂DNA/
+    - 📄 2023_12_11_20_36_18.mp3 (1.5 MB)
+    - 📄 7DFC1FD6-2046-4E94-9547-4AE9261BCB99.jpg (222.2 KB)
+    - 📄 DNA sounds and the points to be focused when breathing.docx (13.1 KB)
+    - 📄 Dance_For_Robert.pdf (7.3 MB)
+    - 📄 ED328B32-74C5-4A1F-8096-55CEBE1D1EA6.jpg (159.8 KB)
+    - 📄 F153C13F-7D0C-45C7-A1D4-AB25B237A455.jpg (104.3 KB)
+    - 📄 LINE_ALBUM_20231210_231216_0.jpg (864.1 KB)
+  - 📄 音聲療癒 脈輪靜心 - 2024-05-11 23-02-02.mp4 (311.7 MB)
+  - 📄 音聲療癒 脈輪靜心 - 2024-05-11 23-40-43.mp4 (838.2 MB)
+  - 📂 音頻/
+    - 📄 F盡快擺脫情緒低潮,身心健康愉快,金錢豐盛,事業成功.mp3 (192.0 MB)
+    - 📄 吳晅菱 身心靈事業溝通議題核心轉化的能力提昇、創造金錢正循環享有豐盛、教育訓練課.mp3 (116.5 MB)
+    - 📄 增加我氣場和所有脈輪的和諧運作與平衡.mp3 (123.5 MB)
+    - 📄 我F情緒糾葛，希望和平、緩和情緒，互相祝.mp3 (176.0 MB)
+    - 📄 我可以增加靜心觀照的能力.mp3 (116.8 MB)
+    - 📄 我樂意做氣功、運動、吟唱，身心靈和諧運作增加我靜心、寧靜、無念、提昇意念清晰.mp3 (171.5 MB)
+    - 📄 我療癒別人有意或無意對我造成的情感和創傷,提高我的女性價值感,我的自信心,我值.mp3 (121.2 MB)
+    - 📄 我維持體重55公斤,增加眼睛滋潤度,消除全身痠痛,體力充沛,良好精神,良好身體柔軟度與平.mp3 (112.0 MB)
+    - 📄 消除我有形和無形的現實與障礙壓力.mp3 (121.1 MB)
+    - 📄 聲音真正的療癒力量在泛音聲頻裡.docx (14.3 KB)
+    - 📄 請求神祝福.mp3 (116.7 MB)
+- 📂 02_個人品牌/
+  - 📄 01 規劃你的行銷活動 (1).pdf (294.7 KB)
+  - 📄 01 規劃你的行銷活動 (2).pdf (294.7 KB)
+  - 📄 01 規劃你的行銷活動.pdf (294.7 KB)
+  - 📄 1. 線上課程大地圖｜Littleboattan 小船-船染力.pdf (7.0 MB)
+  - 📄 2. 破億指南-知識付費-電子書-小船.pdf (11.6 MB)
+  - 📂 2024-03 一年份貼文包/
+    - 📄 1. 一年份社群貼文排程.xlsx 的副本.xlsx (2.5 MB)
+    - 📄 2. 130種社群貼文文案模板.pdf (3.3 MB)
+    - 📄 3. 50種高點擊率貼文標題.docx (1.1 MB)
+    - 📄 3. 50種高點擊率貼文標題.pdf (1.3 MB)
+    - 📄 4.社群漲粉吸睛秘笈.docx (2.3 MB)
+    - 📄 4.社群漲粉吸睛秘笈.pdf (6.0 MB)
+    - 📄 Bonus 1. 受眾洞察練習本.pdf (1.2 MB)
+    - 📄 Bonus 2. 有說服力的故事行銷秘密公式.docx (1.8 MB)
+    - 📄 Bonus 2. 有說服力的故事行銷秘密公式.pdf (8.9 MB)
+    - 📄 Bonus 3. 7天內容行銷事項規劃.pdf (2.0 MB)
+    - 📄 發文追蹤表.xlsx (32.4 KB)
+  - 📄 20241204 從零開始用生成式AI創作專業行銷素材 第五堂課--Sabrina.mp4 (314.8 MB)
+  - 📂 2024蘇姬GPT生活應用/
+    - 📄 02風格化與提案.pptx (7.1 MB)
+    - 📄 1140115打造個人品牌-Tracy .mp4 (474.0 MB)
+    - 📄 20241120 從零開始用生成式AI創作專業行銷素材 第四堂課--Tracy.mp4 (225.6 MB)
+    - 📄 20241127 從零開始用生成式AI創作專業行銷素材 第四堂課--Tracy.mp4 (239.9 MB)
+    - 📄 20241127.docx (1.4 MB)
+    - 📄 20241204 從零開始用生成式AI創作專業行銷素材 第五堂課--Sabrina.mp4 (314.8 MB)
+    - 📄 20241211製作Ai頭像.mp4 (394.0 MB)
+    - 📄 20241218製作Ai數字人 蘇湘惠老師.mp4 (267.1 MB)
+    - 📄 20241225製作 AI 簡報sunny老師.mp4 (465.4 MB)
+    - 📄 2024ChatGPT生活應用第一堂.mp4 (508.8 MB)
+    - 📄 20250108 Canva工具應用.mp4 (545.4 MB)
+    - 📄 ChatGPT生活應用第二堂.mp4 (273.1 MB)
+    - 📄 ChatGPT生活應用第二堂之2.mp4 (83.2 MB)
+  - 📄 3天直播課從零到盈.pdf (5.1 MB)
+  - 📄 FB 廣告檔案庫案例講解-2023-11-07.mp4 (29.1 MB)
+  - 📄 FB廣告投放成功案例.docx (12.9 KB)
+  - 📄 《價值》把你的價值打造成破億的網路事業.pdf (12.8 MB)
+  - 📄 【定位体系】课程作业-晅菱.docx (976.9 KB)
+  - 📄 一人公司千萬營收背後的 AI 員工-2025-12-04.mp4 (8.1 GB)
+  - 📄 一對一線上排列與線上個案.pptx (47.7 KB)
+  - 📄 七色嵐林雅雯 QA 時間 - 2024-07-23 21-53-30.mp4 (946.4 MB)
+  - 📄 七色嵐林雅雯 給身心靈老師的免費培訓 - 2024-09-20 20-06-35.mp4 (3.5 GB)
+  - 📂 個人合約/
+    - 📄 行銷保密協議.pdf (842.8 KB)
+    - 📄 講師經紀合作合約書260215.docx (19.9 KB)
+  - 📄 個人品牌定位自我評估表.pdf (291.2 KB)
+  - 📄 個人商業模式思考方向.jpg (365.4 KB)
+  - 📄 做課必備免費圖片下載-船染力.pdf (4.5 MB)
+  - 📄 做課必備免費影音下載-船染力.pdf (5.4 MB)
+  - 📂 全方位身心靈導師/
+    - 📄 01 規劃你的行銷活動 (1).pdf (294.7 KB)
+    - 📄 【深化顧客情感連結】發展問卷.pdf (254.0 KB)
+    - 📄 【線上課程設計與規劃】參考指南.pdf (385.2 KB)
+    - 📄 享受日常的小練習 .pdf (132.9 KB)
+    - 📄 個人商業模式思考方向.jpg (365.4 KB)
+    - 📄 制定你的商業模式.pdf (468.2 KB)
+    - 📄 商業模式圖.jpg (231.4 KB)
+    - 📄 商業模式範例.jpg (362.1 KB)
+    - 📄 啟動金錢能量實用練習.pdf (192.1 KB)
+    - 📄 建立你的課程活動頁（太陽神經叢技能篇實作練習）.pdf (264.1 KB)
+    - 📄 建立報名系統.xmind (264.4 KB)
+    - 📄 打造你的品牌魅力.pdf (266.6 KB)
+    - 📄 設定你的5年目標.pdf (242.1 KB)
+    - 📄 踏上你的英雄之旅.pdf (437.7 KB)
+    - 📄 身心靈導師開課藍圖.pdf (4.0 MB)
+    - 📄 頂輪【建立你的線上課程社群平台】前置準備.pdf (273.0 KB)
+    - 📄 頂輪個人品牌定位自我評估表.pdf (291.2 KB)
+    - 📄 頂輪撰寫你的品牌故事.pdf (267.4 KB)
+  - 📂 共創實力/
+    - 📄 HD-SL1 (E) - 捷徑.lnk (501.0 B)
+    - 📄 neo 19合約書2020C.docx (52.4 KB)
+    - 📄 neo 19合約書2023C.docx (52.4 KB)
+    - 📄 一幻消毒報價單(年度蟲害)1060101.xlsx (13.1 KB)
+    - 📄 松贊合約108.docx (30.6 KB)
+    - 📄 松贊收據.docx (13.4 KB)
+    - 📄 荷蘭商倍報價單.xls (45.5 KB)
+  - 📄 制定你的商業模式.pdf (468.2 KB)
+  - 📂 創客邦2023/
+    - 📄 12粵.docx (33.7 KB)
+    - 📄 12粵晶化.docx (31.9 KB)
+    - 📄 202041_200401_0001.jpg (221.1 KB)
+    - 📄 24802.jpg (148.1 KB)
+    - 📄 3.合夥契約書-表單 (4).doc (32.5 KB)
+    - 📄 ALMA1090301報價單.docx (34.0 KB)
+    - 📄 ALMA2022報價單.docx (34.1 KB)
+    - 📄 ALMA2023報價單.docx (34.1 KB)
+    - 📄 ALMA報價單.docx (33.7 KB)
+    - 📄 Asahi快閃店.docx (34.0 KB)
+    - 📄 Asahi快閃店2.docx (32.8 KB)
+    - 📄 Baan10901.docx (53.6 KB)
+    - 📄 Bariuma.docx (33.6 KB)
+    - 📄 Bariuma廚助.docx (33.3 KB)
+    - 📄 Bariuma洗地.docx (32.0 KB)
+    - 📄 Bit two eat報價單.docx (33.1 KB)
+    - 📄 CSA026B自動化服務約定轉帳帳號-變更申請書_202101.doc (129.5 KB)
+    - 📄 D貳拾二.docx (31.5 KB)
+    - 📄 EATT叁和院201905報價單.xlsx (50.2 KB)
+    - 📄 EATT態芮202304報價單.xlsx (15.8 KB)
+    - 📄 FRASSI202304截油槽報價單.xlsx (13.5 KB)
+    - 📄 Home shop報價單.docx (51.1 KB)
+    - 📄 INITA.docx (54.2 KB)
+    - 📄 INITA_v2.docx (44.4 KB)
+    - 📄 INTRO2022.docx (33.4 KB)
+    - 📄 LOPFAIT 清潔合約書202304(更正抬頭).doc (54.0 KB)
+    - 📄 LOPFAIT 清潔合約書202304.doc (738.0 KB)
+    - 📄 LOPFAIT報價單202304(更正抬頭).docx (25.4 KB)
+    - 📄 LOPFAIT報價單202304.docx (27.9 KB)
+    - 📄 LOPFAIT晨清檢查表更新20211028.xlsx (7.0 KB)
+    - 📄 MIRAWAN清潔項目.docx (19.4 KB)
+    - 📄 MIRRWAN病媒防治報價單.xlsx (15.0 KB)
+    - 📄 Mad for Garlic.docx (60.6 KB)
+    - 📄 Mad for Garlic洗地.docx (31.8 KB)
+    - 📄 Mira Wan201906報價單.xlsx (15.9 KB)
+    - 📄 Mira Wan2020新冠肺炎專案報價單3.xlsx (16.1 KB)
+    - 📄 Mira Wan巡檢表.xlsx (13.1 KB)
+    - 📄 Mira Wan早清內容202304.xlsx (15.2 KB)
+    - 📄 Mira Wan清潔報價單.xlsx (14.6 KB)
+    - 📄 Mirawan 清潔合約書202304.doc (738.0 KB)
+    - 📄 Mirawan消毒2023年年度合約.doc (736.0 KB)
+    - 📄 Mirrwan員工簽到表.xlsx (17.7 KB)
+    - 📄 Mirrwan早清員工簽到表.xlsx (16.5 KB)
+    - 📄 Moi cafe報價單.docx (33.2 KB)
+    - 📄 Moi cafe報價單.pdf (461.2 KB)
+    - 📄 Mume2020.docx (52.5 KB)
+    - 📄 Mume2022.docx (52.5 KB)
+    - 📄 Mume2023.docx (52.8 KB)
+    - 📄 NEO19.pdf (1.6 MB)
+    - 📄 Neo19員工簽到表.xlsx (17.6 KB)
+    - 📄 Sugar Pea 2022.docx (33.6 KB)
+    - 📄 WE Bistro106080103.docx (33.9 KB)
+    - 📄 Zaap10909.docx (54.1 KB)
+    - 📄 birdy yakitori1120101.docx (51.9 KB)
+    - 📄 bit two eat2021.docx (33.0 KB)
+    - 📄 honey pig1070401.docx (32.2 KB)
+    - 📄 honey pig1070501.docx (32.2 KB)
+    - 📄 honey pig1070513.docx (31.9 KB)
+    - 📄 klash110.xlsx (16.0 KB)
+    - 📄 neo19.docx (51.3 KB)
+    - 📄 vg106080103.docx (53.2 KB)
+    - 📄 享瓶2023.docx (33.4 KB)
+    - 📄 京老滿-廠商領款聲明書(月結60天).pdf (170.0 KB)
+    - 📄 京都勝牛人力合約 201907.doc (66.5 KB)
+    - 📄 京都勝牛洗滌合約 2019.doc (64.0 KB)
+    - 📄 京都勝牛洗滌合約 20190801.doc (64.0 KB)
+    - 📄 人力派遣成本分析.xls (38.5 KB)
+    - 📄 佳得利1月份洗滌.xlsx (16.9 KB)
+    - 📄 個人承攬個人-1(律)-0726.doc (35.0 KB)
+    - 📄 個人承攬個人-1(律)-0731.doc (35.5 KB)
+    - 📄 個人承攬個人.doc (40.0 KB)
+    - 📄 公司承攬公司.doc (39.0 KB)
+    - 📄 公司承攬公司清潔工程契約書.doc (41.0 KB)
+    - 📄 函.docx (11.9 KB)
+    - 📄 創客邦xMUME 報價單_202104.pdf (2.9 MB)
+    - 📄 創客邦人力派遣成本分析.xls (30.5 KB)
+    - 📄 創客邦及共創客戶資料表.xlsx (23.9 KB)
+    - 📄 創客邦薪資10809.docx (19.8 KB)
+    - 📄 勞健保級距(108.01.01) .xlsx (91.5 KB)
+    - 📄 南京叁和院201905報價單.xlsx (50.8 KB)
+    - 📄 南村20190801.doc (61.0 KB)
+    - 📄 博匠晨清檢查表更新202204.xlsx (7.0 KB)
+    - 📄 博匠食品工廠.docx (31.8 KB)
+    - 📄 叁和院南京店2020新冠肺炎專案報價單.xlsx (16.4 KB)
+    - 📄 叁和院大直店2020新冠肺炎專案報價單.xlsx (21.9 KB)
+    - 📄 叁和院忠孝店2020報價單.xlsx (15.1 KB)
+    - 📄 叁和院病媒防治報價單.xlsx (15.0 KB)
+    - 📄 參合院報價單成本分析.xls (75.5 KB)
+    - 📄 參考簡易合約2023.docx (52.9 KB)
+    - 📄 台灣佳得利人力派遣合約.doc (62.0 KB)
+    - 📄 和食EN 日本料理.xlsx (14.4 KB)
+    - 📄 和食酒EN報價單.docx (33.5 KB)
+    - 📄 和食酒EN報價單2021.11.05.docx (33.5 KB)
+    - 📄 和食酒EN報價單2021.12.02.docx (33.0 KB)
+    - 📄 員工出缺勤表.docx (18.1 KB)
+    - 📄 員工簽到表.xlsx (12.5 KB)
+    - 📄 嘉家 仁愛.docx (33.8 KB)
+    - 📄 嘉家.docx (33.9 KB)
+    - 📄 嘉家信義2023.docx (33.9 KB)
+    - 📄 四國.docx (31.8 KB)
+    - 📄 報價單frank.docx (31.9 KB)
+    - 📄 報員工薪資所得 - 奇樂潔.xls (49.0 KB)
+    - 📄 報員工薪資所得-創客邦.xls (34.5 KB)
+    - 📄 報員工薪資所得-創客邦2019.xls (34.5 KB)
+    - 📄 太興 ATT4FUN.docx (33.2 KB)
+    - 📄 太興 北車 合法.docx (33.2 KB)
+    - 📄 太興 北車 外籍.docx (33.3 KB)
+    - 📄 太興2021合約(1).doc (62.5 KB)
+    - 📄 太興ATT奇樂潔洗碗合約.doc (61.0 KB)
+    - 📄 太興ATT洗碗合約.doc (57.5 KB)
+    - 📄 太興ATT洗碗合約1090601至1100531.doc (57.5 KB)
+    - 📄 太興洗碗合約.doc (59.5 KB)
+    - 📄 季旺.docx (32.1 KB)
+    - 📄 季旺1090101.docx (27.2 KB)
+    - 📄 富宴報價單2021.11.05.docx (33.5 KB)
+    - 📄 川川中華料理報價單.docx (32.9 KB)
+    - 📄 工程廠商資料卡(創客邦消毒).xls (70.0 KB)
+    - 📄 心玩藝報價單.docx (33.4 KB)
+    - 📄 承攬契約書.docx (17.8 KB)
+    - 📄 新葡苑 微風南山.docx (31.9 KB)
+    - 📄 新葡苑洗滌合約 2021.doc (57.5 KB)
+    - 📄 新葡苑洗滌合約 20230401.doc (58.0 KB)
+    - 📄 星聚點復興店2023.docx (49.6 KB)
+    - 📄 星靚飯店報價單.docx (32.6 KB)
+    - 📄 月夜岩蟹.docx (50.7 KB)
+    - 📄 月夜岩蟹洗滌.docx (33.1 KB)
+    - 📄 杏子洗碗人力合約 201907.doc (65.5 KB)
+    - 📄 杏子豬排洗滌合約 2018.doc (63.5 KB)
+    - 📄 林ATT嘉.docx (33.7 KB)
+    - 📄 樓上見.docx (33.2 KB)
+    - 📄 橘焱消毒2020.docx (52.6 KB)
+    - 📄 每週六日15600報價單.docx (32.9 KB)
+    - 📄 浩鼎.docx (32.8 KB)
+    - 📄 浩鼎人力派遣成本分析.xls (38.5 KB)
+    - 📄 王座2023.docx (33.3 KB)
+    - 📄 瑪榭1090501.docx (32.5 KB)
+    - 📄 瑪榭1110101.docx (32.6 KB)
+    - 📄 瓦城人力派遣合約.doc (78.5 KB)
+    - 📄 瓦城倉儲.docx (33.3 KB)
+    - 📄 瓦城洗滌.docx (33.2 KB)
+    - 📄 目錄.pdf - 捷徑.lnk (1.4 KB)
+    - 📄 租金催告函範例.docx (13.2 KB)
+    - 📄 興記洗碗合約.doc (59.0 KB)
+    - 📄 興記菜館.docx (32.9 KB)
+    - 📄 良師塾人文食飲.docx (32.0 KB)
+    - 📄 荷蘭商倍報價單.xls (45.5 KB)
+    - 📄 荷蘭商倍科通知信函.docx (15.5 KB)
+    - 📄 葫同1080513.docx (51.6 KB)
+    - 📄 葫同1120101.docx (52.1 KB)
+    - 📄 葫同大直1111201.docx (48.4 KB)
+    - 📄 讓渡合約書.docx (13.4 KB)
+    - 📂 財稅/
+      - 📄 1 107年薪資扣繳速見表.doc (48.5 KB)
+      - 📄 員工必填扶養親屬表.doc (52.5 KB)
+      - 📄 按月 薪資可打字再簽 清冊.doc (42.5 KB)
+    - 📄 鉅星匯報價單 (1).xlsx (12.9 KB)
+    - 📄 阿瑪迪斯合約2023.docx (52.9 KB)
+    - 📄 陳姊妹報價單.docx (32.6 KB)
+    - 📄 非瓶.docx (33.7 KB)
+    - 📄 非瓶2023.docx (34.0 KB)
+    - 📄 餐廳員工簽到表.xlsx (17.8 KB)
+    - 📄 餡老滿 內湖店.docx (31.6 KB)
+    - 📄 餡老滿 松江店.docx (28.4 KB)
+    - 📄 餡老滿 經貿店.docx (31.7 KB)
+    - 📄 餡老滿2023.docx (28.4 KB)
+    - 📄 香色2023.docx (34.0 KB)
+    - 📄 香茅廚1120401.docx (24.4 KB)
+    - 📄 點點心-共創實力外籍洗碗合約(1).doc (67.0 KB)
+    - 📄 點點心-共創實力外籍洗碗合約.doc (59.0 KB)
+    - 📄 點點心-創客邦外籍洗碗合約 1090601至1100531.doc (59.0 KB)
+    - 📄 點點心-創客邦外籍洗碗合約 1100601至11100531.doc (57.5 KB)
+    - 📄 點點心-創客邦外籍洗碗合約(1).doc (62.0 KB)
+    - 📄 點點心-創客邦外籍洗碗合約.doc (59.0 KB)
+  - 📄 創課加速秘.png (323.8 KB)
+  - 📄 創課必備圖標下載-船染力.pdf (2.1 MB)
+  - 📂 品牌創意管理/
+    - 📄 111-2 品牌創意管理講義 陳彥君.pdf (35.9 MB)
+    - 📄 111_1_行銷管理課程簡介_游慧茹.pdf (162.4 KB)
+    - 📄 230205創業與創新商業模式＠課程簡介.pptx (4.6 MB)
+    - 📄 230212創新的內涵.pptx (3.8 MB)
+    - 📄 230219創新的來源.pptx (7.4 MB)
+    - 📄 230226創新的類型.pptx (6.7 MB)
+    - 📄 230305創新的擴散.pptx (5.7 MB)
+    - 📄 230312創新的商業模式.pptx (8.6 MB)
+    - 📄 230326產品創新.pptx (3.2 MB)
+    - 📄 230402創新型組織.pptx (2.6 MB)
+    - 📄 230409網路創新.pptx (5.3 MB)
+    - 📄 台灣學術倫理.pdf (358.5 KB)
+    - 📄 品牌管理觀念綜整 密碼112-2.pdf (551.6 KB)
+    - 📄 社群媒體之體驗行銷研究－以內容行銷為基礎.pdf (1.0 MB)
+    - 📄 網站體驗行銷、體驗價值、顧客滿意度與顧客忠誠度關係之探討.pdf (1.5 MB)
+    - 📄 體驗行銷對顧客滿意度與購買意願之影響分析.pdf (678.2 KB)
+  - 📄 商業模式圖.jpg (231.4 KB)
+  - 📄 商業模式範例.jpg (362.1 KB)
+  - 📄 多米諾資訊科技網站設計服務提案 -  2025-11-12.mp4 (3.0 GB)
+  - 📄 好好愛自己療育學院.gdoc (192.0 B)
+  - 📂 婚姻與家庭/
+    - 📄 1121文獻導讀報告大綱擁有也要天長地久吳晅菱.docx (14.7 KB)
+    - 📄 1121文獻導讀報告擁有也要天長地久吳晅菱.pptx (4.3 MB)
+    - 📄 1121文獻導讀報告擁有也要天長地久吳晅菱測驗.docx (52.1 KB)
+    - 📄 1230_原生家庭探索報告_全球品牌吳晅菱.pptx (13.5 MB)
+    - 📄 1230_原生家庭探索報告大綱_全球品牌吳晅菱..docx (14.4 KB)
+    - 📄 婚姻與家庭.pptx (1.3 MB)
+    - 📄 婚姻與家庭B1715084吳晅菱.pptx (1.9 MB)
+    - 📄 測驗.docx (47.4 KB)
+  - 📄 定位你與顧客的關係&規劃顧客體驗.pdf (282.7 KB)
+  - 📄 小船.gdoc (192.0 B)
+  - 📄 建立你的品牌粉絲頁前置準備（頂輪技能篇實作練習）.pdf (434.7 KB)
+  - 📄 建立你的課程活動頁（太陽神經叢技能篇實作練習）.pdf (264.1 KB)
+  - 📄 建立報名系統.xmind (264.4 KB)
+  - 📄 形塑你的「目標受眾」及「客戶畫像」.pdf (2.2 MB)
+  - 📂 心理諮詢證照/
+    - 📄 650_課時心理諮詢師培訓課程.pdf (12.5 MB)
+    - 📄 中心协总题库.docx (315.9 KB)
+    - 📄 心理练习卷.docx (41.4 KB)
+    - 📄 心理諮詢師專業技能證書｜最後一屆海外線上考試1.pdf (12.0 MB)
+    - 📄 线上考试考生须知2025.pdf (127.4 KB)
+    - 📄 练习题（心理）.docx (48.6 KB)
+    - 📄 考试系统常见问题解答.pdf (95.0 KB)
+    - 📄 考试系统操作指引2025.pdf (1.4 MB)
+  - 📄 快速做電子書神器-船染力.pdf (3.1 MB)
+  - 📄 成為價值傳遞者.pdf (1017.0 KB)
+  - 📄 打造你的品牌魅力.pdf (266.6 KB)
+  - 📄 找回生命活力六大重點.pdf (10.1 MB)
+  - 📄 提升境界，療愈自己「劉豐教授」.gdoc (192.0 B)
+  - 📄 撰寫你的品牌故事.pdf (267.4 KB)
+  - 📂 數位行銷/
+  - 📂 曾蘋果-讓你從零到盈＿吸引式銷售設計直播/
+    - 📄 曾蘋果-1210 讓你從零到盈＿吸引式銷售設計直播D3 1.mp4 (8.5 GB)
+    - 📄 曾蘋果-1211 讓你從零到盈＿吸引式銷售設計直播D3 2.mp4 (8.2 GB)
+    - 📄 曾蘋果-1212 讓你從零到盈＿吸引式銷售設計直播D3 3.mp4 (8.1 GB)
+  - 📄 未來五年內做精神療癒的推動發展_晅菱.pptx (89.2 KB)
+  - 📄 水晶缽工作坊 喚醒你的療癒天賦.gdoc (192.0 B)
+  - 📄 烏尼德呼麥工作坊講義_2022修訂改版.pdf (431.5 KB)
+  - 📄 發現阿育吠陀.gslides (192.0 B)
+  - 📂 真功夫行銷/
+    - 📄 你的錢，為什麼會卡住.pptx (101.1 KB)
+    - 📄 客戶資料蒐集2.0.docx (17.5 KB)
+    - 📄 自我介紹.pdf (15.0 KB)
+    - 📄 自我介紹.pptx (42.7 KB)
+    - 📄 課程資料蒐集.docx (20.2 KB)
+    - 📄 金錢療癒課程_完整銷講版_生命故事逐頁備忘錄.pptx (129.5 KB)
+    - 📄 金錢療癒課程_空白背景銷講PPT_移除你可以這樣講(1).pptx (81.1 KB)
+    - 📄 金錢療癒課程資料 吳晅菱2.docx (29.3 KB)
+    - 📄 銷講簡報資料蒐集.jpg (136.4 KB)
+    - 📄 銷講簡報資料蒐集.xlsx (9.7 KB)
+  - 📂 社群發文/
+    - 📂 2024-03 一年份貼文包/
+      - 📄 1. 一年份社群貼文排程.xlsx 的副本.xlsx (2.5 MB)
+      - 📄 2. 130種社群貼文文案模板.pdf (3.3 MB)
+      - 📄 3. 50種高點擊率貼文標題.docx (1.1 MB)
+      - 📄 3. 50種高點擊率貼文標題.pdf (1.3 MB)
+      - 📄 4.社群漲粉吸睛秘笈.docx (2.3 MB)
+      - 📄 4.社群漲粉吸睛秘笈.pdf (6.0 MB)
+      - 📄 Bonus 1. 受眾洞察練習本.pdf (1.2 MB)
+      - 📄 Bonus 2. 有說服力的故事行銷秘密公式.docx (1.8 MB)
+      - 📄 Bonus 2. 有說服力的故事行銷秘密公式.pdf (8.9 MB)
+      - 📄 Bonus 3. 7天內容行銷事項規劃.pdf (2.0 MB)
+    - 📄 圖片神器-20260309T095757Z-3-001.zip (7.7 MB)
+    - 📄 連結祖先財富5.1.pptx (40.3 MB)
+    - 📄 連結祖先財富二日工作坊2.0.pptx (1.3 MB)
+    - 📄 連結祖先財富二日工作坊3.0.pptx (6.4 MB)
+    - 📄 限動神器-20260309T095758Z-3-001.zip (2.0 MB)
+  - 📄 第一堂課-給晅菱.pptx (4.5 MB)
+  - 📄 第九梯水晶缽證書班，督導記錄表 .docx (9.7 KB)
+  - 📂 自我介紹/
+    - 📄 自我介紹-2026-03-29.mp4 (2.2 GB)
+  - 📂 自發功/
+  - 📂 蒼穹元音/
+    - 📄 個人品牌蒼穹元音的論文.docx (462.3 KB)
+    - 📄 個人簡介.docx (14.8 KB)
+    - 📂 恩琳/
+    - 📂 曾文通頌缽講義/
+      - 📂 中階/
+      - 📂 初階/
+      - 📂 高階/
+    - 📂 瑞強德蘭/
+    - 📂 系統排列/
+    - 📂 蒼穹元音logo/
+  - 📄 蒼穹元音.ai (10.6 MB)
+  - 📄 蒼穹元音.jpg (1.7 MB)
+  - 📄 蒼穹元音.png (871.8 KB)
+  - 📄 行銷你的第一堂課.pdf (630.9 KB)
+  - 📄 行銷管理與策略-吳晅菱-個人品牌商業模式之探討-以樂活產業「蒼穹元音」為例.pdf (487.7 KB)
+  - 📄 規劃你的第一堂課.pdf (1.2 MB)
+  - 📄 解決方案初擬.pdf (863.1 KB)
+  - 📄 課程規劃心智圖模板.xmind (213.3 KB)
+  - 📄 課程規劃心智圖範例.xmind (230.7 KB)
+  - 📄 課程講義配色-船染力.pdf (976.1 KB)
+  - 📂 論文簡報/
+    - 📄 1121-文獻導讀報告-家庭理論1960之後-碩專一洪郁晴.pdf (1.4 MB)
+    - 📄 1社群媒體之體驗行銷研究－以內容行銷為基礎.pdf (1.0 MB)
+    - 📄 2精品品牌故事行銷關鍵成功因素之研究.pdf (2.1 MB)
+    - 📄 3反思策略融入故事行銷學寫作課程之行動方案研究.pdf (1.3 MB)
+    - 📄 4文創商品故事行銷與產品涉入對購買意願之影響.pdf (1.3 MB)
+    - 📄 5體驗行銷、體驗價值與行為意向之相關研究.pdf (1.5 MB)
+    - 📄 6休閒與身心靈健康管理.pdf (1.1 MB)
+    - 📄 7心流體驗對互動型療癒產品的影響.pdf (1.4 MB)
+    - 📄 8行銷理論之分類架構：內容分析法.pdf (1.5 MB)
+    - 📄 9汽車平面廣告敘事框架應用分析.pdf (2.7 MB)
+    - 📄 AI GPT JASON.docx (18.5 KB)
+    - 📄 個人品牌商業模式之探討-以音療「蒼穹元音」為例.pptx (1.5 MB)
+    - 📄 內容行銷.docx (12.7 KB)
+    - 📂 小船/
+      - 📄 1. 線上課程大地圖｜Littleboattan 小船-船染力.pdf (7.0 MB)
+      - 📄 2. 知識付費賣課破億指南-電子書-小船.pdf (9.8 MB)
+      - 📄 《價值》把你的價值打造成破億的網路事業.pdf (12.8 MB)
+      - 📄 做課必備免費圖片下載-船染力.pdf (4.5 MB)
+      - 📄 做課必備免費影音下載-船染力.pdf (5.4 MB)
+      - 📄 創課加速秘籍包概覽-船染力.png (323.8 KB)
+      - 📄 創課必備圖標下載-船染力.pdf (2.1 MB)
+      - 📄 快速做PPT神器-船染力.pdf (2.5 MB)
+      - 📄 快速做電子書神器-船染力.pdf (3.1 MB)
+      - 📄 破億指南-知識付費-電子書-小船.pdf (11.6 MB)
+      - 📄 課程講義配色-船染力.pdf (976.1 KB)
+      - 📄 高效率備課工具-船染力.pdf (926.2 KB)
+    - 📄 影音串流服務體驗行銷對購買意願之影響.pdf (1.4 MB)
+    - 📄 從內容行銷探討線上品牌社群經營.pdf (3.8 MB)
+    - 📄 故事行銷中劇情性與相信度對品牌態度與品牌權益之影響.pdf (1.4 MB)
+    - 📄 故事行銷要素對Facebook中分享意願之影響.pdf (1.2 MB)
+    - 📄 文化創意產業體驗行銷對品牌信任與顧客忠誠度之影響.pdf (1.6 MB)
+    - 📄 社群媒體之體驗行銷研究－以內容行銷為基礎.pdf (1.0 MB)
+    - 📂 簡報樣式/
+      - 📄 Floral Drawings Slides · SlidesCarnival (2).pptx (11.9 MB)
+      - 📄 Helen · SlidesCarnival.pptx (8.3 MB)
+      - 📄 Norfolk · SlidesCarnival.pptx (5.9 MB)
+      - 📄 什麼是家族系統排列.pptx (11.9 MB)
+      - 📄 什麼是家族系統排列2.pptx (13.5 MB)
+    - 📄 美容休閒產業商業模式之研究.pdf (3.1 MB)
+    - 📄 蔡宗德. (2014). 印尼爪哇傳統巫術 (Perdukunan) 醫療中的音聲系統. 關渡音樂學刊編輯委員會, 43..pdf (6.0 MB)
+    - 📂 論文/
+      - 📄 3.個人品牌之商業模式研究彩妝師.pdf (3.5 MB)
+      - 📄 5.個人品牌建立斜槓的跨域學習張亞莉.pdf (8.7 MB)
+      - 📄 TIIBS期刊長篇摘要_Shuanling.doc (63.0 KB)
+      - 📄 TIIBS期刊長篇摘要_Tien 240227.doc (57.0 KB)
+      - 📄 fb240503013152.pdf (2.7 MB)
+      - 📄 fb240503013553.zip (3.3 MB)
+      - 📄 messageImage_1716018098935.jpg (79.9 KB)
+      - 📄 messageImage_1716018136003.jpg (112.5 KB)
+      - 📄 messageImage_1716018198371.jpg (21.7 KB)
+      - 📄 七脈輪介紹.pdf (2.6 MB)
+      - 📄 內容行銷與社群行銷關係之初探.pdf (3.9 MB)
+      - 📂 參考/
+        - 📄 1個人品牌之網路創業策略.pdf (2.1 MB)
+        - 📄 2身心靈產業之商業模式設計.pdf (2.1 MB)
+        - 📄 4探討民眾選擇管鐘音療作為療癒身心之因素.pdf (3.5 MB)
+        - 📄 6.KOL業配行為對個人品牌共鳴影響之研究.zip (4.2 MB)
+        - 📄 個人品牌質量研究與訪談intergram.zip (1.8 MB)
+        - 📄 商業模式與提問.zip (3.1 MB)
+        - 📄 文創與品牌藝術陶瓷喇叭開發與行銷.pdf (38.5 MB)
+        - 📄 林維洋.pdf (6.5 MB)
+        - 📄 林香君頌缽指導.zip (8.9 MB)
+      - 📄 建立直播主個人品牌之關鍵要素.pdf (1.6 MB)
+      - 📄 微型企業之商業模式與行銷策略研究分.pdf (4.1 MB)
+      - 📄 數位行銷策略企劃.pdf (3.5 MB)
+      - 📂 文大相關/
+        - 📄 1699693519276.jpg (387.8 KB)
+        - 📄 3_規劃研究題目_20231007.pptx (755.6 KB)
+        - 📄 6.研究計畫申請表(論文初審).pdf (88.0 KB)
+        - 📄 Ancient Greek Goddess Hera.pptx (49.8 MB)
+        - 📄 Keller品牌共鳴模式.pdf (47.4 KB)
+        - 📄 TIIBS期刊長篇摘要_Shuanling.doc (60.0 KB)
+        - 📄 [修改參考]論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.docx (660.0 KB)
+        - 📄 [修正封面]論文封面格式_全球(專業實務報告).docx (18.8 KB)
+        - 📄 [吳晅菱]中國文化大學紙本博碩士論文授權書.pdf (240.0 KB)
+        - 📄 [電子檔]論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.pdf (1.0 MB)
+        - 📄 b54.jpg (97.4 KB)
+        - 📄 b55a.jpg (108.4 KB)
+        - 📄 b55b.jpg (115.2 KB)
+        - 📄 b55c.jpg (97.3 KB)
+        - 📄 p53-55.pdf (874.2 KB)
+        - 📄 【附件一】2024商學與管理學術研討會發表注意事項.pdf (181.6 KB)
+        - 📄 【附件二】海報發表範本.pdf (322.2 KB)
+        - 📄 中國文化大學紙本博碩士論文授權書.docx (27.8 KB)
+        - 📄 仙女屝頁.pdf (67.2 KB)
+        - 📄 個人品牌商業模式之探討-以音療「蒼穹元音」為例.pptx (2.3 MB)
+        - 📄 吳晅菱-以音療蒼穹元音為例－ (1).docx (595.8 KB)
+        - 📄 吳晅菱個人品牌－ 提要.docx (596.7 KB)
+        - 📄 品牌權益差異圖 (2).pdf (91.0 KB)
+        - 📄 商學院學位論文格式.pdf (8.0 MB)
+        - 📄 商業模式圖.pdf (74.2 KB)
+        - 📄 回條_論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.docx.pdf (259.4 KB)
+        - 📄 學位論文上傳所需準備資料.docx (23.2 KB)
+        - 📂 封面相關/
+        - 📄 專業實務報告申請表.pdf (162.6 KB)
+        - 📄 專業實務報告規範及格式(附件一).pdf (128.0 KB)
+        - 📄 摘要誌謝辭目錄A4.doc (49.5 KB)
+        - 📄 期刊海報.pptx (183.2 KB)
+        - 📄 消費者購買決策過程.pdf (105.6 KB)
+        - 📄 產業分析應用實務-分享版-20240525.pdf (2.2 MB)
+        - 📄 研撰計畫申請表.docx (19.1 KB)
+        - 📄 研究流程圖.pdf (41.3 KB)
+        - 📄 碩專班實務論文架構(文大).pdf (662.8 KB)
+        - 📄 背縫.doc (35.0 KB)
+        - 📄 背縫_全球(專業實務報告)吳晅菱.doc (32.5 KB)
+        - 📄 背縫｜格式(專業實務報告).docx (16.5 KB)
+        - 📄 論文上傳步驟說明.pdf (6.6 MB)
+        - 📄 論文寫作專題研討課程介紹_游慧茹_20230809.pdf (132.2 KB)
+        - 📄 論文樣式A4[1].doc (36.5 KB)
+        - 📄 論文比對系統.pdf (9.1 MB)
+        - 📄 論文｜格式 委員.docx (1.0 MB)
+        - 📄 論文｜格式 慶安.docx (1.0 MB)
+      - 📄 消費者行為.rar (25.9 MB)
+      - 📄 研究流程圖.pdf (41.3 KB)
+      - 📄 聲音療癒概論.pdf (15.8 MB)
+      - 📄 身心靈隨意雜寫.docx (28.5 KB)
+      - 📄 選擇頌缽音療抒緩身心之原因探討.pdf (2.6 MB)
+      - 📄 頌缽療癒之研究.pdf (8.2 MB)
+      - 📄 馬克泛音論文P121.pdf (1.9 MB)
+    - 📂 雅雯/
+      - 📄 撰寫你的品牌故事.pdf (267.4 KB)
+      - 📄 脈輪能量自我檢測表.pdf (127.3 KB)
+    - 📄 音樂治療與老人照護.pdf (996.3 KB)
+    - 📄 音聲異常的物理治療－病例報告.pdf (2.5 MB)
+    - 📄 養生與生命能量進展之初探.pdf (1.6 MB)
+    - 📄 體驗行銷對於品牌建立與顧客滿意度之研究以spa美妍館為例.pdf (1.2 MB)
+  - 📄 議題轉化.docx (13.6 KB)
+  - 📄 身心靈導師開課藍圖.pdf (4.0 MB)
+  - 📂 迪迪-個人品牌/
+    - 📄 小紅書療癒高質感 IP 打造-1-2025-09-14.mp4 (7.5 GB)
+    - 📄 小紅書療癒高質感 IP 打造-2-2025-09-15.mp4 (6.8 GB)
+    - 📄 迪迪-1 分鐘無痛寫出萬讚爆款標題 - 2025-09-20 01-35-22.mp4 (272.0 MB)
+    - 📄 迪迪-1 分鐘無痛寫出萬讚爆款標題 - 2025-09-20 03-28-57.mp4 (2.7 GB)
+  - 📂 靈魂DNA/
+  - 📄 顧問式成交.gdoc (192.0 B)
+  - 📄 高效率備課工具-船染力.pdf (926.2 KB)
+- 📂 03_個人與行政/
+  - 📄 01202024WSPart2.pdf (12.1 MB)
+  - 📄 111-J222XXX087-70-的匯出資料.Prn (272.6 KB)
+  - 📄 111年度-吳晅菱.NTX (974.0 B)
+  - 📄 112PCCU1186011-001.pdf (1.1 MB)
+  - 📄 112PCCU1186011-002.pdf (1.5 KB)
+  - 📄 114年度-吳晅菱-收執聯.pdf (342.8 KB)
+  - 📄 114年度-吳晅菱-稅額估算表.pdf (295.7 KB)
+  - 📄 20211222211329_408840 2.pdf (319.0 KB)
+  - 📄 2024-03-27.pdf (109.8 KB)
+  - 📄 2024-04-10 顧客爭議申訴資料表.pdf (109.8 KB)
+  - 📄 512955751316.pdf (575.3 KB)
+  - 📄 512955751316_1.pdf (575.3 KB)
+  - 📄 514320662096.pdf (444.1 KB)
+  - 📄 697.gdoc (192.0 B)
+  - 📄 DALL·E 2024-06-27 19.00.27 - A visual representation of vocal formants, showing resonant frequencies of the vocal tract. The image should display several peaks on a frequency spec.webp (406.9 KB)
+  - 📄 DALL·E 2024-06-27 19.29.52 - A visual representation of vocal formants, showing resonant frequencies of the vocal tract. The image should display several peaks on a frequency spec.webp (406.9 KB)
+  - 📄 DALL·E 2024-06-27 19.30.10 - A visual representation of vocal formants, showing resonant frequencies of the vocal tract. The image should display several peaks on a frequency spec.webp (406.9 KB)
+  - 📄 DALL·E 2024-06-28 01.53.30 - A detailed illustration of the human body with chakras, each chakra clearly labeled and color-coded according to traditional chakra colors. One image .webp (717.1 KB)
+  - 📄 DALL·E 2024-06-28 01.53.38 - A detailed illustration of the human body with chakras, each chakra clearly labeled and color-coded according to traditional chakra colors. One image .webp (717.1 KB)
+  - 📄 DALL·E 2024-06-28 02.07.47 - A detailed full-body illustration of a female with chakras, each chakra clearly labeled and color-coded according to traditional chakra colors. The ch.webp (801.9 KB)
+  - 📄 DALL·E 2024-06-28 02.16.50 - A detailed full-body illustration of a female with chakras, each chakra clearly labeled and color-coded according to traditional chakra colors. The ch.webp (686.0 KB)
+  - 📄 DALL·E 2024-07-17 20.38.25 - A serene and inviting promotional poster for a one-day crystal bowl teaching workshop. The poster features a beautiful clear crystal bowl placed on a .webp (271.8 KB)
+  - 📄 EFCDAEB2A8C6A69A1CBA60FFB727A82499C5E223_有效的協助.pptx (44.2 KB)
+  - 📄 ESSENTIALS v3.pdf (5.7 MB)
+  - 📄 Full-Text.pdf (4.6 MB)
+  - 📄 Keller品牌共鳴模式.gdraw (192.0 B)
+  - 📄 Keller品牌共鳴模式.pdf (47.4 KB)
+  - 📄 LOPFAIT 清潔合約書202304(更正抬頭) - 複製.doc (53.5 KB)
+  - 📄 LOPFAIT報價單202304.docx (27.9 KB)
+  - 📄 Microsoft.Services.Store.winmd (4.5 KB)
+  - 📄 Mw_Bio (1).pdf (502.5 KB)
+  - 📄 Mw_Bio (2).pdf (502.5 KB)
+  - 📄 Mw_Bio (3).pdf (502.5 KB)
+  - 📄 Mw_Bio (4).pdf (502.5 KB)
+  - 📄 Processed_FormW8_2025-01-17_12-40.pdf (48.5 KB)
+  - 📄 S__17891421.jpg (383.0 KB)
+  - 📄 S__3399706_0.jpg (3.1 MB)
+  - 📄 Submitted_FormW8_2024-11-01_21-48.pdf (48.5 KB)
+  - 📄 Submitted_FormW8_2024-11-01_21-55.pdf (48.5 KB)
+  - 📄 TIIBS期刊長篇摘要_Shuanling.pdf (487.8 KB)
+  - 📄 WSDEC2324ENG.gdoc (192.0 B)
+  - 📄 WSDEC2324ENG.pdf (27.0 MB)
+  - 📄 crvForm.pdf (470.4 KB)
+  - 📄 daw-ghae-mbz - 2024年8月11日.pdf (8.3 KB)
+  - 📄 export_over.gif (1.2 KB)
+  - 📄 fb231109225232.pdf (4.2 MB)
+  - 📄 fb231214011201.pdf (11.5 MB)
+  - 📄 fb240128220058.pdf (1.6 MB)
+  - 📄 fb240128220608.pdf (1.7 MB)
+  - 📄 fb240605002525.pdf (2.4 MB)
+  - 📄 fb240605004219.pdf (3.7 MB)
+  - 📄 fb240605004432.pdf (2.2 MB)
+  - 📄 fb240725132133.pdf (2.2 MB)
+  - 📄 freegift-6位數美金script(完整版).pdf (7.5 MB)
+  - 📄 w2l15nqc.png (180.6 KB)
+  - 📄 《家庭教育指导师》题库（高级）.pdf (666.4 KB)
+  - 📄 【IP变现方式】课程作业.docx (102.7 KB)
+  - 📄 【深化顧客情感連結】發展問卷.pdf (254.0 KB)
+  - 📄 【私域人设变现】课程作业.docx (26.3 KB)
+  - 📄 七.docx (23.1 KB)
+  - 📄 保險契約終止申請書【銀行通路專用版】11202版.pdf (318.1 KB)
+  - 📂 協會資訊/
+    - 📄 202503中國心理衛生協會 心理諮詢師 簡章.pdf (894.2 KB)
+    - 📄 沙盤遊戲心理技術證照-簡章.pdf (8.0 MB)
+    - 📄 沙盤遊戲系統證照-報名表.pdf (89.2 KB)
+    - 📄 表達性藝術療癒證照-報名表.pdf (156.4 KB)
+    - 📄 表達性藝術療癒證照-學習計劃書.pdf (131.4 KB)
+    - 📄 表達性藝術療癒證照-簡章.pdf (7.7 MB)
+  - 📄 台中公會三期-社會住宅代管契約書.pdf (434.5 KB)
+  - 📄 吳晅菱 chaling1004@gmail.com 20220105.pdf (3.4 MB)
+  - 📄 商業圖 (1).pdf (74.2 KB)
+  - 📄 国际疗愈行业协会和国际易经文化传承协会课程和证书.pdf (1.5 MB)
+  - 📄 多米諾3.0 通用教學.pdf (1.5 MB)
+  - 📂 太極拳/
+    - 📄 23791B55-705D-4C97-8E2D-FA143725098D.jpg (198.3 KB)
+    - 📄 4E81CD5D-22CC-42C7-837E-0DBD8F70D79E.jpg (268.8 KB)
+    - 📄 54EE210B-A17F-401F-8D46-27F76024F7F6.jpg (335.6 KB)
+    - 📄 6C6F1002-0FAD-4308-BD53-AFFF4603960E.jpg (204.8 KB)
+    - 📄 BB8051CF-FAF3-4EB7-94F6-F9C73838B993.jpg (243.4 KB)
+  - 📄 客戶 (自動儲存).xlsx (13.1 KB)
+  - 📄 客戶.xlsx (12.4 KB)
+  - 📄 当职场压力让人睡.pptx (114.5 KB)
+  - 📄 我的原生家庭 (1).pdf (73.7 KB)
+  - 📄 我的原生家庭.gdraw (192.0 B)
+  - 📂 我的照片/
+    - 📄 385036456_2319793744882540_911279554882837202_n.jpg (82.7 KB)
+    - 📄 419191719_1412127819728662_4371501293864543058_n.jpg (554.0 KB)
+    - 📄 GoPro_News_Virtual_Backgrounds_UnderTheSea.jpg (491.9 KB)
+    - 📄 S__3399689.jpg (3.0 MB)
+    - 📄 S__3399696.jpg (3.1 MB)
+    - 📄 S__3399754.jpg (3.1 MB)
+    - 📄 S__3399760.jpg (162.5 KB)
+    - 📄 S__3399768.jpg (2.2 MB)
+    - 📄 S__3399769.jpg (2.1 MB)
+    - 📄 S__4644895.jpg (130.5 KB)
+    - 📄 S__4743255.jpg (172.9 KB)
+    - 📄 S__4743261.jpg (178.9 KB)
+    - 📄 S__4743263.jpg (132.8 KB)
+    - 📄 S__4915228.jpg (81.3 KB)
+    - 📄 天使之光.mp4 (11.2 MB)
+  - 📄 敘事取向表達性藝術治療模型應用之初探.pdf (1.6 MB)
+  - 📄 文化授權書.pdf (125.1 KB)
+  - 📄 普通版【年度紀念大課】訓練營作業.pdf (70.3 MB)
+  - 📄 未命名文件.docx (8.5 KB)
+  - 📂 法律/
+    - 📄 個人承攬個人-1(律)-0726.doc (35.0 KB)
+    - 📄 個人承攬個人-1(律)-0731.doc (35.5 KB)
+    - 📄 行政處分相對人依行政程序法第一百零二條陳述意見書-創客邦.odt (10.4 KB)
+    - 📄 行政處分相對人依行政程序法第一百零二條陳述意見書-創客邦與點點心.odt (9.6 KB)
+    - 📄 行政處分相對人依行政程序法第一百零二條陳述意見書-陳在任.odt (9.1 KB)
+    - 📄 陳述意見書-創客邦 胡同.odt (10.5 KB)
+    - 📄 陳述意見書-創客邦與點點心.odt (9.9 KB)
+  - 📄 洗滌部人員工作細則with English.docx.gdoc (192.0 B)
+  - 📄 物業導線規劃.gslides (192.0 B)
+  - 📄 生活就像打電動，虛擬實境=玩索而有得.gdoc (192.0 B)
+  - 📄 研究流程圖.pdf (41.3 KB)
+  - 📄 研究背景與動機.docx (64.0 KB)
+  - 📄 網路形象特質及社群經營模式對購買意願.pdf (5.0 MB)
+  - 📄 聲音物理 .gdoc (192.0 B)
+  - 📄 蒼穹元音精油貼紙A4.pdf (667.5 KB)
+  - 📄 設定你的5年目標.pdf (242.1 KB)
+  - 📄 離婚辭主.gdoc (192.0 B)
+  - 📄 香茅廚1120401.docx (24.1 KB)
+  - 📄 高清版（建議）【年度紀念大課】訓練營作業 (2).pdf (248.7 MB)
+  - 📄 高清版（建議）【年度紀念大課】訓練營作業.pdf (248.7 MB)
+- 📂 04_暫存與工具/
+  - 📄 2024-04-10 (2).pdf (979.9 KB)
+  - 📂 AE00FA95A 安裝完複製 base 進去/
+    - 📄 ALL_KEYS.TXT (235.0 B)
+    - 📂 Base/
+      - 📄 Ages.DB (4.0 KB)
+      - 📄 Ages.PX (4.0 KB)
+      - 📄 Animate.DB (18.0 KB)
+      - 📄 Animate.PX (4.0 KB)
+      - 📄 Animate.XG0 (6.0 KB)
+      - 📄 Animate.YG0 (4.0 KB)
+      - 📄 CustomersPreparatsTable.DB (2.0 KB)
+      - 📄 CustomersPreparatsTable.MB (4.0 KB)
+      - 📄 Dbdwork.ini (2.0 B)
+      - 📂 DestinationFiles/
+        - 📂 Base/
+      - 📄 Doctors.DB (4.0 KB)
+      - 📄 Doctors.PX (4.0 KB)
+      - 📄 Doctors.XG0 (4.0 KB)
+      - 📄 Doctors.YG0 (4.0 KB)
+      - 📄 Entropy.DB (6.0 KB)
+      - 📄 Entropy.PX (4.0 KB)
+      - 📄 Entropy.XG0 (6.0 KB)
+      - 📄 Entropy.XG1 (6.0 KB)
+      - 📄 Entropy.YG0 (4.0 KB)
+      - 📄 Entropy.YG1 (4.0 KB)
+      - 📂 Export/
+        - 📄 ISSLED.DB (2.0 KB)
+        - 📄 ISSLED.MB (4.0 KB)
+        - 📄 ISSLED.PX (2.0 KB)
+        - 📄 ISSLED.XG0 (2.0 KB)
+        - 📄 ISSLED.YG0 (2.0 KB)
+        - 📄 PACIENT.DB (2.0 KB)
+        - 📄 PACIENT.MB (4.0 KB)
+        - 📄 PACIENT.PX (2.0 KB)
+        - 📄 PACIENT.XG0 (2.0 KB)
+        - 📄 PACIENT.YG0 (2.0 KB)
+        - 📄 PGroup.PX (2.0 KB)
+        - 📄 PGroup.XG0 (2.0 KB)
+        - 📄 PGroup.YG0 (2.0 KB)
+        - 📄 PGroup.db (2.0 KB)
+        - 📄 Preparat.MB (4.0 KB)
+        - 📄 Preparat.PX (2.0 KB)
+        - 📄 Preparat.XG0 (2.0 KB)
+        - 📄 Preparat.YG0 (2.0 KB)
+        - 📄 Preparat.db (2.0 KB)
+      - 📄 Illusion.DB (4.0 KB)
+      - 📄 Illusion.PX (4.0 KB)
+      - 📄 Illusion.XG0 (4.0 KB)
+      - 📄 Illusion.YG0 (4.0 KB)
+      - 📄 Modes.DB (4.0 KB)
+      - 📄 Modes.PX (4.0 KB)
+      - 📄 Nest.DB (4.0 KB)
+      - 📄 Orgprep.DB (14.0 KB)
+      - 📄 Orgprep.PX (4.0 KB)
+      - 📄 Orgprep.XG0 (16.0 KB)
+      - 📄 Orgprep.XG1 (12.0 KB)
+      - 📄 Orgprep.YG0 (4.0 KB)
+      - 📄 Orgprep.YG1 (4.0 KB)
+      - 📄 Pays.DB (4.0 KB)
+      - 📄 Pays.PX (4.0 KB)
+      - 📄 Pays.XG0 (4.0 KB)
+      - 📄 Pays.XG1 (4.0 KB)
+      - 📄 Pays.XG2 (4.0 KB)
+      - 📄 Pays.YG0 (4.0 KB)
+      - 📄 Pays.YG1 (4.0 KB)
+      - 📄 Pays.YG2 (4.0 KB)
+      - 📄 Pfctrl.DB (4.0 KB)
+      - 📄 Pfctrl.PX (4.0 KB)
+      - 📄 Pfctrl.XG0 (4.0 KB)
+      - 📄 Pfctrl.XG1 (4.0 KB)
+      - 📄 Pfctrl.YG0 (4.0 KB)
+      - 📄 Pfctrl.YG1 (4.0 KB)
+      - 📄 Pfree.DB (4.0 KB)
+      - 📄 Pfree.PX (4.0 KB)
+      - 📄 Pfree.XG0 (4.0 KB)
+      - 📄 Pfree.XG1 (4.0 KB)
+      - 📄 Pfree.YG0 (4.0 KB)
+      - 📄 Pfree.YG1 (4.0 KB)
+      - 📄 PreparatResults.DB (6.0 KB)
+      - 📄 PreparatResults.PX (4.0 KB)
+      - 📄 Profiles.DB (4.0 KB)
+      - 📄 Profiles.MB (8.0 KB)
+      - 📄 Profiles.PX (4.0 KB)
+      - 📂 SourceFiles/
+        - 📂 Base/
+      - 📄 TriFact.DB (4.0 KB)
+      - 📄 TriFact.PX (4.0 KB)
+      - 📄 TriFact.XG0 (4.0 KB)
+      - 📄 TriFact.XG1 (4.0 KB)
+      - 📄 TriFact.YG0 (4.0 KB)
+      - 📄 TriFact.YG1 (4.0 KB)
+      - 📄 WordsTable.DB (2.0 KB)
+      - 📄 c_glist.dat (12.7 KB)
+      - 📄 chinese.DB (4.2 MB)
+      - 📄 chinese.MB (780.0 KB)
+      - 📄 chinese.PX (26.0 KB)
+      - 📄 chinese.TV (1.6 KB)
+      - 📄 chinese.XG0 (3.4 MB)
+      - 📄 chinese.XG1 (124.0 KB)
+      - 📄 chinese.YG0 (922.0 KB)
+      - 📄 chinese.YG1 (4.0 KB)
+      - 📄 chinese.lng (31.2 KB)
+      - 📄 chinese.text (204.6 KB)
+      - 📄 diagnose.DB (72.0 KB)
+      - 📄 diagnose.PX (4.0 KB)
+      - 📄 diagnose.XG0 (110.0 KB)
+      - 📄 diagnose.YG0 (34.0 KB)
+      - 📄 disease.DB (24.0 KB)
+      - 📄 disease.PX (4.0 KB)
+      - 📄 disease.XG0 (36.0 KB)
+      - 📄 disease.YG0 (12.0 KB)
+      - 📄 etashk.dat (44.0 B)
+      - 📄 family.DB (4.0 KB)
+      - 📄 family.PX (4.0 KB)
+      - 📄 familymembers.DB (4.0 KB)
+      - 📄 familymembers.PX (4.0 KB)
+      - 📄 familyposition.DB (8.0 KB)
+      - 📄 familyposition.PX (4.0 KB)
+      - 📄 foulder.DB (4.0 KB)
+      - 📄 foulder.PX (4.0 KB)
+      - 📄 foulder_pgroup.DB (4.0 KB)
+      - 📄 grp.DB (6.0 KB)
+      - 📄 grp.PX (4.0 KB)
+      - 📄 grp.XG0 (8.0 KB)
+      - 📄 grp.YG0 (4.0 KB)
+      - 📄 image.DB (146.0 KB)
+      - 📄 image.MB (2.3 MB)
+      - 📄 image.PX (4.0 KB)
+      - 📄 image.VAL (434.0 B)
+      - 📄 image.XG0 (34.0 KB)
+      - 📄 image.XG1 (4.0 KB)
+      - 📄 image.XG2 (128.0 KB)
+      - 📄 image.YG0 (4.0 KB)
+      - 📄 image.YG1 (4.0 KB)
+      - 📄 image.YG2 (38.0 KB)
+      - 📄 inprinthistory.DB (4.0 KB)
+      - 📄 inprinthistory.PX (4.0 KB)
+      - 📄 issled.DB (38.0 KB)
+      - 📄 issled.MB (488.0 KB)
+      - 📄 issled.PX (4.0 KB)
+      - 📄 issled.XG0 (6.0 KB)
+      - 📄 issled.YG0 (4.0 KB)
+      - 📄 lfr.DB (34.0 KB)
+      - 📄 lfr.PX (4.0 KB)
+      - 📄 lfr.XG0 (48.0 KB)
+      - 📄 lfr.YG0 (14.0 KB)
+      - 📄 pacient.DB (4.0 KB)
+      - 📄 pacient.MB (8.0 KB)
+      - 📄 pacient.PX (4.0 KB)
+      - 📄 pacient.VAL (393.0 B)
+      - 📄 pacient.XG0 (4.0 KB)
+      - 📄 pacient.YG0 (4.0 KB)
+      - 📄 pgroup.DB (16.0 KB)
+      - 📄 pgroup.PX (4.0 KB)
+      - 📄 pgroup.VAL (259.0 B)
+      - 📄 pgroup.XG0 (22.0 KB)
+      - 📄 pgroup.YG0 (8.0 KB)
+      - 📄 plist.DB (22.2 MB)
+      - 📄 plist.PX (116.0 KB)
+      - 📄 plist.XG0 (27.1 MB)
+      - 📄 plist.YG0 (478.0 KB)
+      - 📄 preparat.DB (6.5 MB)
+      - 📄 preparat.MB (772.0 KB)
+      - 📄 preparat.PX (22.0 KB)
+      - 📄 preparat.VAL (265.0 B)
+      - 📄 preparat.XG0 (2.4 MB)
+      - 📄 preparat.YG0 (326.0 KB)
+    - 📄 HK_small_active.exe (614.0 KB)
+    - 📄 iFEEL_trad_setup.EXE (384.4 MB)
+    - 📄 安裝完把這個 base 複製進電腦.txt (0 B)
+  - 📂 AVS/
+  - 📄 dd93b497f8197d6246c213506b00133c (1).mobi (888.1 KB)
+  - 📄 export_over.gif (1.2 KB)
+  - 📄 fb230928003647.pdf (2.6 MB)
+  - 📄 mag569111.pdf (1.1 MB)
+- 📂 04_音訊與影音素材/
+  - 📄 0517 Afro Percussion Full album.mp3 (31.3 MB)
+  - 📄 09 Tibet LP Anthology A15.MP3 (4.5 MB)
+  - 📄 15 Soto Zen hannya gong, bel en etensgebed BOS 01-11-09.m4a (1.5 MB)
+  - 📄 16 Soto Zen kz ochtendmeditatie BOS 01-11-09.m4a (1.3 MB)
+  - 📄 17 URRS073.MP3 (3.1 MB)
+  - 📄 20 URRS059.MP3 (1.1 MB)
+  - 📄 20240110notes.wma (15.6 MB)
+  - 📄 20241204 從零開始用生成式AI創作專業行銷素材 第五堂課--Sabrina.mp4 (314.8 MB)
+  - 📄 21 URRS060.MP3 (975.9 KB)
+  - 📄 22 URRS061.MP3 (1.4 MB)
+  - 📄 23 URRS064.MP3 (3.3 MB)
+  - 📄 23 松果體養生波（16.54）.m4a (48.7 MB)
+  - 📄 32 殊聖養生波（21.15） (1).m4a (55.1 MB)
+  - 📄 32 殊聖養生波（21.15） (2).m4a (55.1 MB)
+  - 📄 37 Cantus Firmus.mp3 (10.7 MB)
+  - 📄 7-05 - Track 05 SL Sa Novena kopie.mp3 (6.5 MB)
+  - 📄 7-Minute-Chakra-Tune-Up-by-Jonathan-Goldman.mp3 (7.2 MB)
+  - 📄 779429BACEB409BA5737119F98A74C878C4FF9A6 (1).m4a (202.5 KB)
+  - 📄 779429BACEB409BA5737119F98A74C878C4FF9A6.m4a (202.5 KB)
+  - 📄 DJI_20000116221144_0066_D.LRF (3.0 GB)
+  - 📄 DJI_20251029162159_0034_D.LRF (679.3 MB)
+  - 📄 Duet, 'Ordinary' Umngqokolo, Normal Voices, Again Umngqokolo.mp3 (2.9 MB)
+  - 📄 Edjin Duun.mp3 (9.3 MB)
+  - 📄 Golide.mp3 (12.2 MB)
+  - 📄 Kai Bolot.mp3 (8.1 MB)
+  - 📄 Khökhöö namjil.mp3 (4.1 MB)
+  - 📄 MyRec_0423_1850.mp3 (817.0 MB)
+  - 📄 Ndonakalelwe nendlu yam.mp3 (6.6 MB)
+  - 📄 Nutation.mp3 (15.7 MB)
+  - 📄 OneDrive_2024-11-22 (1).zip (609.0 B)
+  - 📄 OneDrive_2024-11-22 (2).zip (609.0 B)
+  - 📄 OneDrive_2024-11-22 (3).zip (609.0 B)
+  - 📄 OneDrive_2024-11-22.zip (609.0 B)
+  - 📄 Satisfaction of Oscillation.mp3 (2.2 MB)
+  - 📄 Sygyt (Ondar).mp3 (10.1 MB)
+  - 📄 Sƹmpahkǝ   H Flower.mp3 (9.2 MB)
+  - 📄 The Kinds Of Umngqokolo, Then Umngqokolo Ngomqangi Solo.mp3 (1.3 MB)
+  - 📄 Tian Ping (Blade of Grass).mp3 (16.9 MB)
+  - 📄 Track 01 shi chi bongo san.mp3 (5.5 MB)
+  - 📄 Track 03.mp3 (7.9 MB)
+  - 📄 Track 06.mp3 (2.1 MB)
+  - 📄 Track 10.mp3 (7.0 MB)
+  - 📄 Track 12.mp3 (7.8 MB)
+  - 📄 Track 13.mp3 (3.7 MB)
+  - 📄 Track 14.mp3 (4.6 MB)
+  - 📄 Track 33.mp3 (1.3 MB)
+  - 📄 fb240128220314.zip (1.7 MB)
+  - 📄 fb240128220846.zip (496.7 KB)
+  - 📄 fb240128220920.zip (1.5 MB)
+  - 📄 中國心理諮詢師證照說明會 - 2026_03_18 20_45 CST - Recording.mp4 (481.0 MB)
+  - 📄 新錄音26.m4a (13.2 MB)
+  - 📄 格式工廠2021.09.13-未來五年卜卦.mp3 (65.6 MB)
+  - 📄 第1式.mp4 (13.1 MB)
+  - 📄 靈魂卡一階第1天-1 (1).m4a (24.8 MB)
+  - 📄 靈魂卡一階第1天-1.m4a (24.8 MB)
+  - 📄 靈魂卡一階第2天-1.m4a (77.0 MB)
+  - 📄 靈魂卡一階（目前工作想轉職).m4a (9.1 MB)
+- 📂 Victor 整理記錄 260704/
+  - 📄 01.mp4 (4.8 MB)
+  - 📄 Captures影片主題與歸類報告.md (6.5 KB)
+  - 📄 Captures影片主題與歸類報告_簡報.html (68.2 KB)
+  - 📄 cloud_drive_files_manifest.md (146.3 KB)
+  - 📄 disk_cleanup_report.md (7.6 KB)
+  - 📄 screen_recorder.py (6.8 KB)
+  - 📂 七七行銷筆記/
+  - 📄 桌面-1-整理前.png (2.6 MB)
+  - 📄 桌面-2-整理後.png (2.5 MB)
+  - 📄 桌面-3-0706 更進一步精簡.png (2.8 MB)
+  - 📄 硬碟 C 槽-1-整理前.png (20.8 KB)
+  - 📄 硬碟 C 槽-2-整理後-0706.png (36.9 KB)
+  - 📄 錄影雲端歸檔#1.md (5.9 KB)
+  - 📄 雲端硬碟-1-整理前-1.png (592.2 KB)
+  - 📄 雲端硬碟-1-整理前-2.png (705.9 KB)
+  - 📄 雲端硬碟-2-整理後.png (150.1 KB)
+- 📂 下載內的/
+  - 📄 [修改]封面｜論文個人品牌商業模式之探討-以蒼穹元音為例晅菱 (1).pdf (201.8 KB)
+  - 📄 [修改]封面｜論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.pdf (201.8 KB)
+  - 📄 [修改]英文摘要｜論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.pdf (52.7 KB)
+  - 📄 [修正封面]論文封面格式_全球(專業實務報告) (1).pdf (144.7 KB)
+  - 📄 [修正封面]論文封面格式_全球(專業實務報告).pdf (144.7 KB)
+  - 📄 [修正摘要]論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.pdf (1.1 MB)
+- 📂 零散檔案_記得整理/
+  - 📄 (老師版)新課企劃書 (2).docx (30.1 KB)
+  - 📄 (老師版)新課企劃書.docx (30.1 KB)
+  - 📄 094NTPU0121101-001.pdf (599.0 KB)
+  - 📄 1. 線上課程大地圖｜Littleboattan 小船-船染力.pdf (7.0 MB)
+  - 📄 10.考試時間申請表.pdf (99.6 KB)
+  - 📄 111-J222XXX087-70-的匯出資料.Prn (272.6 KB)
+  - 📄 1718803343779.jpg (67.6 KB)
+  - 📄 1718803544859.jpg (66.8 KB)
+  - 📄 185(1).m4a (930.8 KB)
+  - 📂 2023-10-11/
+    - 📄 001.jpg (145.7 KB)
+  - 📄 2024-04-10 (2).pdf (979.9 KB)
+  - 📄 202411 AKASHA排列.docx (17.0 KB)
+  - 📄 202503中國心理衛生協會 心理諮詢師 簡章.pdf (894.2 KB)
+  - 📄 230528自媒體+直播電商+網紅經濟.pptx (12.6 MB)
+  - 📄 231209委任銷售協議書【植物硒膠囊】.docx (24.2 KB)
+  - 📄 297718.jpg (115.3 KB)
+  - 📄 297719.jpg (123.5 KB)
+  - 📄 297739.jpg (120.6 KB)
+  - 📄 297741.jpg (99.6 KB)
+  - 📄 348A4B2F-310F-406E-9A55-5804D02EDAB3.jpeg (5.9 MB)
+  - 📄 3754e846-e49a-473e-955e-22c8c479bc1c.mp4 (17.3 MB)
+  - 📄 488826812957983156.m4a (189.9 KB)
+  - 📄 488919679143248515.m4a (202.5 KB)
+  - 📄 6.研究計畫申請表(論文初審).pdf (88.0 KB)
+  - 📄 673995d4-e8e0-4554-b5df-3ee15b5e2af7.mp4 (16.5 MB)
+  - 📄 6906e5f1-209c-433c-9d80-42d84b9d5619.mp4 (16.8 MB)
+  - 📄 7392b931-80e8-427e-b323-75ba6a1c3be7.mp4 (26.5 MB)
+  - 📄 9EDC44A2-BD18-425D-9E4C-4DBD183E0BF8-L0-001.jpg (599.9 KB)
+  - 📄 AUDIO-2023-12-13-13-26-27.m4a (25.1 MB)
+  - 📄 AUDIO-2023-12-13-13-26-47(1).m4a (9.2 MB)
+  - 📄 FB廣告投放成功案例.docx (12.9 KB)
+  - 📂 Feedback/
+    - 📂 {054E7D7C-8E72-4C39-8CDE-577FA319C14F}/
+      - 📄 Capture001.png (253.4 KB)
+    - 📂 {3AE3C977-71BF-4AC2-8CFD-55739BEA98AB}/
+      - 📄 Capture001.png (283.5 KB)
+    - 📂 {7D572510-7A9F-43BC-AE6C-96C9F98DC935}/
+      - 📄 Capture001.png (438.7 KB)
+    - 📂 {9A9BFA9F-CE4C-4020-8690-516B681F9A29}/
+  - 📄 Jeff 2025_11_26 下午 02_52_11.png (2.0 MB)
+  - 📄 Jeff 2025_11_26 下午 02_52_45.png (2.0 MB)
+  - 📄 Jeff 2025_11_26 下午 02_57_59.png (2.0 MB)
+  - 📄 LINE_Android-backup-chat1810991145b (1).zip (8.1 KB)
+  - 📄 LINE_Android-backup-chat1810991145b.zip (8.1 KB)
+  - 📄 Liu_TIIBS期刊長篇摘要_240225.doc (76.5 KB)
+  - 📄 Midu original MARKED copy.lnk (0 B)
+  - 📂 OneNote 筆記本/
+    - 📄 快速筆記.one (4.4 KB)
+    - 📄 我的筆記本.url (177.0 B)
+  - 📂 PowerShell/
+    - 📂 Modules/
+      - 📂 Microsoft.PowerToys.Configure/
+        - 📂 0.100.2.0/
+          - 📄 Microsoft.PowerToys.Configure.psd1 (16.6 KB)
+          - 📄 Microsoft.PowerToys.Configure.psm1 (111.2 KB)
+  - 📄 S__18890766.jpg (291.7 KB)
+  - 📄 S__19751172.jpg (212.9 KB)
+  - 📄 S__3383325.jpg (190.8 KB)
+  - 📄 S__3399685.jpg (99.0 KB)
+  - 📄 S__3399696.jpg (3.1 MB)
+  - 📄 S__3399696_0.jpg (3.1 MB)
+  - 📄 S__3399698.jpg (3.4 MB)
+  - 📄 S__3399699.jpg (3.0 MB)
+  - 📄 S__3399699_0.jpg (3.0 MB)
+  - 📄 S__3399700.jpg (2.9 MB)
+  - 📄 S__3399700_0.jpg (2.9 MB)
+  - 📄 S__3399701.jpg (3.1 MB)
+  - 📄 S__3399701_0.jpg (3.1 MB)
+  - 📄 S__3399702.jpg (1.8 MB)
+  - 📄 S__3399702_0.jpg (1.8 MB)
+  - 📄 S__3399703.jpg (2.7 MB)
+  - 📄 S__3399703_0.jpg (2.7 MB)
+  - 📄 S__3399704.jpg (3.2 MB)
+  - 📄 S__3399704_0.jpg (3.2 MB)
+  - 📄 S__3399706.jpg (3.1 MB)
+  - 📄 S__3399707.jpg (135.2 KB)
+  - 📄 S__3399709.jpg (162.5 KB)
+  - 📄 S__3399709_0.jpg (157.3 KB)
+  - 📄 S__3399711.jpg (196.0 KB)
+  - 📄 S__3399711_0.jpg (196.0 KB)
+  - 📄 S__3399753.jpg (2.5 MB)
+  - 📄 S__3399755.jpg (2.6 MB)
+  - 📄 S__3399757.jpg (2.3 MB)
+  - 📄 S__3399758.jpg (3.2 MB)
+  - 📄 S__3399759.jpg (162.0 KB)
+  - 📄 S__4644895.jpg (130.5 KB)
+  - 📄 S__4644896.jpg (395.6 KB)
+  - 📄 S__4644900.jpg (251.9 KB)
+  - 📄 S__4743252.jpg (125.4 KB)
+  - 📄 S__4743254.jpg (177.3 KB)
+  - 📄 S__4743255.jpg (172.9 KB)
+  - 📄 S__4743257.jpg (165.2 KB)
+  - 📄 S__4743258.jpg (143.9 KB)
+  - 📄 S__4743259.jpg (194.1 KB)
+  - 📄 S__4743260.jpg (170.8 KB)
+  - 📄 S__4743261.jpg (178.9 KB)
+  - 📄 S__4743262.jpg (131.3 KB)
+  - 📄 S__4743263.jpg (132.8 KB)
+  - 📄 S__4915203.jpg (396.5 KB)
+  - 📄 S__4915205.jpg (470.5 KB)
+  - 📄 S__4915206.jpg (476.7 KB)
+  - 📄 S__4915227.jpg (103.2 KB)
+  - 📄 S__4915228.jpg (81.3 KB)
+  - 📄 S__5267474.jpg (191.7 KB)
+  - 📄 S__5267475.jpg (183.3 KB)
+  - 📄 S__5545989.jpg (188.3 KB)
+  - 📄 S__6938702.jpg (398.2 KB)
+  - 📄 S__6938703.jpg (565.4 KB)
+  - 📄 Screenshot 2025_6_16 下午 07_55_35.png (33.3 KB)
+  - 📄 Screenshot 2025_6_16 下午 07_56_07.png (27.0 KB)
+  - 📂 Screenshots/
+    - 📄 2024-02-27.png (1.4 MB)
+    - 📄 2024-03-05 (1).png (124.8 KB)
+    - 📄 2024-03-05 (2).png (124.8 KB)
+    - 📄 2024-03-05.png (128.0 KB)
+    - 📄 2026-03-16.png (106.5 KB)
+  - 📄 TIIBS期刊長篇摘要_Shuanling.doc (60.0 KB)
+  - 📄 TIIBS期刊長篇摘要_Tien 240227.doc (57.0 KB)
+  - 📄 TIIBS期刊長篇摘要_Tien.doc (57.0 KB)
+  - 📂 Zoom/
+    - 📂 2024-08-09 20.02.27 吳晅菱(仙女)的個人會議室/
+      - 📄 audio1407298745.m4a (26.2 MB)
+      - 📄 recording.conf (127.0 B)
+      - 📄 video1407298745.mp4 (338.8 MB)
+  - 📄 [修改]論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.docx (659.7 KB)
+  - 📄 [修改]論文個人品牌商業模式之探討-以蒼穹元音為例晅菱.pdf (102.6 KB)
+  - 📄 [修正封面]論文封面格式_全球(專業實務報告).docx (18.8 KB)
+  - 📄 [修正英文摘要]個人品牌商業模式之探討-以蒼穹元音為例晅菱.pdf (102.6 KB)
+  - 📄 a53aaa92-f45a-4b96-b893-3f4fdec71298.mp4 (5.0 MB)
+  - 📄 crvForm.pdf (470.4 KB)
+  - 📄 dd93b497f8197d6246c213506b00133c (1).mobi (888.1 KB)
+  - 📄 dfe8d71d-c1b0-43e9-9817-d565a69b1548.mp4 (6.1 MB)
+  - 📄 e25e57b2-64c0-4973-9d6a-e8f1bad5c418.mp4 (17.7 MB)
+  - 📄 fb230928003647.pdf (2.6 MB)
+  - 📄 mag569111.pdf (1.1 MB)
+  - 📄 messageImage_1699608307353.jpg (45.3 KB)
+  - 📄 messageImage_1702660233613.jpg (116.0 KB)
+  - 📄 messageImage_1714801815122.jpg (103.9 KB)
+  - 📄 messageImage_1716018136003.jpg (112.5 KB)
+  - 📄 voice_662324.m4a (94.5 KB)
+  - 📄 voice_662325.m4a (45.3 KB)
+  - 📄 voice_662326.m4a (52.8 KB)
+  - 📂 xwechat_files/
+    - 📂 all_users/
+      - 📂 config/
+        - 📄 client_config (4.0 KB)
+        - 📄 client_config.crc (4.0 KB)
+        - 📄 global_config (32.0 KB)
+        - 📄 global_config.crc (4.0 KB)
+        - 📂 sqlite/
+          - 📄 lock.ini (0 B)
+        - 📄 upgrade_v4 (4.0 KB)
+        - 📄 upgrade_v4.crc (4.0 KB)
+      - 📂 head_imgs/
+        - 📂 1419728369/
+          - 📄 2680688531 (204.0 KB)
+      - 📂 login/
+        - 📂 wxid_r2pixesnu33y12/
+          - 📄 key_info.db (24.0 KB)
+          - 📄 key_info.db-shm (32.0 KB)
+          - 📄 key_info.db-wal (24.2 KB)
+      - 📂 sqlite/
+        - 📄 lock.ini (0 B)
+      - 📄 whatsnew.dat (15.0 B)
+    - 📂 wxid_r2pixesnu33y12_8761/
+      - 📂 apm_record/
+        - 📄 memory (3.3 KB)
+        - 📂 process_duration/
+          - 📄 co_overdue_5s_count (2.0 KB)
+          - 📄 co_suspend_1min_count (2.0 KB)
+          - 📄 memory_commit_size (3.3 KB)
+          - 📄 ui_overdue_count (2.1 KB)
+          - 📄 ui_overdue_max_time (1.5 KB)
+          - 📄 ui_overdue_total_time (1.5 KB)
+      - 📂 business/
+        - 📂 emoticon/
+          - 📂 PersistStore/
+            - 📂 28/
+              - 📄 282679be589ffc36bfef3bbd88c841ff (1.1 MB)
+            - 📂 71/
+              - 📄 710a9e4a5005ce377843746c22dc52e2 (2.1 MB)
+            - 📂 b1/
+              - 📄 b1bd9f4c61820ad03db106a8d398d331 (1012.2 KB)
+          - 📂 ThumbStore/
+            - 📂 28/
+              - 📄 282679be589ffc36bfef3bbd88c841ff (276.5 KB)
+              - 📄 282679be589ffc36bfef3bbd88c841ff.icon (4.7 KB)
+            - 📂 71/
+              - 📄 710a9e4a5005ce377843746c22dc52e2 (319.8 KB)
+              - 📄 710a9e4a5005ce377843746c22dc52e2.icon (6.0 KB)
+            - 📂 b1/
+              - 📄 b1bd9f4c61820ad03db106a8d398d331 (249.0 KB)
+              - 📄 b1bd9f4c61820ad03db106a8d398d331.icon (2.3 KB)
+        - 📂 xeditor/
+          - 📂 mmkv/
+            - 📄 XEditorData (4.0 KB)
+            - 📄 XEditorData.crc (4.0 KB)
+        - 📂 xweb/
+          - 📄 4ae98d5eb60df57b644d38e63914fc58 (512.0 KB)
+          - 📄 4ae98d5eb60df57b644d38e63914fc58.crc (4.0 KB)
+          - 📂 mmkv/
+            - 📄 4ae98d5eb60df57b644d38e63914fc58 (512.0 KB)
+            - 📄 4ae98d5eb60df57b644d38e63914fc58.crc (4.0 KB)
+      - 📂 cache/
+        - 📂 2026-06/
+          - 📂 HttpResource/
+            - 📄 9760efab71a34e0f1dc07211c0be85ae (2.8 KB)
+            - 📄 b78650ad085bae077d8cd8a95d8c17d5 (2.1 KB)
+          - 📂 Message/
+            - 📂 700ca0418878ef20366f37592171d5b4/
+              - 📂 Bubble/
+                - 📄 68a571564e1bae3445141094ef5f470c_b.dat (183.4 KB)
+                - 📄 8_1782217107_b.dat (247.8 KB)
+                - 📄 d337ba575642215ceed7443c02b9591d_b.dat (226.3 KB)
+              - 📂 Thumb/
+                - 📄 8_1782217107_thumb.jpg (124.3 KB)
+            - 📂 e49221e09f380ca666576ef77939d6db/
+              - 📂 Bubble/
+                - 📄 5d05d489264a5538201230dbcb1ce499_b.dat (96.9 KB)
+                - 📄 bb668ead083cc5bf37c89bb275577ca7_b.dat (28.0 KB)
+                - 📄 ecf13e1b43ad3b960b3ed6aa15a42cd4_b.dat (35.7 KB)
+                - 📄 f451bbd628cbc3e11a6f5db606317f75_b.dat (30.5 KB)
+        - 📂 2026-07/
+          - 📂 Message/
+            - 📂 21fac7a88871da8ae5a104ac285dc72f/
+              - 📂 Bubble/
+                - 📄 1_1783051814_b.dat (184.0 KB)
+              - 📂 Thumb/
+                - 📄 1_1783051814_thumb.jpg (81.8 KB)
+      - 📂 config/
+        - 📄 file_config_2025 (4.0 KB)
+        - 📄 file_config_2025.crc (4.0 KB)
+        - 📄 file_config_2025v2 (4.0 KB)
+        - 📄 file_config_2025v2.crc (4.0 KB)
+        - 📄 file_config_2026 (4.0 KB)
+        - 📄 file_config_2026.crc (4.0 KB)
+        - 📄 file_config_2026v2 (4.0 KB)
+        - 📄 file_config_2026v2.crc (4.0 KB)
+        - 📄 login_config (4.0 KB)
+        - 📄 login_config.crc (4.0 KB)
+        - 📄 login_configv2 (16.0 KB)
+        - 📄 login_configv2.crc (4.0 KB)
+        - 📂 newclientconfig/
+          - 📄 config (32.7 KB)
+        - 📂 newinit_status/
+          - 📄 newinit_status (4.0 KB)
+          - 📄 newinit_status.crc (4.0 KB)
+        - 📄 newinit_status_flag (1.0 B)
+        - 📄 rs_config (4.0 KB)
+        - 📄 rs_config.crc (4.0 KB)
+        - 📂 xlab/
+          - 📄 config (72.6 KB)
+      - 📂 db_storage/
+        - 📂 MMKV/
+          - 📄 brandprivatemsg@hardcode (4.0 KB)
+          - 📄 brandprivatemsg@hardcode.crc (4.0 KB)
+          - 📄 f2540500tinfo.mmkv (4.0 KB)
+          - 📄 f2540500tinfo.mmkv.crc (4.0 KB)
+          - 📄 f2541000tinfo.mmkv (4.0 KB)
+          - 📄 f2541000tinfo.mmkv.crc (4.0 KB)
+          - 📄 f2541800tinfo.mmkv (4.0 KB)
+          - 📄 f2541800tinfo.mmkv.crc (4.0 KB)
+          - 📄 f2541a00tinfo.mmkv (4.0 KB)
+          - 📄 f2541a00tinfo.mmkv.crc (4.0 KB)
+          - 📄 storage_common (4.0 KB)
+          - 📄 storage_common.crc (4.0 KB)
+        - 📂 bizchat/
+          - 📄 bizchat-LAPTOP-RBQQTQ7R.db-shm (32.0 KB)
+          - 📄 bizchat.db (28.0 KB)
+          - 📄 bizchat.db-shm (32.0 KB)
+          - 📄 bizchat.db-wal (40.3 KB)
+        - 📂 contact/
+          - 📄 contact.db (876.0 KB)
+          - 📄 contact.db-first.material (8.0 KB)
+          - 📄 contact.db-incremental.material (4.0 KB)
+          - 📄 contact.db-last.material (8.0 KB)
+          - 📄 contact.db-shm (32.0 KB)
+          - 📄 contact.db-wal (957.6 KB)
+          - 📄 contact_fts.db (472.0 KB)
+          - 📄 contact_fts.db-shm (32.0 KB)
+          - 📄 contact_fts.db-wal (1.3 MB)
+        - 📂 emoticon/
+          - 📄 emoticon.db (112.0 KB)
+          - 📄 emoticon.db-shm (32.0 KB)
+          - 📄 emoticon.db-wal (181.1 KB)
+        - 📂 favorite/
+          - 📄 favorite-LAPTOP-RBQQTQ7R.db-shm (32.0 KB)
+          - 📄 favorite.db (344.0 KB)
+          - 📄 favorite.db-shm (32.0 KB)
+          - 📄 favorite.db-wal (828.9 KB)
+          - 📄 favorite_fts-LAPTOP-RBQQTQ7R.db-shm (32.0 KB)
+          - 📄 favorite_fts.db (92.0 KB)
+          - 📄 favorite_fts.db-shm (32.0 KB)
+          - 📄 favorite_fts.db-wal (305.8 KB)
+        - 📂 general/
+          - 📄 general.db (340.0 KB)
+          - 📄 general.db-shm (32.0 KB)
+          - 📄 general.db-wal (217.3 KB)
+        - 📂 hardlink/
+          - 📄 hardlink.db (156.0 KB)
+          - 📄 hardlink.db-shm (32.0 KB)
+          - 📄 hardlink.db-wal (257.5 KB)
+        - 📂 head_image/
+          - 📄 head_image-LAPTOP-RBQQTQ7R.db-shm (32.0 KB)
+          - 📄 head_image.db (968.0 KB)
+          - 📄 head_image.db-shm (32.0 KB)
+          - 📄 head_image.db-wal (511.0 KB)
+        - 📂 message/
+          - 📄 biz_message_0.db (420.0 KB)
+          - 📄 biz_message_0.db-first.material (12.0 KB)
+          - 📄 biz_message_0.db-incremental.material (4.0 KB)
+          - 📄 biz_message_0.db-last.material (12.0 KB)
+          - 📄 biz_message_0.db-shm (32.0 KB)
+          - 📄 biz_message_0.db-wal (156.9 KB)
+          - 📄 biz_message_0.kvdb (12.0 KB)
+          - 📄 biz_message_0.kvdb-shm (32.0 KB)
+          - 📄 biz_message_0.kvdb-wal (20.1 KB)
+          - 📄 media_0-LAPTOP-RBQQTQ7R.db-shm (32.0 KB)
+          - 📄 media_0.db (216.0 KB)
+          - 📄 media_0.db-first.material (4.0 KB)
+          - 📄 media_0.db-incremental.material (4.0 KB)
+          - 📄 media_0.db-last.material (4.0 KB)
+          - 📄 media_0.db-shm (32.0 KB)
+          - 📄 media_0.db-wal (132.8 KB)
+          - 📄 media_0.kvdb (12.0 KB)
+          - 📄 media_0.kvdb-shm (32.0 KB)
+          - 📄 media_0.kvdb-wal (20.1 KB)
+          - 📄 media_1.db (4.0 KB)
+          - 📄 media_1.db-shm (32.0 KB)
+          - 📄 media_1.db-wal (350.1 KB)
+          - 📄 media_1.kvdb (12.0 KB)
+          - 📄 media_1.kvdb-shm (32.0 KB)
+          - 📄 media_1.kvdb-wal (20.1 KB)
+          - 📄 message_0-LAPTOP-RBQQTQ7R.db-shm (32.0 KB)
+          - 📄 message_0.db (1.1 MB)
+          - 📄 message_0.db-first.material (28.0 KB)
+          - 📄 message_0.db-incremental.material (4.0 KB)
+          - 📄 message_0.db-last.material (28.0 KB)
+          - 📄 message_0.db-shm (32.0 KB)
+          - 📄 message_0.db-wal (498.9 KB)
+          - 📄 message_0.kvdb (12.0 KB)
+          - 📄 message_0.kvdb-shm (32.0 KB)
+          - 📄 message_0.kvdb-wal (20.1 KB)
+          - 📄 message_1.db (280.0 KB)
+          - 📄 message_1.db-first.material (12.0 KB)
+          - 📄 message_1.db-incremental.material (4.0 KB)
+          - 📄 message_1.db-last.material (8.0 KB)
+          - 📄 message_1.db-shm (32.0 KB)
+          - 📄 message_1.db-wal (2.7 MB)
+          - 📄 message_1.kvdb (12.0 KB)
+          - 📄 message_1.kvdb-shm (32.0 KB)
+          - 📄 message_1.kvdb-wal (20.1 KB)
+          - 📄 message_fts.db (500.0 KB)
+          - 📄 message_fts.db-shm (32.0 KB)
+          - 📄 message_fts.db-wal (426.5 KB)
+          - 📄 message_resource.db (144.0 KB)
+          - 📄 message_resource.db-shm (32.0 KB)
+          - 📄 message_resource.db-wal (0 B)
+          - 📄 weclaw-LAPTOP-RBQQTQ7R.db-shm (32.0 KB)
+          - 📄 weclaw.db (4.0 KB)
+          - 📄 weclaw.db-shm (32.0 KB)
+          - 📄 weclaw.db-wal (0 B)
+        - 📂 session/
+          - 📄 session.db (80.0 KB)
+          - 📄 session.db-first.material (4.0 KB)
+          - 📄 session.db-incremental.material (4.0 KB)
+          - 📄 session.db-last.material (4.0 KB)
+          - 📄 session.db-shm (32.0 KB)
+          - 📄 session.db-wal (603.5 KB)
+        - 📂 sns/
+          - 📄 sns.db (148.0 KB)
+          - 📄 sns.db-shm (32.0 KB)
+          - 📄 sns.db-wal (152.9 KB)
+        - 📂 solitaire/
+          - 📄 solitaire-LAPTOP-RBQQTQ7R.db-shm (32.0 KB)
+          - 📄 solitaire.db (4.0 KB)
+          - 📄 solitaire.db-shm (32.0 KB)
+          - 📄 solitaire.db-wal (0 B)
+      - 📂 msg/
+        - 📂 attach/
+          - 📂 018394a08854938d3d22f7b87b921caa/
+            - 📂 2025-12/
+              - 📂 Img/
+                - 📄 187739b3e9d9e4409c805a9d79ce48e8_t.dat (5.8 KB)
+                - 📄 7d59a3a3f487c021c35cace2f5e4f788_t.dat (4.0 KB)
+                - 📄 7daecc340243a5d710da5385bef56318_t.dat (4.8 KB)
+            - 📂 2026-01/
+              - 📂 Img/
+                - 📄 676a3e557d5afb44af53919011e8bbd1_t.dat (4.2 KB)
+            - 📂 2026-03/
+              - 📂 Img/
+                - 📄 82f543519ebebaa3c08c0c53ae434d7d_t.dat (4.9 KB)
+          - 📂 2af9df079fa833cc8c18e1f72843713e/
+            - 📂 2025-11/
+              - 📂 Img/
+                - 📄 2_1764161238_t.dat (31.5 KB)
+          - 📂 2f58b9609e0f3717e7fc762062707b2b/
+            - 📂 2026-04/
+              - 📂 Img/
+                - 📄 a69c411f13e3365f8761015d480e4dbe.dat (354.3 KB)
+                - 📄 a69c411f13e3365f8761015d480e4dbe_t.dat (6.8 KB)
+          - 📂 4bbb373bdfe9c5b5d75226c46e92845e/
+            - 📂 2025-06/
+              - 📂 Img/
+                - 📄 57a1337af45f8508f774cd3a1e9c4598.dat (42.4 KB)
+                - 📄 57a1337af45f8508f774cd3a1e9c4598_t.dat (2.9 KB)
+                - 📄 9abf71c3f2d7c469c5d82f6caca01080.dat (52.4 KB)
+                - 📄 9abf71c3f2d7c469c5d82f6caca01080_t.dat (2.9 KB)
+            - 📂 2025-09/
+              - 📂 Img/
+                - 📄 63_1757970304_t.dat (30.6 KB)
+                - 📄 7cb80873adb14c02188c9fc5c1ea5340_t.dat (4.7 KB)
+          - 📂 5d127af308a5eadc79ad19366b325776/
+            - 📂 2025-09/
+              - 📂 Img/
+                - 📄 e7e048f255230c3a00b7f4bce5b31d0b.dat (58.1 KB)
+                - 📄 e7e048f255230c3a00b7f4bce5b31d0b_t.dat (4.0 KB)
+          - 📂 698866d8ebb339cf1d1776494fcebd9b/
+            - 📂 2025-12/
+              - 📂 Img/
+                - 📄 102e864bb1767cc681a0ef70099ad904_t.dat (5.5 KB)
+                - 📄 26035f00539d02b303fa2bac2334ce68_t.dat (5.8 KB)
+                - 📄 27f3fd2cc5aa98f5552d536c4c590ff5_t.dat (5.5 KB)
+                - 📄 7664f422d104d2e7c1e35dcb4ab94897_t.dat (4.1 KB)
+                - 📄 bbf40885950a54209a49041f5894f006_t.dat (5.9 KB)
+                - 📄 cf2d0eda6f3c998290f99f0f05b20007_t.dat (3.5 KB)
+                - 📄 d08497a307ba799758e8d90946196291_t.dat (7.2 KB)
+                - 📄 eba7814659f5883009c2c28cb0bbce40_t.dat (3.9 KB)
+                - 📄 f18059ccbd33bafccd8bde8cccd9b3cb_t.dat (4.2 KB)
+                - 📄 f9035a162043131f462a6d18062fb55b_t.dat (3.7 KB)
+          - 📂 700ca0418878ef20366f37592171d5b4/
+            - 📂 2025-09/
+              - 📂 Img/
+                - 📄 5dfd49a6b487212967f85a75ad954f23.dat (51.8 KB)
+                - 📄 5dfd49a6b487212967f85a75ad954f23_t.dat (3.4 KB)
+                - 📄 952aa722d5c4a671d15a05a2f0ba3e14_t.dat (2.5 KB)
+            - 📂 2025-12/
+              - 📂 Img/
+                - 📄 1f67b4e30822776f8bb702ad6d099433_t.dat (4.0 KB)
+                - 📄 a1a64012a50854dd013a9372e0b0119b_t.dat (4.8 KB)
+                - 📄 b420f6f3599728df907f8e3f8348f57c_t.dat (3.6 KB)
+                - 📄 f53c1b964e6c7eedc1d02fa2ffa347db_t.dat (3.0 KB)
+            - 📂 2026-01/
+              - 📂 Img/
+                - 📄 242097e82a8451522569c30834f28409_t.dat (4.5 KB)
+                - 📄 42da4b51735cf53edc1ccd3d1296348b_t.dat (4.2 KB)
+            - 📂 2026-03/
+              - 📂 Img/
+                - 📄 62461d63c3ceea021be2836f8c22c5f7_t.dat (3.1 KB)
+                - 📄 b5909afc3aaf7dc35363de2d96008350_t.dat (3.1 KB)
+            - 📂 2026-06/
+              - 📂 Img/
+                - 📄 68a571564e1bae3445141094ef5f470c.dat (64.3 KB)
+                - 📄 68a571564e1bae3445141094ef5f470c_t.dat (4.4 KB)
+                - 📄 d337ba575642215ceed7443c02b9591d.dat (72.8 KB)
+                - 📄 d337ba575642215ceed7443c02b9591d_t.dat (5.1 KB)
+            - 📂 2026-07/
+              - 📂 Img/
+                - 📄 6c2f118fd9a8814a68e78ae1f6e78471_t.dat (4.9 KB)
+                - 📄 9f2cff499110590afb7e2d5f0ebd93b1_t.dat (4.8 KB)
+                - 📄 d0870e0ecccdb616bd5992ed484111a5_t.dat (4.3 KB)
+          - 📂 84516f5cd9976860a2e4446960cabc28/
+            - 📂 2025-06/
+              - 📂 Img/
+                - 📄 243b551c3a9ca6cd790e166cb733e15c.dat (258.7 KB)
+                - 📄 243b551c3a9ca6cd790e166cb733e15c_t.dat (3.4 KB)
+                - 📄 29765acd1465414faa059ccdae9914b8.dat (167.0 KB)
+                - 📄 29765acd1465414faa059ccdae9914b8_t.dat (4.3 KB)
+                - 📄 fa70c1749e0519f955d3f294bc8bbafa.dat (48.5 KB)
+                - 📄 fa70c1749e0519f955d3f294bc8bbafa_t.dat (9.5 KB)
+          - 📂 897cce9bd677f936548d3cdba37142d1/
+            - 📂 2025-06/
+              - 📂 Img/
+                - 📄 2991c029c6a9126529098c65330b67db_t.dat (2.7 KB)
+                - 📄 47ed00356e4316afff8e328d1ae229e1_t.dat (5.3 KB)
+          - 📂 90c2e5ac3ed238ad7cdfb03312966dbf/
+            - 📂 2026-07/
+              - 📂 Img/
+                - 📄 79cb8dd7f30bd17e6ed35fa757c82403_t.dat (11.1 KB)
+          - 📂 a24e7a96b66d0fc28ae53aa6c0a225f7/
+            - 📂 2025-11/
+              - 📂 Img/
+                - 📄 04caaea5285b147fa3938783530429bf_t.dat (5.0 KB)
+                - 📄 6f910abec84cbec4d39eb1d2b044ba51_t.dat (4.1 KB)
+                - 📄 9e80e75c68012d36eb3a09a8f1edabd4_t.dat (3.6 KB)
+                - 📄 c9e842f98ad5266483d6453f4a269cd5_t.dat (4.6 KB)
+            - 📂 2025-12/
+              - 📂 Img/
+                - 📄 088584cce491b9d19d46053557a1d171_t.dat (3.3 KB)
+                - 📄 95e791c6d2f276d2e88558652023150b_t.dat (6.1 KB)
+                - 📄 c83f512eb1c69662ce0cb0e7923715c0_t.dat (3.6 KB)
+            - 📂 2026-06/
+              - 📂 Img/
+                - 📄 0d162fdefbf30de0a8cc5b883802a7d5_t.dat (11.4 KB)
+                - 📄 271df51aa50e13f3531dbf1e4ec03a6c_t.dat (2.8 KB)
+                - 📄 28eea8f4e639ddcfbb465fa4d45aa7a4_t.dat (3.5 KB)
+                - 📄 37fc35578f53f78797b82167dc15e164_t.dat (3.0 KB)
+                - 📄 9768ba668a21196cdbda1d3b8b4393e2_t.dat (3.2 KB)
+                - 📄 9a845af2cec5d4ce80fc69f0d34bc13f_t.dat (5.4 KB)
+                - 📄 a308fee5573e94113f04d95cf46259b4_t.dat (11.4 KB)
+                - 📄 dced9b4b258c603887746b1b5d788a46_t.dat (4.9 KB)
+                - 📄 dddcbbf08c09af4ef943cb8edc000a80_t.dat (3.5 KB)
+                - 📄 eff68721741f093654d2141cb1fb72f3_t.dat (3.2 KB)
+                - 📄 f53dec1054fa0211e20ad1b49201b62c_t.dat (2.3 KB)
+          - 📂 cdb6a6d9c8b16923c1684167739a9d29/
+            - 📂 2025-11/
+              - 📂 Img/
+                - 📄 231dbd108707e54dee357ef5afa9f2a2_t.dat (3.6 KB)
+                - 📄 347497ce70e243067ff0b61049a1df62_t.dat (4.6 KB)
+                - 📄 554ced68274bb0dc610ed81a6220a13b_t.dat (4.1 KB)
+                - 📄 7eca51af870676d2e572938aeebb79c4_t.dat (2.1 KB)
+                - 📄 cf79d880f3f5ae458a6fe29294c8b726_t.dat (5.0 KB)
+          - 📂 d4038f822bc7a0d8cfef2919b4e63715/
+            - 📂 2025-11/
+              - 📂 Img/
+                - 📄 1_1764161238_t.dat (31.5 KB)
+            - 📂 2026-07/
+              - 📂 Img/
+                - 📄 d55dc9af22a23a1ec1525cb1b0d788d6_t.dat (3.5 KB)
+                - 📄 e5267ff4fa9a996bc61917e2646106a0_t.dat (7.9 KB)
+          - 📂 e49221e09f380ca666576ef77939d6db/
+            - 📂 2025-09/
+              - 📂 Img/
+                - 📄 4404ff308f809586a6d38e6c82edd9a4.dat (96.8 KB)
+                - 📄 4404ff308f809586a6d38e6c82edd9a4_t.dat (7.5 KB)
+                - 📄 bff7e2bf350a80db9bfd419cc74e09ee.dat (86.2 KB)
+                - 📄 bff7e2bf350a80db9bfd419cc74e09ee_t.dat (6.9 KB)
+            - 📂 2025-11/
+              - 📂 Img/
+                - 📄 21c95811e0534bebd17e1188272d505f_t.dat (1.3 KB)
+                - 📄 aaf2000c7d2f5dc9b53b4fbde01967ff_t.dat (2.4 KB)
+                - 📄 dfcd87acff3f158fb3c3c71f004039d6_t.dat (1.3 KB)
+                - 📄 febddc8c9c5ed5abe863e56b51035970_t.dat (3.3 KB)
+            - 📂 2025-12/
+              - 📂 Img/
+                - 📄 11779f4d7cc7c80bbc0bf640394f8ac5_t.dat (3.8 KB)
+                - 📄 11f0c07032b20e9c8e599fa497378c75_t.dat (975.0 B)
+                - 📄 12479e79329869dcae59484013566389_t.dat (2.6 KB)
+                - 📄 14031b61ede2ec76f1a7030c8521d480_t.dat (3.4 KB)
+                - 📄 208cec2e21fb3305ff87be4b20b2cd64_t.dat (3.1 KB)
+                - 📄 2c47f75e4b11e6e4cf983db4a2aefe6c_t.dat (3.8 KB)
+                - 📄 36ae9dfdcd785a2781886ba81f0c4d9a_t.dat (2.4 KB)
+                - 📄 3aecc97c2bb4e2b81722b675bce96915_t.dat (3.4 KB)
+                - 📄 48e5ab832bdfdede452fc3840703afd2_t.dat (2.3 KB)
+                - 📄 4bd2f165dedfcb65b8c65b33e1470992_t.dat (2.6 KB)
+                - 📄 50caf9ed372256be798d1a027191bb99_t.dat (3.7 KB)
+                - 📄 74dc617e6322fa839bdc0e16548fa405_t.dat (3.3 KB)
+                - 📄 912b69b4a3e15f3be82f1280c451cc83.dat (1.4 KB)
+                - 📄 912b69b4a3e15f3be82f1280c451cc83_h.dat (1.4 KB)
+                - 📄 912b69b4a3e15f3be82f1280c451cc83_t.dat (1.2 KB)
+                - 📄 94f43f5b194b0959fc60417073ab14ef_t.dat (3.0 KB)
+                - 📄 97ea3cdce2b78b2608f3fdc901b41692_t.dat (2.6 KB)
+                - 📄 9ddd68539e70fd247e2193fed84dfb69.dat (1.4 KB)
+                - 📄 9ddd68539e70fd247e2193fed84dfb69_h.dat (1.4 KB)
+                - 📄 9ddd68539e70fd247e2193fed84dfb69_t.dat (975.0 B)
+                - 📄 ad3a196067f4a0260dc10de95b9b0664_t.dat (2.6 KB)
+                - 📄 ba9ce57d9df2eb9bc70b953b7a3dc587_t.dat (2.8 KB)
+                - 📄 ce37e4cc91b7d8c5fd25c870999b471c_t.dat (3.5 KB)
+                - 📄 ddd3c765c7effe9f123dc1a19bda6bc3_t.dat (7.2 KB)
+                - 📄 deda68c8f810e873a038a0df161662fa_t.dat (3.8 KB)
+                - 📄 e6ef847543b10060691d8a21a488a836.dat (49.6 KB)
+                - 📄 e6ef847543b10060691d8a21a488a836_t.dat (2.3 KB)
+                - 📄 ff24420e4501e0a82c0c75eb357e457d_t.dat (3.2 KB)
+            - 📂 2026-01/
+              - 📂 Img/
+                - 📄 a02d60a6d21982e12480debf3bfa85ed.dat (85.2 KB)
+                - 📄 a02d60a6d21982e12480debf3bfa85ed_h.dat (110.3 KB)
+                - 📄 a02d60a6d21982e12480debf3bfa85ed_t.dat (5.4 KB)
+            - 📂 2026-03/
+              - 📂 Img/
+                - 📄 44d5ff512cebc8a5598f9fc2a7d81f91.dat (4.6 KB)
+                - 📄 44d5ff512cebc8a5598f9fc2a7d81f91_t.dat (3.6 KB)
+                - 📄 86fe6d31c897f3701d8d59858aba063f.dat (41.7 KB)
+                - 📄 86fe6d31c897f3701d8d59858aba063f_t.dat (13.3 KB)
+            - 📂 2026-04/
+              - 📂 Img/
+                - 📄 48aaf74a9e2970c47976a9f03f9f9390_t.dat (7.9 KB)
+            - 📂 2026-06/
+              - 📂 Img/
+                - 📄 04361547595fd39a49b736c977b85ded_t.dat (6.8 KB)
+                - 📄 1bb69b7f2e17906b823aadd70992de86_t.dat (3.2 KB)
+                - 📄 1de0ab23b98864c2afb26bfa2b88d561_t.dat (5.8 KB)
+                - 📄 33eb65eab0a50fee6a4d22bd797facca_t.dat (3.6 KB)
+                - 📄 3e0461cd5c93d9150b51fa0413bad8b3_t.dat (11.4 KB)
+                - 📄 5d05d489264a5538201230dbcb1ce499.dat (75.3 KB)
+                - 📄 5d05d489264a5538201230dbcb1ce499_t.dat (9.4 KB)
+                - 📄 7c6e11fbc35f3fca78c79bf8ac555a3f_t.dat (12.9 KB)
+                - 📄 8afb9563becf8f779939a5e14aa8a104_t.dat (11.4 KB)
+                - 📄 976a8d4211a65d5aa580bd96ee60884e_t.dat (6.2 KB)
+                - 📄 bb668ead083cc5bf37c89bb275577ca7.dat (25.7 KB)
+                - 📄 bb668ead083cc5bf37c89bb275577ca7_t.dat (3.0 KB)
+                - 📄 c082e182db3dce7e630be6ba4a04396f_t.dat (14.4 KB)
+                - 📄 ecf13e1b43ad3b960b3ed6aa15a42cd4.dat (25.1 KB)
+                - 📄 ecf13e1b43ad3b960b3ed6aa15a42cd4_t.dat (3.0 KB)
+                - 📄 f451bbd628cbc3e11a6f5db606317f75.dat (33.5 KB)
+                - 📄 f451bbd628cbc3e11a6f5db606317f75_t.dat (2.7 KB)
+            - 📂 2026-07/
+              - 📂 Img/
+                - 📄 bc7b62e5a4a71e85debf6ce40d5acfa2_t.dat (11.3 KB)
+                - 📄 d555b15a8751bfda700993395f5e54e8_t.dat (4.6 KB)
+                - 📄 da6140fce7d808448d4e60bb801b3271_t.dat (13.0 KB)
+                - 📄 dadaa811297ce455f4af766d44c88231_t.dat (8.8 KB)
+          - 📂 eaed3da397c0faf51e23f3e2bf62d8f0/
+            - 📂 2025-09/
+              - 📂 Img/
+                - 📄 05b804f5d39157f26585ef80f753a4dc_t.dat (4.9 KB)
+                - 📄 2781fbf67857715f69a06db43d2b6b36_t.dat (4.9 KB)
+                - 📄 3990a0b76b0c0358b340c4dfcf10fd9e_t.dat (3.5 KB)
+                - 📄 51e9966785b41d9a9fb5afadca9f58fd_t.dat (4.1 KB)
+                - 📄 7a38907563fc54cf761880806fe0d9c2_t.dat (6.1 KB)
+                - 📄 bb91f0034950b56eef78a0807c9e6f7e_t.dat (7.3 KB)
+                - 📄 c02edfeadccb28132e6a3f6e22ad2774_t.dat (3.9 KB)
+                - 📄 c828d0bf712e8794109d3926588b9866_t.dat (4.1 KB)
+                - 📄 ce2215a1607c8505a96d6c643dedcfc4_t.dat (2.6 KB)
+                - 📄 e7ded4b249c2e3d4dca7b6682045096d_t.dat (3.9 KB)
+          - 📂 f9c435d15a65e786e4cc0b98ba50e983/
+            - 📂 2025-11/
+              - 📂 Img/
+                - 📄 10540099fdb4b046504d6aa2ccd08635_t.dat (4.1 KB)
+            - 📂 2025-12/
+              - 📂 Img/
+                - 📄 62891ad9ae282205bb4dcc650c5cb35c_t.dat (4.7 KB)
+        - 📂 file/
+          - 📂 2025-06/
+            - 📄 【IP变现方式】课程作业(1).docx (102.7 KB)
+            - 📄 【IP变现方式】课程作业(2).docx (102.7 KB)
+            - 📄 【IP变现方式】课程作业.docx (98.6 KB)
+            - 📄 【定位体系】课程作业-晅菱 - 複製.docx (976.9 KB)
+            - 📄 【定位体系】课程作业-晅菱(1).docx (976.9 KB)
+            - 📄 【定位体系】课程作业-晅菱.docx (966.8 KB)
+            - 📄 【私域人设变现】课程作业(1).docx (26.3 KB)
+            - 📄 【私域人设变现】课程作业(2).docx (26.3 KB)
+            - 📄 【私域人设变现】课程作业.docx (16.1 KB)
+          - 📂 2025-09/
+            - 📄 疗愈师考试题库(1).zip (76.6 KB)
+          - 📂 2025-12/
+            - 📄 12月10日 下午10点18分.m4a (166.8 KB)
+            - 📄 12月10日 下午10点20分.m4a (112.6 KB)
+          - 📂 2026-03/
+            - 📄 线上考试流程及答疑须知(4)(1)(1)(1).zip (1.0 MB)
+            - 📄 练习卷(1).docx (42.6 KB)
+            - 📄 练习卷.docx (43.5 KB)
+          - 📂 2026-06/
+            - 📄 COSE-APP学员操作手册（定）(3)(1).pdf (1.0 MB)
+            - 📄 COSE-PC端学员操作手册（定）(3)(1) - 副本.pdf (1.7 MB)
+            - 📄 《家庭教育指导师》题库（高级）.pdf (666.4 KB)
+        - 📂 video/
+          - 📂 2025-06/
+            - 📄 ff6c18e7199e4cee35a07f3923a12d48_thumb.jpg (5.5 KB)
+          - 📂 2025-09/
+            - 📄 07c79f53b4786050ffe7cfe9c6f3ef28_thumb.jpg (8.2 KB)
+            - 📄 0a9ada75b6990a5e4fe06f1ec1d8c751_thumb.jpg (13.2 KB)
+            - 📄 3ad96cf1674483e7c2a029c54d11562b_thumb.jpg (16.1 KB)
+            - 📄 3ce0f0916cc8ed835c3591b0dcd79d49_thumb.jpg (6.6 KB)
+            - 📄 75a5a0ca9b6b964f4460e503da5d2902_thumb.jpg (16.1 KB)
+            - 📄 7f067209b8b875941c2799d553ad20bb_thumb.jpg (20.5 KB)
+            - 📄 8aeef7b27851e7e8b7e52e26f4dc7c5a_thumb.jpg (21.5 KB)
+            - 📄 9a654d65e66ad369c31cefc47ab9a073_thumb.jpg (16.1 KB)
+            - 📄 9ec7d29079726e5503b1d9287ddea526_thumb.jpg (8.6 KB)
+            - 📄 b7ee165122637d346383b2ffe0319ce7_thumb.jpg (19.4 KB)
+            - 📄 d84330458b1e6a89b0f9829467442035_thumb.jpg (21.5 KB)
+          - 📂 2025-11/
+            - 📄 20943e493a38969e801c3d9f5cd8c06b_thumb.jpg (9.3 KB)
+          - 📂 2025-12/
+            - 📄 37798c37aa96f0828134b17ce8e81e80_thumb.jpg (20.5 KB)
+            - 📄 e0db6906d141680611fa37b7196df2df_thumb.jpg (26.0 KB)
+          - 📂 2026-03/
+            - 📄 988db08c0840f2e06a70ec586348bf0a_thumb.jpg (5.2 KB)
+          - 📂 2026-06/
+            - 📄 22154b65a76e08f8b900d5c3fe133235_thumb.jpg (6.1 KB)
+            - 📄 bb04a968ca5b73d3506cfdba2e48a200_thumb.jpg (10.8 KB)
+            - 📄 ecb427c224662feb102a09d4e02b1441_thumb.jpg (6.1 KB)
+          - 📂 2026-07/
+            - 📄 4d096e191dc667880eddf35e6b5a876c_thumb.jpg (29.3 KB)
+      - 📂 resource/
+        - 📄 172_2_124 (448.8 KB)
+        - 📄 90_1_784 (2.9 MB)
+        - 📄 93_1_205 (358.2 KB)
+        - 📄 93_2_206 (495.2 KB)
+        - 📄 config (1.8 KB)
+  - 📄 【附件一】2024商學與管理學術研討會發表注意事項.pdf (181.6 KB)
+  - 📄 【附件七】學位論文符合學術倫理規範切結書.docx (17.6 KB)
+  - 📄 【附件二】海報發表範本.pdf (322.2 KB)
+  - 📄 【附件六】學位論文原創性檢測報告聲明書.docx (17.9 KB)
+  - 📄 修改3論文封面格式_全球(專業實務報告).docx (18.0 KB)
+  - 📄 個人品牌蒼穹元音 的論文 的副本 (1).docx (484.9 KB)
+  - 📄 個人品牌蒼穹元音.docx (601.3 KB)
+  - 📄 口試前注意事項.doc (33.5 KB)
+  - 📄 天使之光.mp4 (11.2 MB)
+  - 📄 從Zoom Workplace應用程式加入 - Zoom 和其他 1 個頁面 - 個人 - Microsoft​ Edge 2026-01-30 18-58-35.mp4 (2.8 GB)
+  - 📄 心理咨询师练习卷1.docx (47.1 KB)
+  - 📄 心理咨询师练习卷2.docx (48.2 KB)
+  - 📄 我請求神的祝福讓我有成功的事業金錢豐盛.mp3 (778.0 MB)
+  - 📄 教師讀書會操作型PPT_系統動力x人偶排列.pptx (48.0 KB)
+  - 📄 教育機構永續行銷、品牌形象對於購客意願之研究－田淑君.docx (98.3 KB)
+  - 📄 新竹刑事_114易580卷1_P1-36_OCR.pdf (1.2 MB)
+  - 📄 未命名文件 (10).gdoc (192.0 B)
+  - 📄 未命名文件 (11).gdoc (192.0 B)
+  - 📄 未命名文件 (12).gdoc (192.0 B)
+  - 📄 未命名文件 (13).gdoc (192.0 B)
+  - 📄 未命名文件 (4).gdoc (192.0 B)
+  - 📄 未命名文件 (6).gdoc (192.0 B)
+  - 📄 未命名文件 (8).gdoc (192.0 B)
+  - 📄 未命名文件 (9).gdoc (192.0 B)
+  - 📄 未命名簡報.gslides (192.0 B)
+  - 📄 未命名表單 (1).gform (192.0 B)
+  - 📄 未命名表單.gform (192.0 B)
+  - 📄 某首西洋歌 -  2024-05-11 23-16-36.mp4 (491.4 MB)
+  - 📄 梵心之禪養生波.m4a (2.1 MB)
+  - 📄 瑜珈做為東方古老的身心靈修持法門，瑜珈心性的修持並不是遠離「社會的」，.txt (482.0 B)
+  - 📄 秋分的祝福 活動文案.docx (17.8 KB)
+  - 📄 第一章設定受眾.txt (4.1 KB)
+  - 📄 第六章20種小編常用發文.txt (34.0 B)
+  - 📄 簡報3.pptx (37.6 KB)
+  - 📄 系統排列核心知識讀書會.pdf (312.3 KB)
+  - 📄 练习卷(1).docx (42.6 KB)
+  - 📄 练习卷(2).docx (43.5 KB)
+  - 📄 练习卷(3).docx (42.6 KB)
+  - 📄 练习卷(4).docx (42.6 KB)
+  - 📄 练习卷(5).docx (43.5 KB)
+  - 📄 练习卷.docx (42.6 KB)
+  - 📄 背縫｜格式.docx (16.5 KB)
+  - 📄 自我介紹.pptx (42.7 KB)
+  - 📂 螢幕擷取畫面/
+    - 📄 2023-05-04.png (277.9 KB)
+    - 📄 2023-05-09 (1).png (13.3 KB)
+    - 📄 2023-05-09.png (306.7 KB)
+    - 📄 2023-05-10.png (791.0 KB)
+    - 📄 2023-05-25 (1).png (23.1 KB)
+    - 📄 2023-05-25 (10).png (280.4 KB)
+    - 📄 2023-05-25 (100).png (138.8 KB)
+    - 📄 2023-05-25 (101).png (66.5 KB)
+    - 📄 2023-05-25 (102).png (66.5 KB)
+    - 📄 2023-05-25 (103).png (66.5 KB)
+    - 📄 2023-05-25 (104).png (66.5 KB)
+    - 📄 2023-05-25 (105).png (77.3 KB)
+    - 📄 2023-05-25 (106).png (77.3 KB)
+    - 📄 2023-05-25 (107).png (77.3 KB)
+    - 📄 2023-05-25 (108).png (77.3 KB)
+    - 📄 2023-05-25 (109).png (77.3 KB)
+    - 📄 2023-05-25 (11).png (335.8 KB)
+    - 📄 2023-05-25 (110).png (8.2 KB)
+    - 📄 2023-05-25 (111).png (8.2 KB)
+    - 📄 2023-05-25 (112).png (8.2 KB)
+    - 📄 2023-05-25 (113).png (70.8 KB)
+    - 📄 2023-05-25 (114).png (301.2 KB)
+    - 📄 2023-05-25 (115).png (308.8 KB)
+    - 📄 2023-05-25 (116).png (305.2 KB)
+    - 📄 2023-05-25 (117).png (349.2 KB)
+    - 📄 2023-05-25 (118).png (350.2 KB)
+    - 📄 2023-05-25 (119).png (307.8 KB)
+    - 📄 2023-05-25 (12).png (327.5 KB)
+    - 📄 2023-05-25 (120).png (309.0 KB)
+    - 📄 2023-05-25 (121).png (308.0 KB)
+    - 📄 2023-05-25 (122).png (308.6 KB)
+    - 📄 2023-05-25 (123).png (307.9 KB)
+    - 📄 2023-05-25 (124).png (308.8 KB)
+    - 📄 2023-05-25 (125).png (306.0 KB)
+    - 📄 2023-05-25 (126).png (308.0 KB)
+    - 📄 2023-05-25 (127).png (349.2 KB)
+    - 📄 2023-05-25 (128).png (307.4 KB)
+    - 📄 2023-05-25 (129).png (306.0 KB)
+    - 📄 2023-05-25 (13).png (333.2 KB)
+    - 📄 2023-05-25 (14).png (333.2 KB)
+    - 📄 2023-05-25 (15).png (334.4 KB)
+    - 📄 2023-05-25 (16).png (333.2 KB)
+    - 📄 2023-05-25 (17).png (333.2 KB)
+    - 📄 2023-05-25 (18).png (338.1 KB)
+    - 📄 2023-05-25 (19).png (336.0 KB)
+    - 📄 2023-05-25 (2).png (315.9 KB)
+    - 📄 2023-05-25 (20).png (333.2 KB)
+    - 📄 2023-05-25 (21).png (335.8 KB)
+    - 📄 2023-05-25 (22).png (279.9 KB)
+    - 📄 2023-05-25 (23).png (160.6 KB)
+    - 📄 2023-05-25 (24).png (217.9 KB)
+    - 📄 2023-05-25 (25).png (257.0 KB)
+    - 📄 2023-05-25 (26).png (203.0 KB)
+    - 📄 2023-05-25 (27).png (201.6 KB)
+    - 📄 2023-05-25 (28).png (110.2 KB)
+    - 📄 2023-05-25 (29).png (140.1 KB)
+    - 📄 2023-05-25 (3).png (202.7 KB)
+    - 📄 2023-05-25 (30).png (198.7 KB)
+    - 📄 2023-05-25 (31).png (2.6 MB)
+    - 📄 2023-05-25 (32).png (197.9 KB)
+    - 📄 2023-05-25 (33).png (433.2 KB)
+    - 📄 2023-05-25 (34).png (455.7 KB)
+    - 📄 2023-05-25 (35).png (497.9 KB)
+    - 📄 2023-05-25 (36).png (497.4 KB)
+    - 📄 2023-05-25 (37).png (494.7 KB)
+    - 📄 2023-05-25 (38).png (479.2 KB)
+    - 📄 2023-05-25 (39).png (472.2 KB)
+    - 📄 2023-05-25 (4).png (238.0 KB)
+    - 📄 2023-05-25 (40).png (481.9 KB)
+    - 📄 2023-05-25 (41).png (482.9 KB)
+    - 📄 2023-05-25 (42).png (483.7 KB)
+    - 📄 2023-05-25 (43).png (482.8 KB)
+    - 📄 2023-05-25 (44).png (291.6 KB)
+    - 📄 2023-05-25 (45).png (315.3 KB)
+    - 📄 2023-05-25 (46).png (313.3 KB)
+    - 📄 2023-05-25 (47).png (373.0 KB)
+    - 📄 2023-05-25 (48).png (314.6 KB)
+    - 📄 2023-05-25 (49).png (376.1 KB)
+    - 📄 2023-05-25 (5).png (280.9 KB)
+    - 📄 2023-05-25 (50).png (373.1 KB)
+    - 📄 2023-05-25 (51).png (373.1 KB)
+    - 📄 2023-05-25 (52).png (374.9 KB)
+    - 📄 2023-05-25 (53).png (313.3 KB)
+    - 📄 2023-05-25 (54).png (374.8 KB)
+    - 📄 2023-05-25 (55).png (373.1 KB)
+    - 📄 2023-05-25 (56).png (373.4 KB)
+    - 📄 2023-05-25 (57).png (373.0 KB)
+    - 📄 2023-05-25 (58).png (373.1 KB)
+    - 📄 2023-05-25 (59).png (376.1 KB)
+    - 📄 2023-05-25 (6).png (281.1 KB)
+    - 📄 2023-05-25 (60).png (313.4 KB)
+    - 📄 2023-05-25 (61).png (314.0 KB)
+    - 📄 2023-05-25 (62).png (311.1 KB)
+    - 📄 2023-05-25 (63).png (311.1 KB)
+    - 📄 2023-05-25 (64).png (374.6 KB)
+    - 📄 2023-05-25 (65).png (374.6 KB)
+    - 📄 2023-05-25 (66).png (312.7 KB)
+    - 📄 2023-05-25 (67).png (313.9 KB)
+    - 📄 2023-05-25 (68).png (373.6 KB)
+    - 📄 2023-05-25 (69).png (371.9 KB)
+    - 📄 2023-05-25 (7).png (336.0 KB)
+    - 📄 2023-05-25 (70).png (371.8 KB)
+    - 📄 2023-05-25 (71).png (374.8 KB)
+    - 📄 2023-05-25 (72).png (374.4 KB)
+    - 📄 2023-05-25 (73).png (313.7 KB)
+    - 📄 2023-05-25 (74).png (313.9 KB)
+    - 📄 2023-05-25 (75).png (374.8 KB)
+    - 📄 2023-05-25 (76).png (373.6 KB)
+    - 📄 2023-05-25 (77).png (371.8 KB)
+    - 📄 2023-05-25 (78).png (373.1 KB)
+    - 📄 2023-05-25 (79).png (313.8 KB)
+    - 📄 2023-05-25 (8).png (280.4 KB)
+    - 📄 2023-05-25 (80).png (86.8 KB)
+    - 📄 2023-05-25 (81).png (377.3 KB)
+    - 📄 2023-05-25 (82).png (316.4 KB)
+    - 📄 2023-05-25 (83).png (377.7 KB)
+    - 📄 2023-05-25 (84).png (316.5 KB)
+    - 📄 2023-05-25 (85).png (313.9 KB)
+    - 📄 2023-05-25 (86).png (314.8 KB)
+    - 📄 2023-05-25 (87).png (378.3 KB)
+    - 📄 2023-05-25 (88).png (314.1 KB)
+    - 📄 2023-05-25 (89).png (312.4 KB)
+    - 📄 2023-05-25 (9).png (335.6 KB)
+    - 📄 2023-05-25 (90).png (373.9 KB)
+    - 📄 2023-05-25 (91).png (375.7 KB)
+    - 📄 2023-05-25 (92).png (376.1 KB)
+    - 📄 2023-05-25 (93).png (315.1 KB)
+    - 📄 2023-05-25 (94).png (375.7 KB)
+    - 📄 2023-05-25 (95).png (85.3 KB)
+    - 📄 2023-05-25 (96).png (375.6 KB)
+    - 📄 2023-05-25 (97).png (312.4 KB)
+    - 📄 2023-05-25 (98).png (313.9 KB)
+    - 📄 2023-05-25 (99).png (376.6 KB)
+    - 📄 2023-05-25.png (615.4 KB)
+    - 📄 2023-05-28 (1).png (874.4 KB)
+    - 📄 2023-05-28 (2).png (53.8 KB)
+    - 📄 2023-05-28.png (870.3 KB)
+    - 📄 2023-06-20.png (1.3 MB)
+    - 📄 螢幕擷取畫面 (1).png (565.0 KB)
+    - 📄 螢幕擷取畫面 (10).png (1.5 MB)
+    - 📄 螢幕擷取畫面 (11).png (1.4 MB)
+    - 📄 螢幕擷取畫面 (12).png (1.4 MB)
+    - 📄 螢幕擷取畫面 (13).png (435.7 KB)
+    - 📄 螢幕擷取畫面 (14).png (434.8 KB)
+    - 📄 螢幕擷取畫面 (15).png (440.3 KB)
+    - 📄 螢幕擷取畫面 (16).png (1.5 MB)
+    - 📄 螢幕擷取畫面 (17).png (1.5 MB)
+    - 📄 螢幕擷取畫面 (18).png (1.5 MB)
+    - 📄 螢幕擷取畫面 (19).png (463.9 KB)
+    - 📄 螢幕擷取畫面 (2).png (1.5 MB)
+    - 📄 螢幕擷取畫面 (20).png (1.3 MB)
+    - 📄 螢幕擷取畫面 (3).png (321.9 KB)
+    - 📄 螢幕擷取畫面 (4).png (326.1 KB)
+    - 📄 螢幕擷取畫面 (5).png (317.8 KB)
+    - 📄 螢幕擷取畫面 (6).png (317.8 KB)
+    - 📄 螢幕擷取畫面 (7).png (1.5 MB)
+    - 📄 螢幕擷取畫面 (8).png (1.5 MB)
+    - 📄 螢幕擷取畫面 (9).png (1.5 MB)
+    - 📄 螢幕擷取畫面 2024-02-07 185410.png (1.8 KB)
+    - 📄 螢幕擷取畫面 2024-03-05 134536.png (21.9 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 211228.png (632.6 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 211838.png (866.8 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 212118.png (425.0 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 212405.png (516.5 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 212451.png (363.0 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 212503.png (505.5 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 212801.png (404.9 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 212837.png (555.2 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 212915.png (753.1 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 213009.png (573.8 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 213104.png (172.4 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 213157.png (193.4 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 213301.png (171.4 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 213357.png (100.4 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 213439.png (250.6 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 213611.png (87.7 KB)
+    - 📄 螢幕擷取畫面 2025-01-08 213708.png (553.2 KB)
+    - 📄 螢幕擷取畫面 2025-03-05 130515.png (134.3 KB)
+    - 📄 螢幕擷取畫面 2025-06-05 103011.png (1.3 MB)
+    - 📄 螢幕擷取畫面 2025-06-06 235859.png (131.5 KB)
+    - 📄 螢幕擷取畫面 2026-07-04 180114.png (1.2 MB)
+    - 📄 螢幕擷取畫面 2026-07-04 180124.png (2.6 MB)
+    - 📄 螢幕擷取畫面 2026-07-04 180226.png (20.9 KB)
+    - 📄 螢幕擷取畫面 2026-07-04 184748.png (587.7 KB)
+    - 📄 螢幕擷取畫面 2026-07-04 184755.png (705.9 KB)
+    - 📄 螢幕擷取畫面 2026-07-04 184921.png (592.2 KB)
+  - 📄 論文上傳步驟說明.pdf (6.6 MB)
+  - 📄 論文封面(吳).docx (18.0 KB)
+  - 📄 論文封面(吳).pdf (102.7 KB)
+  - 📄 論文封面格式_全球(專業實務報告) (1).doc (38.0 KB)
+  - 📄 身心靈課程商業模式之探討.docx (33.3 KB)
+  - 📄 金錢療癒課程_完整銷講版_附備忘錄.pptx (507.6 KB)
+  - 📄 銷講簡報資料蒐集.xlsx (9.7 KB)
+  - 📄 靈性良知_伴學營簡報.pptx (42.2 KB)
+  - 📄 靈魂卡.m4a (19.1 MB)
+  - 📄 靈魂卡ME個案.m4a (44.3 MB)
+  - 📄 靈魂卡個案示範.m4a (32.4 MB)
+  - 📂 風景照/
+    - 📄 133556238212580129.jpg (1.8 MB)
+    - 📄 133567713722251497.jpg (1.6 MB)
+    - 📄 133872686042252678.jpg (1.7 MB)
+    - 📄 133872686091162369.jpg (1.8 MB)
+    - 📄 133910972931909439.jpg (2.3 MB)
+    - 📄 133923486528223880.jpg (2.0 MB)
+    - 📄 133923486619954817.jpg (1.9 MB)
+    - 📄 133937504840611610.jpg (1.6 MB)
+    - 📄 133945480583730605.jpg (2.7 MB)
+    - 📄 133955294689355816.jpg (2.4 MB)
+    - 📄 134000645208361606.jpg (2.4 MB)
+    - 📄 134022609364041700.jpg (2.1 MB)
+    - 📄 134027768215742609.jpg (1.6 MB)
+    - 📄 134069409743447312.jpg (1.9 MB)
+    - 📄 134081158819518739.jpg (1.9 MB)
+    - 📄 134099782814123184.jpg (2.2 MB)
+  - 📄 體驗課簡報2.0 感恩源頭.pptx (11.9 MB)
+</textarea>
+    </section>
+    <div id="drag-bar"
+      class="w-1.5 hover:w-2 hover:bg-indigo-500/80 bg-slate-200 dark:bg-slate-700 cursor-col-resize shrink-0 transition-all duration-150 h-full flex items-center justify-center relative group z-20">
+      <div
+        class="w-0.5 h-6 rounded-full bg-slate-400 dark:bg-slate-500 group-hover:bg-white transition-colors duration-150 pointer-events-none">
+      </div>
+    </div>
+    <section id="map-container" style="width: 50%;"
+      class="relative bg-slate-50 dark:bg-slate-900 flex flex-col h-full transition-all duration-300 overflow-hidden">
+      <svg id="markmap" class="w-full flex-1 cursor-move" style="height: 100%; width: 100%; min-height: 500px;"></svg>
+      <div
+        class="absolute bottom-6 right-6 flex space-x-2 bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl shadow-xl backdrop-blur-md z-10">
+        <button onclick="zoomIn()" title="放大"
+          class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i
+            class="fa-solid fa-plus text-sm"></i></button>
+        <button onclick="zoomOut()" title="縮小"
+          class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i
+            class="fa-solid fa-minus text-sm"></i></button>
+        <button onclick="zoomFit()" title="適合螢幕"
+          class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow"><i
+            class="fa-solid fa-expand text-sm"></i></button>
+      </div>
+      <!-- 可點擊展開的資訊提示按鈕與面版 -->
+      <div class="absolute top-4 left-4 z-30 flex items-start">
+        <button id="btn-info-toggle" onclick="toggleInfoTooltip()"
+          class="w-9 h-9 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg transition">
+          <i class="fa-solid fa-circle-info text-lg"></i>
+        </button>
+        <div id="info-tooltip"
+          class="hidden ml-2 bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 shadow-2xl max-w-[240px] md:max-w-sm pointer-events-auto transition-all">
+          <div class="hidden md:block">
+            <strong class="text-indigo-600 dark:text-indigo-400 block mb-0.5">電腦版操作說明：</strong>
+            滑鼠拖曳畫布移動，滾輪縮放，單擊節點展開/收合，雙擊編輯節點，右鍵選單管理。
+          </div>
+          <div class="block md:hidden">
+            <strong class="text-indigo-600 dark:text-indigo-400 block mb-0.5">手機版操作說明：</strong>
+            單指拖曳畫布移動，雙指捏合縮放，單擊節點展開/收合，雙擊編輯節點，長按或點選右鍵選單管理。
+          </div>
+        </div>
+      </div>
+      <!-- 浮動右鍵選單 -->
+      <div id="context-menu"
+        class="hidden absolute bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-md z-50 text-xs font-medium">
+        <button id="menu-opt-edit" onclick="menuEditNode()"
+          class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+          <i class="fa-solid fa-pen text-slate-400 dark:text-slate-500"></i> 編輯節點文字
+        </button>
+        <button id="menu-opt-child" onclick="menuAddChild()"
+          class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+          <i class="fa-solid fa-plus text-slate-400 dark:text-slate-500"></i> 新增子節點
+        </button>
+        <button id="menu-opt-sibling" onclick="menuAddSibling()"
+          class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+          <i class="fa-solid fa-square-plus text-slate-400 dark:text-slate-500"></i> 新增同層節點
+        </button>
+        <button id="menu-opt-parent" onclick="menuAddParentTheme()"
+          class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+          <i class="fa-solid fa-folder-plus text-slate-400 dark:text-slate-500"></i> 新增獨立根主題
+        </button>
+        <div id="menu-opt-sep" class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
+        <button id="menu-opt-delete" onclick="menuDeleteNode()"
+          class="w-full text-left px-4 py-2 hover:bg-rose-600 hover:text-white flex items-center gap-2 text-rose-500 dark:text-rose-400 hover:text-white transition duration-150">
+          <i class="fa-solid fa-trash"></i> 刪除此節點
+        </button>
+      </div>
+      <!-- 行內編輯器 -->
+      <div id="inline-editor-container" class="hidden absolute z-50">
+        <input type="text" id="inline-editor"
+          class="bg-white dark:bg-slate-800 border-2 border-indigo-500 text-slate-800 dark:text-slate-100 px-3 py-1.5 rounded-lg shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-xs font-semibold min-w-[150px]">
+      </div>
+    </section>
+  </main>
+
+  <!-- Mobile Menu Panel -->
+  <div id="mobile-menu-panel"
+    class="hidden fixed inset-y-0 right-0 w-64 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-2xl z-50 flex flex-col transition-transform duration-300 transform translate-x-full">
+    <!-- Close button & title -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+      <span class="font-bold text-sm text-slate-800 dark:text-slate-200">選單功能</span>
+      <button onclick="toggleMobileMenu()"
+        class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <!-- Menu actions -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <!-- View Mode selection -->
+      <div class="space-y-2">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檢視模式</span>
+        <div
+          class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+          <button id="mobile-btn-view-split" onclick="switchView('split'); toggleMobileMenu();"
+            class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+            <i class="fa-solid fa-columns mb-0.5"></i>雙欄
+          </button>
+          <button id="mobile-btn-view-edit" onclick="switchView('edit'); toggleMobileMenu();"
+            class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+            <i class="fa-solid fa-file-pen mb-0.5"></i>編輯
+          </button>
+          <button id="mobile-btn-view-map" onclick="switchView('map'); toggleMobileMenu();"
+            class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+            <i class="fa-solid fa-expand mb-0.5"></i>心智圖
+          </button>
+        </div>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+      <!-- History operations -->
+      <div class="space-y-3">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">歷程操作</span>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="mobile-btn-undo" onclick="undo(); toggleMobileMenu();" disabled
+            class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-arrow-rotate-left"></i><span>復原</span>
+          </button>
+          <button id="mobile-btn-redo" onclick="redo(); toggleMobileMenu();" disabled
+            class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-arrow-rotate-right"></i><span>重做</span>
+          </button>
+        </div>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+      <!-- Markmap operations -->
+      <div class="space-y-3">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">心智圖操作</span>
+        <button onclick="zoomFit(); toggleMobileMenu();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-compress w-4"></i><span>重設縮放</span>
+        </button>
+        <button id="mobile-btn-expand-all" onclick="toggleExpandAll(); toggleMobileMenu();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-angles-down w-4"></i><span>一鍵展開</span>
+        </button>
+        <button id="mobile-btn-toggle-line" onclick="toggleLineStyle(); toggleMobileMenu();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-route w-4"></i><span>直角折線</span>
+        </button>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+      <!-- File actions -->
+      <div class="space-y-3">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檔案匯出</span>
+        <button onclick="exportMarkdown(); toggleMobileMenu();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-file-code w-4"></i><span>匯出 .md</span>
+        </button>
+        <button onclick="exportSVG(); toggleMobileMenu();"
+          class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5 shadow-md">
+          <i class="fa-solid fa-download w-4"></i><span>下載 SVG 圖片</span>
+        </button>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+      <!-- Theme toggle -->
+      <div class="space-y-3">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">主題設定</span>
+        <button onclick="toggleTheme();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-sun w-4 dark:hidden"></i>
+          <i class="fa-solid fa-moon w-4 hidden dark:inline-block"></i>
+          <span>切換深淺色</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Mobile Menu Backdrop -->
+  <div id="mobile-menu-backdrop" onclick="toggleMobileMenu()"
+    class="hidden fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 z-40 transition-opacity duration-300 opacity-0">
+  </div>
+
+</body>
+
+</html>
