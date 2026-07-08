@@ -841,17 +841,7 @@
         if (nodeEl) {
           const d = nodeEl.__data__;
           if (d && d.lineIndex !== undefined) {
-            const lines = editor.value.split('\n');
-            let charIndex = 0;
-            for (let i = 0; i < d.lineIndex; i++) {
-              charIndex += lines[i].length + 1;
-            }
-            editor.focus();
-            editor.setSelectionRange(charIndex, charIndex + lines[d.lineIndex].length);
-
-            const lineHeight = 24;
-            editor.scrollTop = d.lineIndex * lineHeight - editor.clientHeight / 2;
-
+            focusEditorOnNode(d);
             mm.setHighlight(d);
           }
         }
@@ -1069,6 +1059,155 @@
       updateMarkmap(false);
       pushState();
     }
+
+    // --- 搜尋功能相關邏輯 ---
+    let searchResults = [];
+    let searchResultIndex = -1;
+    let currentSearchKeyword = "";
+    let searchDebounceTimeout;
+
+    function focusEditorOnNode(node) {
+      if (!node || node.lineIndex === undefined) return;
+      const editor = document.querySelector('#editor');
+      if (!editor) return;
+      const lines = editor.value.split('\n');
+      let charIndex = 0;
+      for (let i = 0; i < node.lineIndex; i++) {
+        charIndex += lines[i].length + 1;
+      }
+      editor.focus();
+      editor.setSelectionRange(charIndex, charIndex + lines[node.lineIndex].length);
+
+      const lineHeight = 24;
+      editor.scrollTop = node.lineIndex * lineHeight - editor.clientHeight / 2;
+    }
+
+    function performSearch(keyword, direction = 1) {
+      if (!mm || !mm.state.data) return;
+      keyword = keyword.trim().toLowerCase();
+
+      const desktopInput = document.getElementById('desktop-search-input');
+      const mobileInput = document.getElementById('mobile-search-input');
+
+      // 同步輸入框內容
+      if (desktopInput && desktopInput.value !== keyword) desktopInput.value = keyword;
+      if (mobileInput && mobileInput.value !== keyword) mobileInput.value = keyword;
+
+      if (!keyword) {
+        searchResults = [];
+        searchResultIndex = -1;
+        currentSearchKeyword = "";
+        updateSearchUIStatus("");
+        return;
+      }
+
+      // 如果關鍵字改變，重新搜尋
+      if (keyword !== currentSearchKeyword) {
+        currentSearchKeyword = keyword;
+        searchResults = [];
+
+        function walk(node) {
+          if (!node) return;
+          if (node.content) {
+            const decoded = decodeHTMLEntities(node.content).toLowerCase();
+            if (decoded.includes(keyword)) {
+              searchResults.push(node);
+            }
+          }
+          if (node.children) {
+            node.children.forEach(walk);
+          }
+        }
+        walk(mm.state.data);
+
+        // 排序 searchResults，照 lineIndex 排序
+        searchResults.sort((a, b) => {
+          const lineA = a.lineIndex !== undefined ? a.lineIndex : 0;
+          const lineB = b.lineIndex !== undefined ? b.lineIndex : 0;
+          return lineA - lineB;
+        });
+
+        searchResultIndex = searchResults.length > 0 ? 0 : -1;
+      } else {
+        // 如果關鍵字相同，只是要往上或往下尋找
+        if (searchResults.length > 0) {
+          searchResultIndex = (searchResultIndex + direction + searchResults.length) % searchResults.length;
+        }
+      }
+
+      if (searchResults.length > 0) {
+        const targetNode = searchResults[searchResultIndex];
+        const statusText = `${searchResultIndex + 1} / ${searchResults.length}`;
+        updateSearchUIStatus(statusText, true);
+
+        // 定位並展開
+        const wasFolded = unfoldAncestors(targetNode);
+        if (wasFolded) {
+          mm.renderData().then(() => {
+            mm.setHighlight(targetNode);
+            mm.centerNode(targetNode);
+          });
+        } else {
+          mm.setHighlight(targetNode);
+          mm.centerNode(targetNode);
+        }
+
+        // 同步定位編輯器
+        focusEditorOnNode(targetNode);
+      } else {
+        updateSearchUIStatus("找不到結果", false);
+      }
+    }
+
+    function updateSearchUIStatus(text, hasResults = false) {
+      const desktopStatus = document.getElementById('desktop-search-status');
+      const mobileStatus = document.getElementById('mobile-search-status');
+
+      if (desktopStatus) {
+        desktopStatus.innerText = text;
+        if (text) {
+          desktopStatus.classList.remove('hidden');
+          if (hasResults) {
+            desktopStatus.className = "absolute right-10 inset-y-0 flex items-center text-[10px] pointer-events-none select-none text-indigo-600 dark:text-indigo-400 font-semibold bg-white dark:bg-slate-800 px-1";
+          } else {
+            desktopStatus.className = "absolute right-10 inset-y-0 flex items-center text-[10px] pointer-events-none select-none text-rose-500 font-semibold bg-white dark:bg-slate-800 px-1";
+          }
+        } else {
+          desktopStatus.classList.add('hidden');
+        }
+      }
+      if (mobileStatus) {
+        mobileStatus.innerText = text;
+        if (text) {
+          mobileStatus.classList.remove('hidden');
+          mobileStatus.className = `text-[11px] mt-1 font-semibold ${hasResults ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-500'}`;
+        } else {
+          mobileStatus.classList.add('hidden');
+        }
+      }
+    }
+
+    function navigateSearch(direction) {
+      const keyword = document.getElementById('desktop-search-input')?.value || document.getElementById('mobile-search-input')?.value || "";
+      performSearch(keyword, direction);
+    }
+
+    function handleSearchKeydown(event) {
+      if (event.key === 'Enter') {
+        const keyword = event.target.value;
+        performSearch(keyword, 1);
+      }
+    }
+
+    function handleSearchInput(event) {
+      clearTimeout(searchDebounceTimeout);
+      const keyword = event.target.value;
+      searchDebounceTimeout = setTimeout(() => {
+        currentSearchKeyword = ""; 
+        performSearch(keyword, 0);
+      }, 300);
+    }
+    // -------------------------------------
 
     let timeout;
 
@@ -1425,6 +1564,25 @@
     </div>
     <!-- Desktop Toolbar (Hidden on Mobile) -->
     <div class="hidden md:flex items-center space-x-3">
+      <!-- Search Input (Desktop) -->
+      <div class="relative w-40 lg:w-56 shrink-0">
+        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 text-[10px]"></i>
+        </span>
+        <input type="text" id="desktop-search-input" placeholder="搜尋檔案名稱..." onkeydown="handleSearchKeydown(event)" oninput="handleSearchInput(event)"
+          class="block w-full pl-7 pr-16 py-1.5 bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-800 dark:text-slate-200">
+        <div id="desktop-search-status" class="hidden absolute right-10 inset-y-0 flex items-center text-[9px] pointer-events-none select-none"></div>
+        <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center space-x-0.5">
+          <button onclick="navigateSearch(-1)" title="上一個" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
+            <i class="fa-solid fa-chevron-up text-[9px]"></i>
+          </button>
+          <button onclick="navigateSearch(1)" title="下一個" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
+            <i class="fa-solid fa-chevron-down text-[9px]"></i>
+          </button>
+        </div>
+      </div>
+      <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+
       <div
         class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center space-x-1">
         <button id="btn-view-split" onclick="switchView('split')" title="分割模式"
@@ -3108,6 +3266,28 @@
     </div>
     <!-- Menu actions -->
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <!-- Search Box (Mobile) -->
+      <div class="space-y-2">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">搜尋檔案</span>
+        <div class="relative w-full">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+          </span>
+          <input type="text" id="mobile-search-input" placeholder="輸入關鍵字搜尋..." onkeydown="handleSearchKeydown(event)" oninput="handleSearchInput(event)"
+            class="block w-full pl-9 pr-14 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-800 dark:text-slate-200">
+          <div class="absolute inset-y-0 right-0 pr-2 flex items-center space-x-1">
+            <button onclick="navigateSearch(-1)" title="上一個" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+              <i class="fa-solid fa-chevron-up text-xs"></i>
+            </button>
+            <button onclick="navigateSearch(1)" title="下一個" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+              <i class="fa-solid fa-chevron-down text-xs"></i>
+            </button>
+          </div>
+        </div>
+        <div id="mobile-search-status" class="hidden text-[10px] select-none"></div>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+
       <!-- View Mode selection -->
       <div class="space-y-2">
         <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檢視模式</span>
