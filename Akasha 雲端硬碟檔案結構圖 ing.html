@@ -480,7 +480,6 @@
       } else {
         root = buildMarkmapData(parseMarkdown(markdown));
       }
-      sortFolderAndFiles(root, 0);
       alignNodesWithLines(root, markdown);
       lastActiveNode = null;
 
@@ -583,11 +582,23 @@
         };
         adjustX(this.state.data, 0, 0);
 
-        // Step 3: 重新計算 bounding box 讓 fit() 正確
+        // Step 3: 重新計算 bounding box 讓 fit() 正確（過濾折疊子節點與 NaN 值以防止縮放故障）
         const allNodes = [];
-        const collect = n => { if (n) { allNodes.push(n); (n.children || []).forEach(collect); } };
+        const collect = n => {
+          if (!n) return;
+          allNodes.push(n);
+          if (n.payload && n.payload.fold) return; // 折疊的節點其子節點不納入計算
+          (n.children || []).forEach(collect);
+        };
         collect(this.state.data);
-        const rects = allNodes.map(n => n.state && n.state.rect).filter(Boolean);
+        const rects = allNodes
+          .map(n => n.state && n.state.rect)
+          .filter(r => r && 
+            typeof r.x === 'number' && !isNaN(r.x) && 
+            typeof r.y === 'number' && !isNaN(r.y) && 
+            typeof r.width === 'number' && !isNaN(r.width) && 
+            typeof r.height === 'number' && !isNaN(r.height)
+          );
         if (rects.length) this.state.rect = {
           x1: Math.min(...rects.map(r => r.x)),
           y1: Math.min(...rects.map(r => r.y)),
@@ -662,7 +673,6 @@
 
       alignNodesWithLines(root, markdown);
       lastActiveNode = null;
-      sortFolderAndFiles(root, 0);
       mm.setData(root);
 
       // 將快照的折疊狀態還原到實際的 state.data 中，並重新渲染
