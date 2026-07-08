@@ -615,7 +615,7 @@
 
         // Step 2: 固定 gap 拉伸 X 軸
         const GAP_L1 = 180;  // root → 第一層
-        const GAP_DEEP = 250; // 第二層以下
+        const GAP_DEEP = 300; // 第二層以下
         const adjustX = (node, depth, parentRightX) => {
           if (!node || !node.state || !node.state.rect) return;
           const gap = depth === 0 ? 0 : (depth === 1 ? GAP_L1 : GAP_DEEP);
@@ -1211,9 +1211,9 @@
 
     let timeout;
 
-    let lastSplitPercent = 50;
+    let lastSplitPercent = 30;
     let lastSplitPercentMobile = 50;
-    let activeViewMode = 'split';
+    let activeViewMode = 'map';
 
     function isMobileView() {
       return window.innerWidth < 768;
@@ -1472,6 +1472,7 @@
       formatEditorHeadings();
       initMarkmap();
       setupDragBar();
+      switchView(activeViewMode);
       setTimeout(pushState, 600); // 初始狀態記錄在 historyStack[0]，作為基線
     };
 
@@ -1646,7 +1647,7 @@
     </button>
   </header>
   <main class="flex-1 flex overflow-hidden">
-    <section id="editor-container" style="width: 50%;"
+    <section id="editor-container" style="width: 30%;"
       class="flex flex-col bg-white dark:bg-slate-950 shadow-inner transition-all duration-300">
       <div
         class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 shrink-0">
@@ -3191,7 +3192,7 @@
         class="w-0.5 h-6 rounded-full bg-slate-400 dark:bg-slate-500 group-hover:bg-white transition-colors duration-150 pointer-events-none">
       </div>
     </div>
-    <section id="map-container" style="width: 50%;"
+    <section id="map-container" style="width: 70%;"
       class="relative bg-slate-50 dark:bg-slate-900 flex flex-col h-full transition-all duration-300 overflow-hidden">
       <svg id="markmap" class="w-full flex-1 cursor-move" style="height: 100%; width: 100%; min-height: 500px;"></svg>
       <div
