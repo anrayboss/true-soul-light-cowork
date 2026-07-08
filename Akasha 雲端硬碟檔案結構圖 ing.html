@@ -345,8 +345,8 @@
 
       let updated = false;
 
-      // 展開所有祖先節點
-      for (let i = 0; i < path.length - 1; i++) {
+      // 展開所有祖先節點以及目標節點本身
+      for (let i = 0; i < path.length; i++) {
         if (!path[i].payload) path[i].payload = {};
         if (path[i].payload.fold !== 0) {
           path[i].payload.fold = 0;
@@ -1203,7 +1203,7 @@
       clearTimeout(searchDebounceTimeout);
       const keyword = event.target.value;
       searchDebounceTimeout = setTimeout(() => {
-        currentSearchKeyword = ""; 
+        currentSearchKeyword = "";
         performSearch(keyword, 0);
       }, 300);
     }
@@ -1557,9 +1557,9 @@
           class="text-base md:text-lg font-bold tracking-wide text-slate-900 dark:text-white flex flex-wrap items-center gap-1 md:gap-2">
           雲端硬碟檔案結構圖 <span
             class="text-[10px] md:text-xs bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/50 px-2 py-0.5 rounded-full font-normal">Akasha
-            電腦急救中</span>
+            電腦整理中</span>
         </h1>
-        <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400">可即時編輯、縮放與匯出的動態心智圖系統</p>
+        <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400">可即時編輯、縮放與匯出的智慧心智圖</p>
       </div>
     </div>
     <!-- Desktop Toolbar (Hidden on Mobile) -->
@@ -1569,14 +1569,18 @@
         <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
           <i class="fa-solid fa-magnifying-glass text-slate-400 text-[10px]"></i>
         </span>
-        <input type="text" id="desktop-search-input" placeholder="搜尋檔案名稱..." onkeydown="handleSearchKeydown(event)" oninput="handleSearchInput(event)"
+        <input type="text" id="desktop-search-input" placeholder="搜尋檔案名稱..." onkeydown="handleSearchKeydown(event)"
+          oninput="handleSearchInput(event)"
           class="block w-full pl-7 pr-16 py-1.5 bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-800 dark:text-slate-200">
-        <div id="desktop-search-status" class="hidden absolute right-10 inset-y-0 flex items-center text-[9px] pointer-events-none select-none"></div>
+        <div id="desktop-search-status"
+          class="hidden absolute right-10 inset-y-0 flex items-center text-[9px] pointer-events-none select-none"></div>
         <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center space-x-0.5">
-          <button onclick="navigateSearch(-1)" title="上一個" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
+          <button onclick="navigateSearch(-1)" title="上一個"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
             <i class="fa-solid fa-chevron-up text-[9px]"></i>
           </button>
-          <button onclick="navigateSearch(1)" title="下一個" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
+          <button onclick="navigateSearch(1)" title="下一個"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
             <i class="fa-solid fa-chevron-down text-[9px]"></i>
           </button>
         </div>
@@ -3273,13 +3277,16 @@
           <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
           </span>
-          <input type="text" id="mobile-search-input" placeholder="輸入關鍵字搜尋..." onkeydown="handleSearchKeydown(event)" oninput="handleSearchInput(event)"
+          <input type="text" id="mobile-search-input" placeholder="輸入關鍵字搜尋..." onkeydown="handleSearchKeydown(event)"
+            oninput="handleSearchInput(event)"
             class="block w-full pl-9 pr-14 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-800 dark:text-slate-200">
           <div class="absolute inset-y-0 right-0 pr-2 flex items-center space-x-1">
-            <button onclick="navigateSearch(-1)" title="上一個" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+            <button onclick="navigateSearch(-1)" title="上一個"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
               <i class="fa-solid fa-chevron-up text-xs"></i>
             </button>
-            <button onclick="navigateSearch(1)" title="下一個" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+            <button onclick="navigateSearch(1)" title="下一個"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
               <i class="fa-solid fa-chevron-down text-xs"></i>
             </button>
           </div>
