@@ -344,6 +344,8 @@
       findPath(mm.state.data, []);
 
       let updated = false;
+
+      // 展開所有祖先節點
       for (let i = 0; i < path.length - 1; i++) {
         if (!path[i].payload) path[i].payload = {};
         if (path[i].payload.fold !== 0) {
@@ -351,6 +353,24 @@
           updated = true;
         }
       }
+
+      // 同層級節點互斥：將路徑上每個節點的兄弟節點折疊
+      for (let i = 1; i < path.length; i++) {
+        const parent = path[i - 1];
+        const currentNode = path[i];
+        if (parent && parent.children) {
+          parent.children.forEach(sibling => {
+            if (sibling !== currentNode && sibling.children && sibling.children.length > 0) {
+              if (!sibling.payload) sibling.payload = {};
+              if (sibling.payload.fold !== 1) {
+                sibling.payload.fold = 1;
+                updated = true;
+              }
+            }
+          });
+        }
+      }
+
       return updated;
     }
 
@@ -521,6 +541,29 @@
         pushState();
       }
     }
+
+    function findParentNode(root, target) {
+      if (!root || !root.children) return null;
+      if (root.children.includes(target)) return root;
+      for (const child of root.children) {
+        const p = findParentNode(child, target);
+        if (p) return p;
+      }
+      return null;
+    }
+
+    function autoCollapseSiblings(targetNode) {
+      if (!mm || !mm.state.data || !targetNode) return;
+      const parent = findParentNode(mm.state.data, targetNode);
+      if (!parent || !parent.children) return;
+
+      parent.children.forEach(sibling => {
+        if (sibling !== targetNode && sibling.children && sibling.children.length > 0) {
+          if (!sibling.payload) sibling.payload = {};
+          sibling.payload.fold = 1;
+        }
+      });
+    }
     // -----------------------------------------------------
 
     function initMarkmap() {
@@ -572,7 +615,7 @@
 
         // Step 2: 固定 gap 拉伸 X 軸
         const GAP_L1 = 180;  // root → 第一層
-        const GAP_DEEP = 500; // 第二層以下
+        const GAP_DEEP = 250; // 第二層以下
         const adjustX = (node, depth, parentRightX) => {
           if (!node || !node.state || !node.state.rect) return;
           const gap = depth === 0 ? 0 : (depth === 1 ? GAP_L1 : GAP_DEEP);
@@ -593,10 +636,10 @@
         collect(this.state.data);
         const rects = allNodes
           .map(n => n.state && n.state.rect)
-          .filter(r => r && 
-            typeof r.x === 'number' && !isNaN(r.x) && 
-            typeof r.y === 'number' && !isNaN(r.y) && 
-            typeof r.width === 'number' && !isNaN(r.width) && 
+          .filter(r => r &&
+            typeof r.x === 'number' && !isNaN(r.x) &&
+            typeof r.y === 'number' && !isNaN(r.y) &&
+            typeof r.width === 'number' && !isNaN(r.width) &&
             typeof r.height === 'number' && !isNaN(r.height)
           );
         if (rects.length) this.state.rect = {
@@ -783,7 +826,18 @@
       });
 
       svgEl.addEventListener('click', (event) => {
+        const circleEl = event.target.closest('circle');
         const nodeEl = event.target.closest('.markmap-node');
+        if (circleEl && nodeEl) {
+          const d = nodeEl.__data__;
+          if (d && d.payload && d.payload.fold === 1) {
+            const depth = d.state ? d.state.depth : (d.depth || 0);
+            if (depth >= 1) {
+              autoCollapseSiblings(d);
+            }
+          }
+        }
+
         if (nodeEl) {
           const d = nodeEl.__data__;
           if (d && d.lineIndex !== undefined) {
