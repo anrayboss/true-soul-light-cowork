@@ -278,11 +278,11 @@
         const icon = b.querySelector('i');
         const span = b.querySelector('span');
         if (window.useStraightLines) {
-          icon.className = "fa-solid fa-route";
-          span.innerText = "直角折線";
-        } else {
           icon.className = "fa-solid fa-bezier-curve";
           span.innerText = "曲線連結";
+        } else {
+          icon.className = "fa-solid fa-route";
+          span.innerText = "直角折線";
         }
       };
 
@@ -1623,7 +1623,7 @@
       </button>
       <button id="btn-toggle-line" onclick="toggleLineStyle()" title="切換折線/曲線樣式"
         class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
-        <i class="fa-solid fa-bezier-curve"></i><span>曲線連結</span>
+        <i class="fa-solid fa-route"></i><span>直角折線</span>
       </button>
       <button onclick="exportMarkdown()" title="下載 Markdown"
         class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
@@ -3321,7 +3321,7 @@
         </button>
         <button id="mobile-btn-toggle-line" onclick="toggleLineStyle(); toggleMobileMenu();"
           class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
-          <i class="fa-solid fa-bezier-curve w-4"></i><span>曲線連結</span>
+          <i class="fa-solid fa-route w-4"></i><span>直角折線</span>
         </button>
       </div>
       <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
