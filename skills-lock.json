@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "cfo-expert": {
+      "source": "j9o/cfo-expert",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "07b67ba511e368857aa36da924b8477d7149a198459ca36a7180deb31d6aac61"
+    },
     "ckm:banner-design": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
