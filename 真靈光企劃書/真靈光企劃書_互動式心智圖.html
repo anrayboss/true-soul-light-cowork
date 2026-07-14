@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>真靈光企劃書 互動式心智圖</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+    // Set theme on load based on preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+    // Override d3.linkHorizontal to support toggling between straight lines and curves
+    (function () {
+      const originalLinkHorizontal = d3.linkHorizontal;
+      window.useStraightLines = false; // Default to curves, but allow toggling
+
+      d3.linkHorizontal = function () {
+        const originalGenerator = originalLinkHorizontal();
+        let sourceAccessor = d => d.source;
+        let targetAccessor = d => d.target;
+        let xAccessor = d => d[0];
+        let yAccessor = d => d[1];
+
+        const generator = function (d) {
+          if (!window.useStraightLines) {
+            return originalGenerator(d);
+          }
+          const s = sourceAccessor(d);
+          const t = targetAccessor(d);
+          const x0 = xAccessor(s);
+          const y0 = yAccessor(s);
+          const x1 = xAccessor(t);
+          const y1 = yAccessor(t);
+          const x_mid = (x0 + x1) / 2;
+          return `M${x0},${y0} L${x_mid},${y0} L${x_mid},${y1} L${x1},${y1}`;
+        };
+
+        generator.source = function (_) {
+          if (arguments.length) {
+            sourceAccessor = _;
+            originalGenerator.source(_);
+            return generator;
+          }
+          return sourceAccessor;
+        };
+        generator.target = function (_) {
+          if (arguments.length) {
+            targetAccessor = _;
+            originalGenerator.target(_);
+            return generator;
+          }
+          return targetAccessor;
+        };
+        generator.x = function (_) {
+          if (arguments.length) {
+            xAccessor = _;
+            originalGenerator.x(_);
+            return generator;
+          }
+          return xAccessor;
+        };
+        generator.y = function (_) {
+          if (arguments.length) {
+            yAccessor = _;
+            originalGenerator.y(_);
+            return generator;
+          }
+          return yAccessor;
+        };
+
+        return generator;
+      };
+    })();
+
+    var transformer, mm;
+    let activeNodeData = null;
+    let activeNodeEl = null;
+
+    // Simple markdown to tree parser (fallback if Transformer unavailable)
+    function parseMarkdown(md) {
+      const lines = md.split('\n');
+      const root = { content: '', children: [], depth: 0 };
+      const stack = [root];
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        let depth, content;
+        const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)/);
+        const bulletMatch = trimmed.match(/^[-*]\s+(.*)/);
+        const indentedBulletMatch = line.match(/^(\s+)[-*]\s+(.*)/);
+
+        if (headingMatch) {
+          depth = headingMatch[1].length;
+          content = headingMatch[2];
+        } else if (indentedBulletMatch) {
+          const indent = indentedBulletMatch[1].length;
+          depth = 7 + Math.floor(indent / 2);
+          content = indentedBulletMatch[2];
+        } else if (bulletMatch) {
+          depth = 7;
+          content = bulletMatch[1];
+        } else {
+          continue;
+        }
+
+        const node = { content, children: [], depth };
+
+        while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
+          stack.pop();
+        }
+        stack[stack.length - 1].children.push(node);
+        stack.push(node);
+      }
+
+      return root.children.length === 1 ? root.children[0] : root;
+    }
+
+    function buildMarkmapData(node) {
+      return {
+        content: node.content,
+        children: (node.children || []).map(buildMarkmapData)
+      };
+    }
+
+    function alignNodesWithLines(root, markdown) {
+      const lines = markdown.split('\n');
+      const nodeLines = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        const isHeading = trimmed.match(/^(#{1,6})\s+/);
+        const isBullet = trimmed.match(/^[-*]\s+/);
+        const isIndentedBullet = line.match(/^(\s+)[-*]\s+/);
+
+        if (isHeading || isBullet || isIndentedBullet) {
+          nodeLines.push({
+            lineIndex: i,
+            lineContent: line
+          });
+        }
+      }
+
+      const treeNodes = [];
+      function traverse(node) {
+        if (!node) return;
+        if (node.depth === 0 && !node.content && node.children && node.children.length > 0) {
+          // Virtual root
+        } else {
+          treeNodes.push(node);
+        }
+        if (node.children) {
+          node.children.forEach(traverse);
+        }
+      }
+
+      traverse(root);
+
+      const limit = Math.min(treeNodes.length, nodeLines.length);
+      for (let i = 0; i < limit; i++) {
+        treeNodes[i].lineIndex = nodeLines[i].lineIndex;
+      }
+    }
+
+    const darkColors = ['#818cf8', '#c084fc', '#2dd4bf', '#fbbf24', '#f472b6', '#60a5fa', '#f87171', '#a3e635', '#22d3ee'];
+    const lightColors = ['#4f46e5', '#9333ea', '#0d9488', '#d97706', '#db2777', '#2563eb', '#dc2626', '#65a30d', '#0891b2'];
+
+    const darkStyle = (id) => `
+    .${id} g { fill: #ffffff; font-weight: 500; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .${id} foreignObject { color: #ffffff; }
+    .${id} circle { fill: #0f172a; }
+`;
+
+    const lightStyle = (id) => `
+    .${id} g { fill: #0f172a; font-weight: 500; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .${id} foreignObject { color: #0f172a; }
+    .${id} circle { fill: #ffffff; }
+`;
+
+    let isAllExpanded = false;
+
+    function setAllNodesFold(node, foldVal) {
+      if (!node) return;
+      if (!node.payload) node.payload = {};
+      node.payload.fold = foldVal;
+      if (node.children) {
+        node.children.forEach(child => setAllNodesFold(child, foldVal));
+      }
+    }
+
+    function collapseAllNodes(node, depth = 1) {
+      if (!node) return;
+      if (!node.payload) node.payload = {};
+      if (depth > 2) {
+        node.payload.fold = 1;
+      } else {
+        delete node.payload.fold;
+      }
+      if (node.children) {
+        node.children.forEach(child => collapseAllNodes(child, depth + 1));
+      }
+    }
+
+    function resetExpandButton() {
+      const btn = document.querySelector('#btn-expand-all');
+      const mobileBtn = document.querySelector('#mobile-btn-expand-all');
+
+      const updateBtnState = (b) => {
+        if (!b) return;
+        const icon = b.querySelector('i');
+        const span = b.querySelector('span');
+        icon.className = "fa-solid fa-angles-down";
+        span.innerText = "一鍵展開";
+      };
+
+      updateBtnState(btn);
+      updateBtnState(mobileBtn);
+      isAllExpanded = false;
+    }
+
+    function toggleExpandAll() {
+      const btn = document.querySelector('#btn-expand-all');
+      const mobileBtn = document.querySelector('#mobile-btn-expand-all');
+
+      const setExpandState = (b, expanded) => {
+        if (!b) return;
+        const icon = b.querySelector('i');
+        const span = b.querySelector('span');
+        if (expanded) {
+          icon.className = "fa-solid fa-rotate-left";
+          span.innerText = "恢復預設";
+        } else {
+          icon.className = "fa-solid fa-angles-down";
+          span.innerText = "一鍵展開";
+        }
+      };
+
+      if (isAllExpanded) {
+        collapseAllNodes(mm.state.data);
+        mm.setData(mm.state.data);
+        setExpandState(btn, false);
+        setExpandState(mobileBtn, false);
+        isAllExpanded = false;
+      } else {
+        setAllNodesFold(mm.state.data, 0);
+        mm.renderData();
+        setExpandState(btn, true);
+        setExpandState(mobileBtn, true);
+        isAllExpanded = true;
+      }
+      pushState();
+    }
+
+    function toggleLineStyle() {
+      const btn = document.querySelector('#btn-toggle-line');
+      const mobileBtn = document.querySelector('#mobile-btn-toggle-line');
+
+      window.useStraightLines = !window.useStraightLines;
+
+      const updateStyleState = (b) => {
+        if (!b) return;
+        const icon = b.querySelector('i');
+        const span = b.querySelector('span');
+        if (window.useStraightLines) {
+          icon.className = "fa-solid fa-bezier-curve";
+          span.innerText = "曲線連結";
+        } else {
+          icon.className = "fa-solid fa-route";
+          span.innerText = "直角折線";
+        }
+      };
+
+      updateStyleState(btn);
+      updateStyleState(mobileBtn);
+
+      if (mm) {
+        mm.renderData();
+      }
+    }
+
+    function decodeHTMLEntities(text) {
+      const textArea = document.createElement('textarea');
+      textArea.innerHTML = text;
+      return textArea.value;
+    }
+
+    let lastActiveNode = null;
+
+    function findActiveNodeForLine(lineIndex) {
+      if (!mm || !mm.state.data) return null;
+      let closestNode = null;
+      let maxLine = -1;
+
+      function walk(node) {
+        if (!node) return;
+        if (node.lineIndex !== undefined && node.lineIndex <= lineIndex && node.lineIndex > maxLine) {
+          maxLine = node.lineIndex;
+          closestNode = node;
+        }
+        if (node.children) {
+          node.children.forEach(walk);
+        }
+      }
+
+      walk(mm.state.data);
+      return closestNode;
+    }
+
+    function unfoldAncestors(targetNode) {
+      if (!mm || !mm.state.data) return false;
+      let path = [];
+      let found = false;
+
+      function findPath(node, currentPath) {
+        if (!node || found) return;
+        currentPath.push(node);
+        if (node === targetNode) {
+          path = [...currentPath];
+          found = true;
+          return;
+        }
+        if (node.children) {
+          node.children.forEach(child => findPath(child, currentPath));
+        }
+        currentPath.pop();
+      }
+
+      findPath(mm.state.data, []);
+
+      let updated = false;
+
+      // 展開所有祖先節點以及目標節點本身
+      for (let i = 0; i < path.length; i++) {
+        if (!path[i].payload) path[i].payload = {};
+        if (path[i].payload.fold !== 0) {
+          path[i].payload.fold = 0;
+          updated = true;
+        }
+      }
+
+      // 同層級節點互斥：將路徑上每個節點的兄弟節點折疊
+      for (let i = 1; i < path.length; i++) {
+        const parent = path[i - 1];
+        const currentNode = path[i];
+        if (parent && parent.children) {
+          parent.children.forEach(sibling => {
+            if (sibling !== currentNode && sibling.children && sibling.children.length > 0) {
+              if (!sibling.payload) sibling.payload = {};
+              if (sibling.payload.fold !== 1) {
+                sibling.payload.fold = 1;
+                updated = true;
+              }
+            }
+          });
+        }
+      }
+
+      return updated;
+    }
+
+    function syncMapWithEditorCursor() {
+      if (!mm || !mm.state.data) return;
+      const editor = document.querySelector('#editor');
+      const cursorPos = editor.selectionStart;
+      const textBefore = editor.value.substring(0, cursorPos);
+      const lineIndex = textBefore.split('\n').length - 1;
+
+      const activeNode = findActiveNodeForLine(lineIndex);
+      if (!activeNode) {
+        if (lastActiveNode !== null) {
+          lastActiveNode = null;
+          mm.setHighlight(null);
+        }
+        return;
+      }
+
+      if (activeNode !== lastActiveNode) {
+        lastActiveNode = activeNode;
+        const wasFolded = unfoldAncestors(activeNode);
+        if (wasFolded) {
+          mm.renderData().then(() => {
+            mm.setHighlight(activeNode);
+            mm.centerNode(activeNode);
+          });
+        } else {
+          mm.setHighlight(activeNode);
+          mm.centerNode(activeNode);
+        }
+      }
+    }
+
+
+    // --- 歷程控制與分類排序優化程式碼 ---
+    let historyStack = [];
+    let historyIndex = -1;
+    let isApplyingHistory = false;
+
+    function sortFolderAndFiles(node, depth = 0) {
+      if (!node || !node.children || node.children.length === 0) return;
+
+      // 從第三層（depth >= 1）開始進行分類排序：資料夾置頂、檔案置底，內部按拼音字母排序
+      if (depth >= 1) {
+        node.children.sort((a, b) => {
+          const isDirA = a.content.includes('📂');
+          const isDirB = b.content.includes('📂');
+
+          if (isDirA && !isDirB) return -1;
+          if (!isDirA && isDirB) return 1;
+
+          return a.content.localeCompare(b.content, 'zh-Hant');
+        });
+      }
+
+      node.children.forEach(child => sortFolderAndFiles(child, depth + 1));
+    }
+
+    function pushState() {
+      if (!mm || !mm.state.data || isApplyingHistory) return;
+
+      const text = document.querySelector('#editor').value;
+      const folds = saveFoldState(mm.state.data);
+      const newState = { text, folds: JSON.parse(JSON.stringify(folds)) };
+
+      if (historyIndex >= 0 && statesAreEqual(historyStack[historyIndex], newState)) {
+        return;
+      }
+
+      historyStack = historyStack.slice(0, historyIndex + 1);
+      historyStack.push(newState);
+      historyIndex = historyStack.length - 1;
+
+      updateUndoRedoButtons();
+    }
+
+    function statesAreEqual(s1, s2) {
+      if (!s1 || !s2) return false;
+      if (s1.text !== s2.text) return false;
+      const keys1 = Object.keys(s1.folds);
+      const keys2 = Object.keys(s2.folds);
+      if (keys1.length !== keys2.length) return false;
+      for (const k of keys1) {
+        if (s1.folds[k] !== s2.folds[k]) return false;
+      }
+      return true;
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        restoreHistoryState(historyStack[historyIndex]);
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        restoreHistoryState(historyStack[historyIndex]);
+      }
+    }
+
+    function restoreHistoryState(state) {
+      if (!state) return;
+      isApplyingHistory = true;
+
+      const editor = document.querySelector('#editor');
+      if (editor.value !== state.text) {
+        editor.value = state.text;
+        updateMarkmapWithFolds(state.folds);
+      } else {
+        restoreFoldState(mm.state.data, state.folds);
+        mm.renderData();  // 用 renderData 而非 setData，避免 _initializeData 重置折疊狀態
+        updateUndoRedoButtons();
+        isApplyingHistory = false;
+      }
+    }
+
+    function updateMarkmapWithFolds(folds) {
+      if (!mm) return;
+      const markdown = document.querySelector('#editor').value;
+      let root;
+      if (transformer) {
+        const result = transformer.transform(markdown);
+        root = result.root;
+      } else {
+        root = buildMarkmapData(parseMarkdown(markdown));
+      }
+      alignNodesWithLines(root, markdown);
+      lastActiveNode = null;
+
+      mm.setData(root);
+      restoreFoldState(mm.state.data, folds);
+      mm.renderData();
+
+      updateUndoRedoButtons();
+      isApplyingHistory = false;
+    }
+
+    function updateUndoRedoButtons() {
+      const btnUndo = document.getElementById('btn-undo');
+      const btnRedo = document.getElementById('btn-redo');
+      const mobUndo = document.getElementById('mobile-btn-undo');
+      const mobRedo = document.getElementById('mobile-btn-redo');
+
+      const canUndo = historyIndex > 0;
+      const canRedo = historyIndex < historyStack.length - 1;
+
+      if (btnUndo) btnUndo.disabled = !canUndo;
+      if (btnRedo) btnRedo.disabled = !canRedo;
+
+      if (mobUndo) {
+        mobUndo.disabled = !canUndo;
+        mobUndo.style.opacity = canUndo ? "1" : "0.4";
+      }
+      if (mobRedo) {
+        mobRedo.disabled = !canRedo;
+        mobRedo.style.opacity = canRedo ? "1" : "0.4";
+      }
+    }
+
+    function checkAndPushFoldChange() {
+      if (!mm || !mm.state.data || isApplyingHistory) return;
+      const currentFolds = saveFoldState(mm.state.data);
+      const lastFolds = historyIndex >= 0 ? historyStack[historyIndex].folds : {};
+      if (JSON.stringify(currentFolds) !== JSON.stringify(lastFolds)) {
+        pushState();
+      }
+    }
+
+    function findParentNode(root, target) {
+      if (!root || !root.children) return null;
+      if (root.children.includes(target)) return root;
+      for (const child of root.children) {
+        const p = findParentNode(child, target);
+        if (p) return p;
+      }
+      return null;
+    }
+
+    function autoCollapseSiblings(targetNode) {
+      if (!mm || !mm.state.data || !targetNode) return;
+      const parent = findParentNode(mm.state.data, targetNode);
+      if (!parent || !parent.children) return;
+
+      parent.children.forEach(sibling => {
+        if (sibling !== targetNode && sibling.children && sibling.children.length > 0) {
+          if (!sibling.payload) sibling.payload = {};
+          sibling.payload.fold = 1;
+        }
+      });
+    }
+    // -----------------------------------------------------
+
+    function initMarkmap() {
+      const { Markmap } = window.markmap;
+      const svgEl = document.querySelector('#markmap');
+      const isDark = document.documentElement.classList.contains('dark');
+      const currentColors = isDark ? darkColors : lightColors;
+      const currentStyle = isDark ? darkStyle : lightStyle;
+
+      mm = Markmap.create(svgEl, {
+        zoom: true,
+        pan: true,
+        initialExpandLevel: 2,
+        spacingVertical: 10,
+        spacingHorizontal: 80,
+        color: (node) => {
+          const depth = node.state ? node.state.depth : (node.depth || 0);
+          return currentColors[depth % currentColors.length];
+        },
+        style: currentStyle
+      });
+
+      // 覆寫 _relayout：
+      //   Step 1 - 重新分配 Y 座標為均勻間距（消除 D3 flextree 因 subtree 高度撐開垂直的副作用）
+      //   Step 2 - 只把 X 軸向右拉伸到指定 gap
+      const _origRelayout = mm._relayout.bind(mm);
+      mm._relayout = function () {
+        _origRelayout();
+        if (!this.state.data) return;
+        const spacingV = this.options.spacingVertical || 10;
+
+        // Step 1: 均勻重排 Y，每個節點的子節點以固定間距排列在父節點上下
+        const redistributeY = (node) => {
+          if (!node || !node.state || !node.state.rect) return;
+          const children = node.children || [];
+          if (!children.length) return;
+          // 取出節點高度（state.size[1] 是節點本身的高，fallback 20px）
+          const nodeH = (node.state.size && node.state.size[1]) ? node.state.size[1] : 20;
+          const step = nodeH + spacingV;
+          const parentY = node.state.rect.y;
+          const totalSpan = (children.length - 1) * step;
+          const startY = parentY - totalSpan / 2;
+          children.forEach((child, i) => {
+            if (child.state && child.state.rect) child.state.rect.y = startY + i * step;
+            redistributeY(child);
+          });
+        };
+        redistributeY(this.state.data);
+
+        // Step 2: 固定 gap 拉伸 X 軸
+        const GAP_L1 = 180;  // root → 第一層
+        const GAP_DEEP = 300; // 第二層以下
+        const adjustX = (node, depth, parentRightX) => {
+          if (!node || !node.state || !node.state.rect) return;
+          const gap = depth === 0 ? 0 : (depth === 1 ? GAP_L1 : GAP_DEEP);
+          if (depth > 0) node.state.rect.x = parentRightX + gap;
+          const rightX = node.state.rect.x + node.state.rect.width;
+          (node.children || []).forEach(c => adjustX(c, depth + 1, rightX));
+        };
+        adjustX(this.state.data, 0, 0);
+
+        // Step 3: 重新計算 bounding box 讓 fit() 正確（過濾折疊子節點與 NaN 值以防止縮放故障）
+        const allNodes = [];
+        const collect = n => {
+          if (!n) return;
+          allNodes.push(n);
+          if (n.payload && n.payload.fold) return; // 折疊的節點其子節點不納入計算
+          (n.children || []).forEach(collect);
+        };
+        collect(this.state.data);
+        const rects = allNodes
+          .map(n => n.state && n.state.rect)
+          .filter(r => r &&
+            typeof r.x === 'number' && !isNaN(r.x) &&
+            typeof r.y === 'number' && !isNaN(r.y) &&
+            typeof r.width === 'number' && !isNaN(r.width) &&
+            typeof r.height === 'number' && !isNaN(r.height)
+          );
+        if (rects.length) this.state.rect = {
+          x1: Math.min(...rects.map(r => r.x)),
+          y1: Math.min(...rects.map(r => r.y)),
+          x2: Math.max(...rects.map(r => r.x + r.width)),
+          y2: Math.max(...rects.map(r => r.y + r.height))
+        };
+      };
+
+      // Try to get Transformer from markmap-lib
+      if (window.markmap && window.markmap.Transformer) {
+        transformer = new window.markmap.Transformer();
+        console.log('Using markmap Transformer');
+      } else {
+        console.log('Transformer not available, using built-in parser');
+      }
+
+      setTimeout(() => { updateMarkmap(true); }, 100);
+      setupEditEvents();
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      if (mm) {
+        const currentColors = isDark ? darkColors : lightColors;
+        const currentStyle = isDark ? darkStyle : lightStyle;
+        mm.setOptions({
+          color: (node) => {
+            const depth = node.state ? node.state.depth : (node.depth || 0);
+            return currentColors[depth % currentColors.length];
+          },
+          style: currentStyle
+        });
+        mm.updateStyle();
+        mm.renderData();
+      }
+    }
+
+    function saveFoldState(node, map = {}) {
+      if (!node) return map;
+      if (node.content !== undefined) {
+        map[node.content] = node.payload?.fold ?? null;
+      }
+      (node.children || []).forEach(c => saveFoldState(c, map));
+      return map;
+    }
+
+    function restoreFoldState(node, map) {
+      if (!node) return;
+      if (node.content !== undefined && map[node.content] !== undefined && map[node.content] !== null) {
+        if (!node.payload) node.payload = {};
+        node.payload.fold = map[node.content];
+      }
+      (node.children || []).forEach(c => restoreFoldState(c, map));
+    }
+
+    function updateMarkmap(isFirstLoad = false) {
+      if (!mm) return;
+      const markdown = document.querySelector('#editor').value;
+
+      // 編輯時快照現有折疊狀態，稍後還原
+      const foldSnapshot = (!isFirstLoad && mm.state.data) ? saveFoldState(mm.state.data) : {};
+
+      let root;
+      if (transformer) {
+        const result = transformer.transform(markdown);
+        root = result.root;
+      } else {
+        root = buildMarkmapData(parseMarkdown(markdown));
+      }
+
+      alignNodesWithLines(root, markdown);
+      lastActiveNode = null;
+      mm.setData(root);
+
+      // 將快照的折疊狀態還原到實際的 state.data 中，並重新渲染
+      if (!isFirstLoad) {
+        restoreFoldState(mm.state.data, foldSnapshot);
+        mm.renderData();
+        // 文字編輯才推歷史（折疊操作由 checkAndPushFoldChange 負責）
+        pushState();
+      }
+
+      // 只在首次載入時 fit，避免編輯時視角跳動
+      if (isFirstLoad) mm.fit();
+
+      resetExpandButton();
+    }
+
+    function setupEditEvents() {
+      const svgEl = document.querySelector('#markmap');
+      const contextMenu = document.querySelector('#context-menu');
+      const inlineEditorContainer = document.querySelector('#inline-editor-container');
+      const inlineEditor = document.querySelector('#inline-editor');
+
+      svgEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const nodeEl = e.target.closest('.markmap-node');
+        const containerRect = document.querySelector('#map-container').getBoundingClientRect();
+        contextMenu.style.left = `${e.clientX - containerRect.left}px`;
+        contextMenu.style.top = `${e.clientY - containerRect.top}px`;
+
+        const optEdit = document.querySelector('#menu-opt-edit');
+        const optChild = document.querySelector('#menu-opt-child');
+        const optSibling = document.querySelector('#menu-opt-sibling');
+        const optParent = document.querySelector('#menu-opt-parent');
+        const optSep = document.querySelector('#menu-opt-sep');
+        const optDelete = document.querySelector('#menu-opt-delete');
+
+        if (nodeEl) {
+          // Clicked on a node
+          activeNodeEl = nodeEl;
+          activeNodeData = nodeEl.__data__;
+
+          if (optEdit) optEdit.style.display = 'flex';
+          if (optChild) optChild.style.display = 'flex';
+          if (optSibling) optSibling.style.display = 'flex';
+          if (optParent) optParent.style.display = 'none';
+          if (optSep) optSep.style.display = 'block';
+          if (optDelete) optDelete.style.display = 'flex';
+        } else {
+          // Clicked on empty space
+          activeNodeEl = null;
+          activeNodeData = null;
+
+          if (optEdit) optEdit.style.display = 'none';
+          if (optChild) optChild.style.display = 'none';
+          if (optSibling) optSibling.style.display = 'none';
+          if (optParent) optParent.style.display = 'flex';
+          if (optSep) optSep.style.display = 'none';
+          if (optDelete) optDelete.style.display = 'none';
+        }
+
+        contextMenu.classList.remove('hidden');
+        inlineEditorContainer.classList.add('hidden');
+      });
+
+      svgEl.addEventListener('dblclick', (e) => {
+        const nodeEl = e.target.closest('.markmap-node');
+        if (!nodeEl) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        activeNodeEl = nodeEl;
+        activeNodeData = nodeEl.__data__;
+
+        if (!activeNodeData || activeNodeData.lineIndex === undefined) return;
+
+        showInlineEditor();
+      }, true);
+
+      document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) {
+          contextMenu.classList.add('hidden');
+        }
+        if (!inlineEditorContainer.contains(e.target) && !e.target.closest('.markmap-node')) {
+          commitInlineEdit();
+        }
+      });
+
+      inlineEditor.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          commitInlineEdit();
+        } else if (e.key === 'Escape') {
+          inlineEditorContainer.classList.add('hidden');
+        }
+      });
+
+      const editor = document.querySelector('#editor');
+      editor.addEventListener('click', syncMapWithEditorCursor);
+      editor.addEventListener('keyup', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+          syncMapWithEditorCursor();
+        }
+      });
+      editor.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => updateMarkmap(false), 300);
+      });
+
+      svgEl.addEventListener('click', (event) => {
+        const circleEl = event.target.closest('circle');
+        const nodeEl = event.target.closest('.markmap-node');
+        if (circleEl && nodeEl) {
+          const d = nodeEl.__data__;
+          if (d && d.payload && d.payload.fold === 1) {
+            const depth = d.state ? d.state.depth : (d.depth || 0);
+            if (depth >= 1) {
+              autoCollapseSiblings(d);
+            }
+          }
+        }
+
+        if (nodeEl) {
+          const d = nodeEl.__data__;
+          if (d && d.lineIndex !== undefined) {
+            focusEditorOnNode(d);
+            mm.setHighlight(d);
+          }
+        }
+        setTimeout(checkAndPushFoldChange, 150);
+      }, true);
+    }
+
+    function showInlineEditor() {
+      const inlineEditorContainer = document.querySelector('#inline-editor-container');
+      const inlineEditor = document.querySelector('#inline-editor');
+      const containerRect = document.querySelector('#map-container').getBoundingClientRect();
+      const nodeRect = activeNodeEl.getBoundingClientRect();
+
+      inlineEditor.value = decodeHTMLEntities(activeNodeData.content);
+      inlineEditorContainer.style.left = `${nodeRect.left - containerRect.left}px`;
+      inlineEditorContainer.style.top = `${nodeRect.top - containerRect.top - 5}px`;
+      inlineEditorContainer.style.width = `${Math.max(nodeRect.width + 10, 160)}px`;
+      inlineEditorContainer.classList.remove('hidden');
+      inlineEditor.focus();
+      inlineEditor.select();
+
+      document.querySelector('#context-menu').classList.add('hidden');
+    }
+
+    function commitInlineEdit() {
+      const inlineEditorContainer = document.querySelector('#inline-editor-container');
+      if (inlineEditorContainer.classList.contains('hidden') || !activeNodeData) return;
+
+      const newValue = document.querySelector('#inline-editor').value.trim();
+      if (newValue && newValue !== activeNodeData.content) {
+        updateMarkdownLine(activeNodeData.lineIndex, newValue);
+      }
+      inlineEditorContainer.classList.add('hidden');
+    }
+
+    function getLineDepth(line) {
+      const trimmed = line.trim();
+      const headingMatch = trimmed.match(/^(#{1,6})\s+/);
+      const indentedBulletMatch = line.match(/^(\s+)[-*]\s+/);
+      const bulletMatch = trimmed.match(/^[-*]\s+/);
+
+      if (headingMatch) {
+        return headingMatch[1].length;
+      } else if (indentedBulletMatch) {
+        const indent = indentedBulletMatch[1].length;
+        return 7 + Math.floor(indent / 2);
+      } else if (bulletMatch) {
+        return 7;
+      }
+      return 999;
+    }
+
+    function findDescendantEndIndex(lines, startIndex, baseDepth) {
+      let i = startIndex + 1;
+      while (i < lines.length) {
+        const line = lines[i];
+        if (!line.trim()) {
+          i++;
+          continue;
+        }
+        const depth = getLineDepth(line);
+        if (depth <= baseDepth) {
+          break;
+        }
+        i++;
+      }
+      return i;
+    }
+
+    function updateMarkdownLine(lineIndex, newText) {
+      const editor = document.querySelector('#editor');
+      const lines = editor.value.split('\n');
+      const originalLine = lines[lineIndex];
+      const match = originalLine.match(/^(\s*(?:#{1,6}|[-*])\s+)/);
+      const prefix = match ? match[1] : '';
+
+      lines[lineIndex] = prefix + newText;
+      editor.value = lines.join('\n');
+      updateMarkmap(false);
+      pushState();
+    }
+
+    function menuAddParentTheme() {
+      document.querySelector('#context-menu').classList.add('hidden');
+
+      const editor = document.querySelector('#editor');
+      let insertText = '# 新獨立主題';
+
+      editor.value = editor.value.trimEnd() + '\n\n' + insertText;
+      updateMarkmap(false);
+
+      // Scroll to the bottom of the editor
+      editor.scrollTop = editor.scrollHeight;
+
+      setTimeout(() => {
+        const svgEl = document.querySelector('#markmap');
+        const nodeEls = svgEl.querySelectorAll('.markmap-node');
+        const newLines = editor.value.split('\n');
+        const newIndex = newLines.length - 1;
+
+        for (const el of nodeEls) {
+          if (el.__data__ && el.__data__.lineIndex === newIndex) {
+            activeNodeEl = el;
+            activeNodeData = el.__data__;
+
+            // Highlight and center on the new root node
+            mm.setHighlight(activeNodeData);
+            mm.centerNode(activeNodeData);
+
+            showInlineEditor();
+            break;
+          }
+        }
+      }, 400);
+    }
+
+    function menuEditNode() {
+      document.querySelector('#context-menu').classList.add('hidden');
+      showInlineEditor();
+    }
+
+    function menuAddChild() {
+      document.querySelector('#context-menu').classList.add('hidden');
+      if (!activeNodeData) return;
+
+      const editor = document.querySelector('#editor');
+      const lines = editor.value.split('\n');
+      const lineIndex = activeNodeData.lineIndex;
+      const parentLine = lines[lineIndex];
+
+      const headingMatch = parentLine.match(/^(\s*)(#{1,6})\s+/);
+      const bulletMatch = parentLine.match(/^(\s*)([-*])\s+/);
+      let childPrefix = '';
+
+      if (headingMatch) {
+        const indent = headingMatch[1];
+        const hashes = headingMatch[2];
+        if (hashes.length < 6) {
+          childPrefix = indent + hashes + '# ';
+        } else {
+          childPrefix = indent + '- ';
+        }
+      } else if (bulletMatch) {
+        const indent = bulletMatch[1];
+        childPrefix = indent + '  - ';
+      } else {
+        childPrefix = '- ';
+      }
+
+      lines.splice(lineIndex + 1, 0, childPrefix + '新子節點');
+      editor.value = lines.join('\n');
+      updateMarkmap(false);
+
+      setTimeout(() => {
+        const svgEl = document.querySelector('#markmap');
+        const nodeEls = svgEl.querySelectorAll('.markmap-node');
+        for (const el of nodeEls) {
+          if (el.__data__ && el.__data__.lineIndex === lineIndex + 1) {
+            activeNodeEl = el;
+            activeNodeData = el.__data__;
+            showInlineEditor();
+            break;
+          }
+        }
+      }, 400);
+    }
+
+    function menuAddSibling() {
+      document.querySelector('#context-menu').classList.add('hidden');
+      if (!activeNodeData) return;
+
+      const editor = document.querySelector('#editor');
+      const lines = editor.value.split('\n');
+      const lineIndex = activeNodeData.lineIndex;
+      const currentLine = lines[lineIndex];
+      const baseDepth = getLineDepth(currentLine);
+
+      const match = currentLine.match(/^(\s*(?:#{1,6}|[-*])\s+)/);
+      const prefix = match ? match[1] : '- ';
+
+      const insertIndex = findDescendantEndIndex(lines, lineIndex, baseDepth);
+
+      lines.splice(insertIndex, 0, prefix + '新節點');
+      editor.value = lines.join('\n');
+      updateMarkmap(false);
+
+      setTimeout(() => {
+        const svgEl = document.querySelector('#markmap');
+        const nodeEls = svgEl.querySelectorAll('.markmap-node');
+        for (const el of nodeEls) {
+          if (el.__data__ && el.__data__.lineIndex === insertIndex) {
+            activeNodeEl = el;
+            activeNodeData = el.__data__;
+            showInlineEditor();
+            break;
+          }
+        }
+      }, 400);
+    }
+
+    function menuDeleteNode() {
+      document.querySelector('#context-menu').classList.add('hidden');
+      if (!activeNodeData) return;
+
+      const editor = document.querySelector('#editor');
+      const lines = editor.value.split('\n');
+      const lineIndex = activeNodeData.lineIndex;
+      const currentLine = lines[lineIndex];
+      const baseDepth = getLineDepth(currentLine);
+
+      const endIndex = findDescendantEndIndex(lines, lineIndex, baseDepth);
+      lines.splice(lineIndex, endIndex - lineIndex);
+
+      editor.value = lines.join('\n');
+      updateMarkmap(false);
+      pushState();
+    }
+
+    // --- 搜尋功能相關邏輯 ---
+    let searchResults = [];
+    let searchResultIndex = -1;
+    let currentSearchKeyword = "";
+    let searchDebounceTimeout;
+
+    function focusEditorOnNode(node) {
+      if (!node || node.lineIndex === undefined) return;
+      const editor = document.querySelector('#editor');
+      if (!editor) return;
+      const lines = editor.value.split('\n');
+      let charIndex = 0;
+      for (let i = 0; i < node.lineIndex; i++) {
+        charIndex += lines[i].length + 1;
+      }
+      editor.focus();
+      editor.setSelectionRange(charIndex, charIndex + lines[node.lineIndex].length);
+
+      const lineHeight = 24;
+      editor.scrollTop = node.lineIndex * lineHeight - editor.clientHeight / 2;
+    }
+
+    function performSearch(keyword, direction = 1) {
+      if (!mm || !mm.state.data) return;
+      keyword = keyword.trim().toLowerCase();
+
+      const desktopInput = document.getElementById('desktop-search-input');
+      const mobileInput = document.getElementById('mobile-search-input');
+
+      // 同步輸入框內容
+      if (desktopInput && desktopInput.value !== keyword) desktopInput.value = keyword;
+      if (mobileInput && mobileInput.value !== keyword) mobileInput.value = keyword;
+
+      if (!keyword) {
+        searchResults = [];
+        searchResultIndex = -1;
+        currentSearchKeyword = "";
+        updateSearchUIStatus("");
+        return;
+      }
+
+      // 如果關鍵字改變，重新搜尋
+      if (keyword !== currentSearchKeyword) {
+        currentSearchKeyword = keyword;
+        searchResults = [];
+
+        function walk(node) {
+          if (!node) return;
+          if (node.content) {
+            const decoded = decodeHTMLEntities(node.content).toLowerCase();
+            if (decoded.includes(keyword)) {
+              searchResults.push(node);
+            }
+          }
+          if (node.children) {
+            node.children.forEach(walk);
+          }
+        }
+        walk(mm.state.data);
+
+        // 排序 searchResults，照 lineIndex 排序
+        searchResults.sort((a, b) => {
+          const lineA = a.lineIndex !== undefined ? a.lineIndex : 0;
+          const lineB = b.lineIndex !== undefined ? b.lineIndex : 0;
+          return lineA - lineB;
+        });
+
+        searchResultIndex = searchResults.length > 0 ? 0 : -1;
+      } else {
+        // 如果關鍵字相同，只是要往上或往下尋找
+        if (searchResults.length > 0) {
+          searchResultIndex = (searchResultIndex + direction + searchResults.length) % searchResults.length;
+        }
+      }
+
+      if (searchResults.length > 0) {
+        const targetNode = searchResults[searchResultIndex];
+        const statusText = `${searchResultIndex + 1} / ${searchResults.length}`;
+        updateSearchUIStatus(statusText, true);
+
+        // 定位並展開
+        const wasFolded = unfoldAncestors(targetNode);
+        if (wasFolded) {
+          mm.renderData().then(() => {
+            mm.setHighlight(targetNode);
+            mm.centerNode(targetNode);
+          });
+        } else {
+          mm.setHighlight(targetNode);
+          mm.centerNode(targetNode);
+        }
+
+        // 同步定位編輯器
+        focusEditorOnNode(targetNode);
+      } else {
+        updateSearchUIStatus("找不到結果", false);
+      }
+    }
+
+    function updateSearchUIStatus(text, hasResults = false) {
+      const desktopStatus = document.getElementById('desktop-search-status');
+      const mobileStatus = document.getElementById('mobile-search-status');
+
+      if (desktopStatus) {
+        desktopStatus.innerText = text;
+        if (text) {
+          desktopStatus.classList.remove('hidden');
+          if (hasResults) {
+            desktopStatus.className = "absolute right-10 inset-y-0 flex items-center text-[10px] pointer-events-none select-none text-indigo-600 dark:text-indigo-400 font-semibold bg-white dark:bg-slate-800 px-1";
+          } else {
+            desktopStatus.className = "absolute right-10 inset-y-0 flex items-center text-[10px] pointer-events-none select-none text-rose-500 font-semibold bg-white dark:bg-slate-800 px-1";
+          }
+        } else {
+          desktopStatus.classList.add('hidden');
+        }
+      }
+      if (mobileStatus) {
+        mobileStatus.innerText = text;
+        if (text) {
+          mobileStatus.classList.remove('hidden');
+          mobileStatus.className = `text-[11px] mt-1 font-semibold ${hasResults ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-500'}`;
+        } else {
+          mobileStatus.classList.add('hidden');
+        }
+      }
+    }
+
+    function navigateSearch(direction) {
+      const keyword = document.getElementById('desktop-search-input')?.value || document.getElementById('mobile-search-input')?.value || "";
+      performSearch(keyword, direction);
+    }
+
+    function handleSearchKeydown(event) {
+      if (event.key === 'Enter') {
+        const keyword = event.target.value;
+        performSearch(keyword, 1);
+      }
+    }
+
+    function handleSearchInput(event) {
+      clearTimeout(searchDebounceTimeout);
+      const keyword = event.target.value;
+      searchDebounceTimeout = setTimeout(() => {
+        currentSearchKeyword = "";
+        performSearch(keyword, 0);
+      }, 300);
+    }
+    // -------------------------------------
+
+    let timeout;
+
+    let lastSplitPercent = 30;
+    let lastSplitPercentMobile = 50;
+    let activeViewMode = 'map';
+
+    function isMobileView() {
+      return window.innerWidth < 768;
+    }
+
+    function toggleMobileMenu() {
+      const panel = document.querySelector('#mobile-menu-panel');
+      const backdrop = document.querySelector('#mobile-menu-backdrop');
+      if (!panel || !backdrop) return;
+
+      if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        backdrop.classList.remove('hidden');
+        setTimeout(() => {
+          panel.classList.remove('translate-x-full');
+          backdrop.classList.remove('opacity-0');
+          backdrop.classList.add('opacity-100');
+        }, 10);
+      } else {
+        panel.classList.add('translate-x-full');
+        backdrop.classList.remove('opacity-100');
+        backdrop.classList.add('opacity-0');
+        setTimeout(() => {
+          panel.classList.add('hidden');
+          backdrop.classList.add('hidden');
+        }, 300);
+      }
+    }
+
+    function setupDragBar() {
+      const dragBar = document.querySelector('#drag-bar');
+      const editorCol = document.querySelector('#editor-container');
+      const mapCol = document.querySelector('#map-container');
+      const main = document.querySelector('main');
+
+      if (!dragBar) return;
+
+      let isDragging = false;
+
+      function onDragStart(e) {
+        isDragging = true;
+        mapCol.style.pointerEvents = 'none';
+        document.body.style.cursor = isMobileView() ? 'row-resize' : 'col-resize';
+        document.body.style.userSelect = 'none';
+      }
+
+      function onDragMove(e) {
+        if (!isDragging) return;
+        if (e.cancelable) e.preventDefault();
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const mainRect = main.getBoundingClientRect();
+
+        if (isMobileView()) {
+          const offsetY = clientY - mainRect.top;
+          const percentage = (offsetY / mainRect.height) * 100;
+          if (percentage >= 15 && percentage <= 85) {
+            lastSplitPercentMobile = percentage;
+            editorCol.style.height = `${percentage}%`;
+            editorCol.style.width = '100%';
+            mapCol.style.height = `${100 - percentage}%`;
+            mapCol.style.width = '100%';
+          }
+        } else {
+          const offsetX = clientX - mainRect.left;
+          const percentage = (offsetX / mainRect.width) * 100;
+          if (percentage >= 20 && percentage <= 80) {
+            lastSplitPercent = percentage;
+            editorCol.style.width = `${percentage}%`;
+            editorCol.style.height = '100%';
+            mapCol.style.width = `${100 - percentage}%`;
+            mapCol.style.height = '100%';
+          }
+        }
+      }
+
+      function onDragEnd() {
+        if (isDragging) {
+          isDragging = false;
+          mapCol.style.pointerEvents = 'auto';
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          if (mm) mm.fit();
+        }
+      }
+
+      // Mouse Events
+      dragBar.addEventListener('mousedown', onDragStart);
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', onDragEnd);
+
+      // Touch Events (Mobile)
+      dragBar.addEventListener('touchstart', onDragStart, { passive: true });
+      document.addEventListener('touchmove', onDragMove, { passive: false });
+      document.addEventListener('touchend', onDragEnd);
+    }
+
+    function switchView(mode) {
+      activeViewMode = mode;
+      const editorCol = document.querySelector('#editor-container');
+      const mapCol = document.querySelector('#map-container');
+      const dragBar = document.querySelector('#drag-bar');
+
+      // Sync buttons for desktop
+      const btns = {
+        split: document.querySelector('#btn-view-split'),
+        edit: document.querySelector('#btn-view-edit'),
+        map: document.querySelector('#btn-view-map')
+      };
+      Object.values(btns).forEach(btn => {
+        if (btn) btn.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1";
+      });
+
+      // Sync buttons for mobile
+      const mobileBtns = {
+        split: document.querySelector('#mobile-btn-view-split'),
+        edit: document.querySelector('#mobile-btn-view-edit'),
+        map: document.querySelector('#mobile-btn-view-map')
+      };
+      Object.values(mobileBtns).forEach(btn => {
+        if (btn) btn.className = "py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center";
+      });
+
+      if (mode === 'split') {
+        if (btns.split) btns.split.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+        if (mobileBtns.split) mobileBtns.split.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+
+        editorCol.style.display = "flex";
+        mapCol.style.display = "flex";
+        if (dragBar) dragBar.style.display = "flex";
+
+        if (isMobileView()) {
+          editorCol.style.width = '100%';
+          editorCol.style.height = `${lastSplitPercentMobile}%`;
+          mapCol.style.width = '100%';
+          mapCol.style.height = `${100 - lastSplitPercentMobile}%`;
+        } else {
+          editorCol.style.width = `${lastSplitPercent}%`;
+          editorCol.style.height = '100%';
+          mapCol.style.width = `${100 - lastSplitPercent}%`;
+          mapCol.style.height = '100%';
+        }
+      } else if (mode === 'edit') {
+        if (btns.edit) btns.edit.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+        if (mobileBtns.edit) mobileBtns.edit.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+
+        editorCol.style.display = "flex";
+        editorCol.style.width = "100%";
+        editorCol.style.height = "100%";
+        mapCol.style.display = "none";
+        if (dragBar) dragBar.style.display = "none";
+      } else if (mode === 'map') {
+        if (btns.map) btns.map.className = "px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1";
+        if (mobileBtns.map) mobileBtns.map.className = "py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm flex flex-col items-center justify-center";
+
+        editorCol.style.display = "none";
+        mapCol.style.display = "flex";
+        mapCol.style.width = "100%";
+        mapCol.style.height = "100%";
+        if (dragBar) dragBar.style.display = "none";
+      }
+      setTimeout(() => { if (mm && mode !== 'edit') { mm.fit(); } }, 300);
+    }
+
+    window.addEventListener('resize', () => {
+      if (activeViewMode === 'split') {
+        const editorCol = document.querySelector('#editor-container');
+        const mapCol = document.querySelector('#map-container');
+        if (isMobileView()) {
+          editorCol.style.width = '100%';
+          editorCol.style.height = `${lastSplitPercentMobile}%`;
+          mapCol.style.width = '100%';
+          mapCol.style.height = `${100 - lastSplitPercentMobile}%`;
+        } else {
+          editorCol.style.width = `${lastSplitPercent}%`;
+          editorCol.style.height = '100%';
+          mapCol.style.width = `${100 - lastSplitPercent}%`;
+          mapCol.style.height = '100%';
+        }
+      }
+      if (mm && document.querySelector('#map-container').style.display !== 'none') { mm.fit(); }
+    });
+
+    function zoomIn() { mm.rescale(1.25); }
+    function zoomOut() { mm.rescale(0.8); }
+    function zoomFit() { mm.fit(); }
+
+    function exportMarkdown() {
+      const text = document.querySelector('#editor').value;
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '真靈光企劃書.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportSVG() {
+      const svgEl = document.querySelector('#markmap');
+      const clone = svgEl.cloneNode(true);
+      const g = svgEl.querySelector('g');
+      const bbox = g.getBBox();
+      clone.setAttribute('viewBox', `${bbox.x - 50} ${bbox.y - 50} ${bbox.width + 100} ${bbox.height + 100}`);
+      clone.setAttribute('width', bbox.width + 100);
+      clone.setAttribute('height', bbox.height + 100);
+      clone.style.backgroundColor = document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc';
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(clone);
+      if (!source.match(/^<\?xml/)) {
+        source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+      }
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '真靈光企劃書_心智圖.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function formatEditorHeadings() {
+      const editor = document.querySelector('#editor');
+      if (!editor) return;
+      const lines = editor.value.split('\n');
+      const formatted = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.trim().startsWith('#') && i > 0 && lines[i - 1].trim() !== '') {
+          formatted.push('');
+        }
+        formatted.push(line);
+      }
+      editor.value = formatted.join('\n');
+    }
+
+    function toggleInfoTooltip() {
+      const tooltip = document.querySelector('#info-tooltip');
+      if (tooltip) {
+        tooltip.classList.toggle('hidden');
+      }
+    }
+
+    // 點擊空白處自動收合提示
+    document.addEventListener('click', (e) => {
+      const container = document.querySelector('#btn-info-toggle')?.parentElement;
+      const tooltip = document.querySelector('#info-tooltip');
+      if (container && tooltip && !container.contains(e.target) && !tooltip.classList.contains('hidden')) {
+        tooltip.classList.add('hidden');
+      }
+    });
+
+    window.onload = () => {
+      formatEditorHeadings();
+      initMarkmap();
+      setupDragBar();
+      switchView(activeViewMode);
+      setTimeout(pushState, 600); // 初始狀態記錄在 historyStack[0]，作為基線
+    };
+
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-lib/dist/browser/index.iife.js"></script>
+  <style>
+    :root {
+      --scrollbar-track: #f1f5f9;
+      --scrollbar-thumb: #cbd5e1;
+      --scrollbar-thumb-hover: #94a3b8;
+    }
+
+    .dark {
+      --scrollbar-track: #1e293b;
+      --scrollbar-thumb: #475569;
+      --scrollbar-thumb-hover: #64748b;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--scrollbar-thumb-hover);
+    }
+
+    .markmap-node {
+      cursor: pointer;
+    }
+
+    @media (max-width: 767px) {
+      main {
+        flex-direction: column !important;
+      }
+
+      #drag-bar {
+        width: 100% !important;
+        height: 6px !important;
+        cursor: row-resize !important;
+        border-top: 1px solid rgba(226, 232, 240, 0.8);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      }
+
+      .dark #drag-bar {
+        border-top: 1px solid rgba(51, 65, 85, 0.8);
+        border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+      }
+
+      #drag-bar>div {
+        width: 24px !important;
+        height: 3px !important;
+      }
+
+      #editor-container,
+      #map-container {
+        border-right: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
+  <header
+    class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3 flex items-center justify-between shadow-lg shrink-0">
+    <div class="flex items-center space-x-2 md:space-x-3">
+      <div class="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2 md:p-2.5 rounded-xl shadow-md shrink-0">
+        <i class="fa-solid fa-sitemap text-lg md:text-xl text-white"></i>
+      </div>
+      <div>
+        <h1
+          class="text-base md:text-lg font-bold tracking-wide text-slate-900 dark:text-white flex flex-wrap items-center gap-1 md:gap-2">
+          <input id="header-title" type="text" placeholder="輸入你的大標題"
+            class="bg-transparent border-none outline-none font-bold tracking-wide text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-w-[6rem] w-auto max-w-[16rem]"
+            style="field-sizing: content;" value="真靈光企劃書">
+          <span
+            class="text-[10px] md:text-xs bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/50 px-2 py-0.5 rounded-full font-normal flex items-center">
+            <input id="header-subtitle" type="text" placeholder="輸入重點小標"
+              class="bg-transparent border-none outline-none text-indigo-600 dark:text-indigo-300 placeholder-indigo-400/60 dark:placeholder-indigo-400/40 font-normal min-w-[4rem] w-auto max-w-[12rem]"
+              style="field-sizing: content;" value="有序架構版">
+          </span>
+        </h1>
+        <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400">可即時編輯、追蹤焦點與搜尋的智慧心智圖</p>
+      </div>
+    </div>
+    <!-- Desktop Toolbar (Hidden on Mobile) -->
+    <div class="hidden md:flex items-center space-x-3">
+      <!-- Search Input (Desktop) -->
+      <div class="relative w-40 lg:w-56 shrink-0">
+        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 text-[10px]"></i>
+        </span>
+        <input type="text" id="desktop-search-input" placeholder="搜尋檔案名稱..." onkeydown="handleSearchKeydown(event)"
+          oninput="handleSearchInput(event)"
+          class="block w-full pl-7 pr-16 py-1.5 bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-800 dark:text-slate-200">
+        <div id="desktop-search-status"
+          class="hidden absolute right-10 inset-y-0 flex items-center text-[9px] pointer-events-none select-none"></div>
+        <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center space-x-0.5">
+          <button onclick="navigateSearch(-1)" title="上一個"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
+            <i class="fa-solid fa-chevron-up text-[9px]"></i>
+          </button>
+          <button onclick="navigateSearch(1)" title="下一個"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
+            <i class="fa-solid fa-chevron-down text-[9px]"></i>
+          </button>
+        </div>
+      </div>
+      <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+      <div
+        class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center space-x-1">
+        <button id="btn-view-split" onclick="switchView('split')" title="分割模式"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center space-x-1">
+          <i class="fa-solid fa-columns"></i><span>雙欄</span>
+        </button>
+        <button id="btn-view-edit" onclick="switchView('edit')" title="純編輯模式"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
+          <i class="fa-solid fa-file-pen"></i><span>編輯</span>
+        </button>
+        <button id="btn-view-map" onclick="switchView('map')" title="純心智圖模式"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
+          <i class="fa-solid fa-expand"></i><span>心智圖</span>
+        </button>
+      </div>
+      <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+      <button id="btn-undo" onclick="undo()" title="復原" disabled
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+        <i class="fa-solid fa-arrow-rotate-left"></i><span>復原</span>
+      </button>
+      <button id="btn-redo" onclick="redo()" title="重做" disabled
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+        <i class="fa-solid fa-arrow-rotate-right"></i><span>重做</span>
+      </button>
+      <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+      <button onclick="zoomFit()" title="置中縮放"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-compress"></i><span>重設縮放</span>
+      </button>
+      <button id="btn-expand-all" onclick="toggleExpandAll()" title="一鍵展開或一鍵收摺"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-angles-down"></i><span>一鍵展開</span>
+      </button>
+      <button id="btn-toggle-line" onclick="toggleLineStyle()" title="切換折線/曲線樣式"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-route"></i><span>直角折線</span>
+      </button>
+      <button onclick="exportMarkdown()" title="下載 Markdown"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-file-code"></i><span>匯出 .md</span>
+      </button>
+      <button onclick="exportSVG()" title="下載 SVG"
+        class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-md">
+        <i class="fa-solid fa-download"></i><span>下載 SVG 圖片</span>
+      </button>
+      <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+      <button id="btn-theme-toggle" onclick="toggleTheme()" title="切換深淺色"
+        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-lg text-xs font-medium transition flex items-center justify-center shadow-sm">
+        <i class="fa-solid fa-sun text-sm dark:hidden"></i>
+        <i class="fa-solid fa-moon text-sm hidden dark:inline-block"></i>
+      </button>
+    </div>
+    <!-- Hamburger Menu Button (Mobile only) -->
+    <button id="btn-mobile-menu" onclick="toggleMobileMenu()"
+      class="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition">
+      <i class="fa-solid fa-bars text-xl"></i>
+    </button>
+  </header>
+  <main class="flex-1 flex overflow-hidden">
+    <section id="editor-container" style="width: 30%;"
+      class="flex flex-col bg-white dark:bg-slate-950 shadow-inner transition-all duration-300">
+      <div
+        class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 shrink-0">
+        <span class="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-pen-nib"></i>
+          結構文字編輯區 (Markdown 語法)</span>
+        <span class="text-slate-400 dark:text-slate-500 font-normal">直接編輯文字即可即時更新右側心智圖</span>
+      </div>
+      <textarea id="editor"
+        class="flex-1 w-full bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 p-5 font-sans text-2xl leading-relaxed resize-none focus:outline-none focus:ring-0 selection:bg-indigo-600 selection:text-white">
+# 真靈光企劃書
+## 📋 目錄
+## 🌌 【意圖】Why：願景、理念與戰略方向
+### 一、願景與核心定位
+#### 核心定位：
+#### 經營目的：
+#### 服務內涵：
+#### 涵蓋診所、運動教室、咖啡廳、AI 量測區、諮詢室、整脊室，提供身心靈一站式服務。
+#### 服務流程：定 → 清 → 補
+#### 陳老師的立場與目標
+### 二、操盤手資歷
+### 三、黃金三年最高戰略目標
+#### 六大最高目標
+#### 三年階段總覽
+### 四、徹底根除過去六大亂象
+### 五、企業獨特優勢總覽
+### 六、向陳老師的三個核心直球答辯
+#### ❓ 花多少錢？
+#### ❓ 要做什麼？
+#### ❓ 怎麼做出一個系統，讓身心靈老師拯救很多人？
+## 🌀 【能量】How：制度、運營與執行手段
+### 七、集團組織架構與核心團隊職稱配置表
+#### 最高決策層
+#### 三大系統
+#### 核心團隊職稱配置表（含靈性決策團）
+### 八、靈性顧問（陳老師）特別安排
+### 九、三大系統權責分工
+#### 1. 🏢 內部運營系統 — 總經理（紅塵鐵血大管家）
+#### 2. 🎬 行銷業務系統 — 陳仲豪（操盤手）＆ 自媒體拍片團隊
+#### 3. 🔮 靈性培訓系統 — 12位靈性培訓系統決策團隊(當初老師是說12位，若加上其他12位太多就改成6位)
+### 十、兩層樓變現漏斗（獲利閉環模型）
+#### 🧱 一層：身（動態引流與日常高頻消費剛需）
+#### 🧱 二層：心、靈與頂層戰略
+#### 四步閉環獲利精髓
+#### 跨公司合規閉環
+### 十一、雙公司合規防火牆機制
+#### 真靈光實業有限公司（天網 · 人網 · 地網體驗設備與產品）
+#### 真靈光中醫診所 / 大健康醫療機構（地網合法醫療）
+### 十二、真靈光身心靈一站式服務
+#### 就像是蝦皮一樣，可以算出看手機的對象要什麼
+### 十三、練習生海選與菁英孵化制度
+#### 新世紀身心靈老師培訓系統
+#### 六大禁忌高壓電線（觸犯者立即開除）
+#### 補充計畫
+### 十四、徵才需求、人才觀與加盟店實習考核開店資格
+#### 人才觀
+#### 開店資格：
+### 十五、第一年集團季度執行甘特圖、各系統待辦事項
+#### 甘特圖
+#### 待辦事項列表
+### 十六、企業成長路徑藍圖
+### 十七：風險分析與應對策略
+### 十八：關鍵里程碑與工作考核指標
+#### 第一年里程碑
+#### 第二～三年里程碑
+#### 第四～十年目標
+## 💎 【物質】What：預算、分紅與獲利估算
+### 十九、三大子公司架構與集團多元利潤引擎
+### 二十、核心決策團隊 24 人與全員多層級分紅激勵制度
+#### 黃金分紅存摺制度：
+#### 2. 24位核心決策團隊與全員分紅比例分配表
+#### 3. 合理淨利分紅計算與雙向合理性剖析
+### 二十一、六大財務分潤與流量變現引擎
+#### 1、一對一諮詢、按摩與整脊調理（由診所公司發放）
+#### 2、線上課程類型（由實業公司發放）
+#### 3、一對多教室團課（由實業公司發放）
+#### 4、大宗產品與能量設備（由實業公司發放）
+#### 5、TikTok 公會與身心靈網紅經紀變現（由經紀公司發放）
+#### 6、身心靈網路平台流量廣告與行銷服務營收（由行銷顧問公司發放）
+### 二十二、真靈光全員創業基金鎖定與加盟店孵化機制
+### 二十三、代理商首年推廣裂變與被動收入估算（白話示範）
+### 二十四、代理商第一年到第十年累積被動收益預估表（白話精算）
+### 二十五、第一年預算精算總表
+### 二十六、三年獲利與擴張時程
+#### 第一年（業績破局期）
+#### 第二年（幾何裂變期）
+#### 第三年（全面複製期）
+#### 代理商與店家成長保守預估
+#### 旗艦店 vs 加盟店配置
+#### 保守估計集團利潤方式如下
+#### 🟢 保守估計：十年毛利、成本與稅後淨利
+#### 營運成本明細結構（以第1~5年為例，不含稅）
+#### 客觀估計集團利潤方式如下
+#### 🔵 客觀估計：十年毛利、成本與稅後淨利
+#### 🔴 樂觀估計：十年毛利、成本與稅後淨利
+### 二十七、核心團隊全員多層級薪酬分紅制度
+#### 一、淨利分紅
+#### 二、四層全體分紅與激勵基金制度說明
+#### 二（續）、四大科技業級別激勵與約束機制
+#### 三、三層薪酬結構
+##### 🥇 Tier 1：經營決策層（進第一層分紅池，共 24 人）
+##### 🥈 Tier 2：高階主管與專業人士（進第二層分紅池，固定比例制）
+##### 🥉 Tier 3：基層一般員工（固定薪資 + 利潤分享制）
+#### 四、貢獻累積分紅：努力一陣子，被動收入一輩子
+#### 五、創辦團隊加入時間係數（終身鎖定）
+### 二十八、Tier1職位十年總收入預估
+#### 🟢 保守估計：十年收入 (稅後分紅池約 25.05 億)
+#### 🔵 客觀估計：十年收入 (稅後分紅池約 472.29 億)
+#### 🔴 樂觀估計：十年收入 (稅後分紅池約 2,874.69 億)
+### 二十九、十年成本與淨利分析（含營所稅）
+#### 🟢 保守估計：十年毛利、成本與稅後淨利
+#### 營運成本明細結構（以第1~5年為例，不含稅）
+#### 🔵 客觀估計：十年毛利、成本與稅後淨利
+#### 🔴 樂觀估計：十年毛利、成本與稅後淨利
+</textarea>
+    </section>
+    <div id="drag-bar"
+      class="w-1.5 hover:w-2 hover:bg-indigo-500/80 bg-slate-200 dark:bg-slate-700 cursor-col-resize shrink-0 transition-all duration-150 h-full flex items-center justify-center relative group z-20">
+      <div
+        class="w-0.5 h-6 rounded-full bg-slate-400 dark:bg-slate-500 group-hover:bg-white transition-colors duration-150 pointer-events-none">
+      </div>
+    </div>
+    <section id="map-container" style="width: 70%;"
+      class="relative bg-slate-50 dark:bg-slate-900 flex flex-col h-full transition-all duration-300 overflow-hidden">
+      <svg id="markmap" class="w-full flex-1 cursor-move" style="height: 100%; width: 100%; min-height: 500px;"></svg>
+      <div
+        class="absolute bottom-6 right-6 flex space-x-2 bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl shadow-xl backdrop-blur-md z-10">
+        <button onclick="zoomIn()" title="放大"
+          class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i
+            class="fa-solid fa-plus text-sm"></i></button>
+        <button onclick="zoomOut()" title="縮小"
+          class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition shadow"><i
+            class="fa-solid fa-minus text-sm"></i></button>
+        <button onclick="zoomFit()" title="適合螢幕"
+          class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow"><i
+            class="fa-solid fa-expand text-sm"></i></button>
+      </div>
+      <!-- 可點擊展開的資訊提示按鈕與面版 -->
+      <div class="absolute top-4 left-4 z-30 flex items-start">
+        <button id="btn-info-toggle" onclick="toggleInfoTooltip()"
+          class="w-9 h-9 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg transition">
+          <i class="fa-solid fa-circle-info text-lg"></i>
+        </button>
+        <div id="info-tooltip"
+          class="hidden ml-2 bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 shadow-2xl max-w-[240px] md:max-w-sm pointer-events-auto transition-all">
+          <div class="hidden md:block">
+            <strong class="text-indigo-600 dark:text-indigo-400 block mb-0.5">電腦版操作說明：</strong>
+            滑鼠拖曳畫布移動，滾輪縮放，單擊節點展開/收合，雙擊編輯節點，右鍵選單管理。
+          </div>
+          <div class="block md:hidden">
+            <strong class="text-indigo-600 dark:text-indigo-400 block mb-0.5">手機版操作說明：</strong>
+            單指拖曳畫布移動，雙指捏合縮放，單擊節點展開/收合，雙擊編輯節點，長按或點選右鍵選單管理。
+          </div>
+        </div>
+      </div>
+      <!-- 浮動右鍵選單 -->
+      <div id="context-menu"
+        class="hidden absolute bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-md z-50 text-xs font-medium">
+        <button id="menu-opt-edit" onclick="menuEditNode()"
+          class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+          <i class="fa-solid fa-pen text-slate-400 dark:text-slate-500"></i> 編輯節點文字
+        </button>
+        <button id="menu-opt-child" onclick="menuAddChild()"
+          class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+          <i class="fa-solid fa-plus text-slate-400 dark:text-slate-500"></i> 新增子節點
+        </button>
+        <button id="menu-opt-sibling" onclick="menuAddSibling()"
+          class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+          <i class="fa-solid fa-square-plus text-slate-400 dark:text-slate-500"></i> 新增同層節點
+        </button>
+        <button id="menu-opt-parent" onclick="menuAddParentTheme()"
+          class="w-full text-left px-4 py-2 hover:bg-indigo-600 hover:text-white flex items-center gap-2 transition duration-150">
+          <i class="fa-solid fa-folder-plus text-slate-400 dark:text-slate-500"></i> 新增獨立根主題
+        </button>
+        <div id="menu-opt-sep" class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
+        <button id="menu-opt-delete" onclick="menuDeleteNode()"
+          class="w-full text-left px-4 py-2 hover:bg-rose-600 hover:text-white flex items-center gap-2 text-rose-500 dark:text-rose-400 hover:text-white transition duration-150">
+          <i class="fa-solid fa-trash"></i> 刪除此節點
+        </button>
+      </div>
+      <!-- 行內編輯器 -->
+      <div id="inline-editor-container" class="hidden absolute z-50">
+        <input type="text" id="inline-editor"
+          class="bg-white dark:bg-slate-800 border-2 border-indigo-500 text-slate-800 dark:text-slate-100 px-3 py-1.5 rounded-lg shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-xs font-semibold min-w-[150px]">
+      </div>
+    </section>
+  </main>
+
+  <!-- Mobile Menu Panel -->
+  <div id="mobile-menu-panel"
+    class="hidden fixed inset-y-0 right-0 w-64 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-2xl z-50 flex flex-col transition-transform duration-300 transform translate-x-full">
+    <!-- Close button & title -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+      <span class="font-bold text-sm text-slate-800 dark:text-slate-200">選單功能</span>
+      <button onclick="toggleMobileMenu()"
+        class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <!-- Menu actions -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <!-- Search Box (Mobile) -->
+      <div class="space-y-2">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">搜尋檔案</span>
+        <div class="relative w-full">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+          </span>
+          <input type="text" id="mobile-search-input" placeholder="輸入關鍵字搜尋..." onkeydown="handleSearchKeydown(event)"
+            oninput="handleSearchInput(event)"
+            class="block w-full pl-9 pr-14 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-800 dark:text-slate-200">
+          <div class="absolute inset-y-0 right-0 pr-2 flex items-center space-x-1">
+            <button onclick="navigateSearch(-1)" title="上一個"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+              <i class="fa-solid fa-chevron-up text-xs"></i>
+            </button>
+            <button onclick="navigateSearch(1)" title="下一個"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+              <i class="fa-solid fa-chevron-down text-xs"></i>
+            </button>
+          </div>
+        </div>
+        <div id="mobile-search-status" class="hidden text-[10px] select-none"></div>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+
+      <!-- View Mode selection -->
+      <div class="space-y-2">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檢視模式</span>
+        <div
+          class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+          <button id="mobile-btn-view-split" onclick="switchView('split'); toggleMobileMenu();"
+            class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+            <i class="fa-solid fa-columns mb-0.5"></i>雙欄
+          </button>
+          <button id="mobile-btn-view-edit" onclick="switchView('edit'); toggleMobileMenu();"
+            class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+            <i class="fa-solid fa-file-pen mb-0.5"></i>編輯
+          </button>
+          <button id="mobile-btn-view-map" onclick="switchView('map'); toggleMobileMenu();"
+            class="py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex flex-col items-center justify-center">
+            <i class="fa-solid fa-expand mb-0.5"></i>心智圖
+          </button>
+        </div>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+      <!-- History operations -->
+      <div class="space-y-3">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">歷程操作</span>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="mobile-btn-undo" onclick="undo(); toggleMobileMenu();" disabled
+            class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-arrow-rotate-left"></i><span>復原</span>
+          </button>
+          <button id="mobile-btn-redo" onclick="redo(); toggleMobileMenu();" disabled
+            class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-arrow-rotate-right"></i><span>重做</span>
+          </button>
+        </div>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+      <!-- Markmap operations -->
+      <div class="space-y-3">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">心智圖操作</span>
+        <button onclick="zoomFit(); toggleMobileMenu();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-compress w-4"></i><span>重設縮放</span>
+        </button>
+        <button id="mobile-btn-expand-all" onclick="toggleExpandAll(); toggleMobileMenu();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-angles-down w-4"></i><span>一鍵展開</span>
+        </button>
+        <button id="mobile-btn-toggle-line" onclick="toggleLineStyle(); toggleMobileMenu();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-route w-4"></i><span>直角折線</span>
+        </button>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+      <!-- File actions -->
+      <div class="space-y-3">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">檔案匯出</span>
+        <button onclick="exportMarkdown(); toggleMobileMenu();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-file-code w-4"></i><span>匯出 .md</span>
+        </button>
+        <button onclick="exportSVG(); toggleMobileMenu();"
+          class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5 shadow-md">
+          <i class="fa-solid fa-download w-4"></i><span>下載 SVG 圖片</span>
+        </button>
+      </div>
+      <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+      <!-- Theme toggle -->
+      <div class="space-y-3">
+        <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">主題設定</span>
+        <button onclick="toggleTheme();"
+          class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-xs font-medium transition flex items-center space-x-2.5">
+          <i class="fa-solid fa-sun w-4 dark:hidden"></i>
+          <i class="fa-solid fa-moon w-4 hidden dark:inline-block"></i>
+          <span>切換深淺色</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Mobile Menu Backdrop -->
+  <div id="mobile-menu-backdrop" onclick="toggleMobileMenu()"
+    class="hidden fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 z-40 transition-opacity duration-300 opacity-0">
+  </div>
+
+</body>
+
+</html>
