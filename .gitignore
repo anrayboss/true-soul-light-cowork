@@ -5,3 +5,4 @@
 /.tmp.driveupload
 /.tmp.drivedownload
 /.obsidian
+.env
