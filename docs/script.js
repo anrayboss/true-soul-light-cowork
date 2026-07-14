@@ -41,144 +41,78 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-// 2. 身心靈 x 定清補 九大知識點分類
-const bodyInspirations = [
-    {
-        meta: "身 (Body) · 定 (Orient)",
-        title: "遠紅外線甕蒸排汗",
-        desc: "運用古法漢方草本蒸氣加速深層發汗，帶走皮下毛孔毒素與體內濕寒，重塑輕盈排毒循環。"
-    },
-    {
-        meta: "身 (Body) · 清 (Clear)",
-        title: "細胞級膳食營養補充",
-        desc: "配合葉醫師草本高抗氧精華與特調量子調頻咖啡，修復受損細胞壁，補足精微元氣。"
-    },
-    {
-        meta: "身 (Body) · 補 (Nourish)",
-        title: "整脊與經絡平衡按摩",
-        desc: "微調與擺正長期歪斜的骨骼關節，揉開經絡阻塞之筋結，使肉體力線結構回歸正直平衡。"
-    }
-];
+// 2. 免費身心靈影音專區與懸浮影片播放器
+const videoModal = document.getElementById('video-modal');
+const videoPlayer = document.getElementById('preview-video');
+const videoSourceMp4 = document.getElementById('video-source-mp4');
+const videoSourceWebm = document.getElementById('video-source-webm');
+const videoTag = document.getElementById('video-modal-tag');
+const videoTitle = document.getElementById('video-modal-title');
+const videoDesc = document.getElementById('video-modal-desc');
 
-const mindInspirations = [
-    {
-        meta: "心 (Mind) · 定 (Orient)",
-        title: "純鈦缽聲音沐浴",
-        desc: "聆聽高純度鈦缽產生的超高頻共振泛音，震開情緒陰霾，清除潛意識大腦焦慮與雜念。"
+const videoData = {
+    course: {
+        tag: "免費影音 · 系統課程",
+        title: "一、身心靈系統課程",
+        desc: "本系統課程從身心靈三維度（定、清、補）出發，協助您系統化了解自身生命能階與落地修行步驟。",
+        poster: "images for website/course_cover.png",
+        videoMp4: "https://assets.mixkit.co/videos/preview/mixkit-meditating-woman-in-a-beautiful-forest-43187-large.mp4",
+        videoWebm: "https://upload.wikimedia.org/wikipedia/commons/transcoded/b/b1/Yoga_Class_in_Session.webm/Yoga_Class_in_Session.webm.480p.vp9.webm"
     },
-    {
-        meta: "心 (Mind) · 清 (Clear)",
-        title: "同頻學員支持社群",
-        desc: "加入溫暖且包容的學員心靈充電圈，在真誠傾聽與愛的共振中，補充足夠的情緒底氣。"
+    energy: {
+        tag: "免費影音 · 能量補充",
+        title: "二、補充心靈能量系列",
+        desc: "聽覺與視覺的雙重音頻療癒。結合頌缽與脈輪調頻能量，能快速穩定並補充您的磁場防護罩。",
+        poster: "images for website/energy_cover.png",
+        videoMp4: "https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-background-1611-large.mp4",
+        videoWebm: "https://upload.wikimedia.org/wikipedia/commons/transcoded/f/f1/Aurora_Borealis_from_the_Space_Station.webm/Aurora_Borealis_from_the_Space_Station.webm.480p.vp9.webm"
     },
-    {
-        meta: "心 (Mind) · 補 (Nourish)",
-        title: "西方敘事諮商與算命",
-        desc: "結合東西方命理格局與敘事諮詢，協助打破慣性思維盲點，調正內在心態信念與事業定位。"
+    knowledge: {
+        tag: "免費影音 · 趣味知識",
+        title: "三、有趣身心靈知識",
+        desc: "帶您快速看懂人類圖、占星盤與生命靈數的基礎解讀法。用最趣味的角度解開靈魂藍圖。",
+        poster: "images for website/knowledge_cover.png",
+        videoMp4: "https://assets.mixkit.co/videos/preview/mixkit-mysterious-glowing-crescent-moon-in-sky-48666-large.mp4",
+        videoWebm: "https://upload.wikimedia.org/wikipedia/commons/transcoded/3/38/Night_Sky_Timelapse_at_Doi_Inthanon_National_Park.webm/Night_Sky_Timelapse_at_Doi_Inthanon_National_Park.webm.480p.vp9.webm"
     }
-];
-
-const soulInspirations = [
-    {
-        meta: "靈 (Soul) · 定 (Orient)",
-        title: "業力消災祈福法會",
-        desc: "針對多生累劫累積的宿世業力堵塞，進行深度消災儀軌與功德迴向，清除靈魂深層負能糾纏。"
-    },
-    {
-        meta: "靈 (Soul) · 清 (Clear)",
-        title: "量子矽晶圓能量卡",
-        desc: "隨身佩戴微米半導體矽晶能量晶圓鍊或飲用調頻水，修補並強化個人氣場防護罩。"
-    },
-    {
-        meta: "靈 (Soul) · 補 (Nourish)",
-        title: "阿卡西靈魂定位諮詢",
-        desc: "開啟靈魂的阿卡西記錄，解讀本源星系與靈性軌跡，調整人生天命航道與此生藍圖。"
-    }
-];
-
-// 收藏狀態記錄
-const collectedState = {
-    body: false,
-    mind: false,
-    soul: false
 };
 
-const currentInspIndexes = {
-    body: 1, // 初始預設膳食補充
-    mind: 2, // 初始預設敘事諮商
-    soul: 0  // 初始預設業力法會
-};
+function openVideoModal(type) {
+    const data = videoData[type];
+    if (!data) return;
 
-const nextInspBtn = document.getElementById('next-insp-btn');
+    videoTag.innerText = data.tag;
+    videoTitle.innerText = data.title;
+    videoDesc.innerText = data.desc;
 
-// 初始化收藏按鈕狀態
-function updateCollectBtnUi(type) {
-    const btn = document.getElementById(`collect-btn-${type}`);
-    const textSpan = btn.querySelector('span');
-    const icon = btn.querySelector('i');
+    // 設定影片來源與封面圖 (支援 WebM 與 MP4 fallback 雙通道)
+    videoPlayer.removeAttribute('src'); // 移除直接的 src，確保使用內部 source 元素
+    videoPlayer.poster = data.poster;
+    videoSourceMp4.src = data.videoMp4;
+    videoSourceWebm.src = data.videoWebm;
+    videoPlayer.load();
 
-    if (collectedState[type]) {
-        btn.classList.add('collected');
-        icon.className = 'fa-solid fa-heart';
-        textSpan.innerText = '已收藏';
-    } else {
-        btn.classList.remove('collected');
-        icon.className = 'fa-regular fa-heart';
-        textSpan.innerText = '收藏卡片';
-    }
+    videoModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // 嘗試自動播放
+    videoPlayer.play().catch(error => {
+        console.log("Auto-play was prevented. Waiting for user interaction.", error);
+    });
 }
 
-// 隨選按鈕點擊：同時洗牌三張卡片
-nextInspBtn.addEventListener('click', () => {
-    // 洗牌三個面向的索引
-    currentInspIndexes.body = Math.floor(Math.random() * bodyInspirations.length);
-    currentInspIndexes.mind = Math.floor(Math.random() * mindInspirations.length);
-    currentInspIndexes.soul = Math.floor(Math.random() * soulInspirations.length);
+function closeVideoModal() {
+    videoPlayer.pause();
+    videoModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
 
-    // 重置三張卡片的收藏狀態（新抽取的預設不收藏）
-    collectedState.body = false;
-    collectedState.mind = false;
-    collectedState.soul = false;
-
-    // 平滑漸變切換
-    animateCardSwitch('body', bodyInspirations[currentInspIndexes.body]);
-    animateCardSwitch('mind', mindInspirations[currentInspIndexes.mind]);
-    animateCardSwitch('soul', soulInspirations[currentInspIndexes.soul]);
+// 點擊彈窗外部關閉影片彈窗
+videoModal.addEventListener('click', (e) => {
+    if (e.target === videoModal) {
+        closeVideoModal();
+    }
 });
-
-function animateCardSwitch(type, item) {
-    const box = document.getElementById(`box-${type}`);
-    const meta = document.getElementById(`insp-${type}-meta`);
-    const title = document.getElementById(`insp-${type}-title`);
-    const desc = document.getElementById(`insp-${type}-desc`);
-
-    box.style.opacity = 0;
-    box.style.transform = 'translateY(15px)';
-
-    setTimeout(() => {
-        meta.innerText = item.meta;
-        title.innerText = item.title;
-        desc.innerText = item.desc;
-
-        updateCollectBtnUi(type);
-
-        box.style.opacity = 1;
-        box.style.transform = 'translateY(0)';
-    }, 300);
-}
-
-// 收藏切換
-function toggleCollect(type) {
-    collectedState[type] = !collectedState[type];
-    updateCollectBtnUi(type);
-
-    if (collectedState[type]) {
-        const item = type === 'body' ? bodyInspirations[currentInspIndexes.body] :
-            type === 'mind' ? mindInspirations[currentInspIndexes.mind] :
-                soulInspirations[currentInspIndexes.soul];
-        alert(`成功收藏【${item.meta} · ${item.title}】！該指引已記錄至個人靈修庫。`);
-    }
-}
 
 // 3. 服務矩陣 Modal 彈窗
 const modal = document.getElementById('matrix-modal');

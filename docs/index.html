@@ -32,7 +32,7 @@
                 <span class="logo-zh">真靈光</span><span class="logo-en">True Soul Light</span>
             </a>
             <nav class="nav">
-                <a href="#about" class="nav-link">每日修行資源</a>
+                <a href="#about" class="nav-link">免費影音專區</a>
                 <a href="#matrix" class="nav-link">服務原理</a>
                 <a href="#tools" class="nav-link">命盤定位</a>
                 <a href="#quiz" class="nav-link">免費測驗</a>
@@ -77,63 +77,93 @@
     <section id="about" class="editorial-section">
         <div class="container">
             <div style="margin-bottom: 50px;">
-                <span class="section-tag">01 / Daily Learning</span>
-                <h2 class="section-title">每日免費修行靈感</h2>
+                <span class="section-tag">01 / Free Videos</span>
+                <h2 class="section-title">免費身心靈影音專區</h2>
                 <p class="body-text" style="max-width: 800px;">
-                    我們相信修行融入於日常生活中的每一個微小選擇。本系統提供身、心、靈三面向對應定、清、補的九大修持指引。下方三張卡片分別呈現「身」、「心」、「靈」的今日指引，點擊「隨選今日靈感」按鈕即可隨機洗牌更新。
+                    我們相信修行融入於日常生活中的每一個微小選擇。本系統提供身、心、靈三面向對應的免費影音資源，包含系統課程、能量補充與趣味知識，點擊下方卡片即可立即線上播放觀看。
                 </p>
             </div>
 
             <!-- 三欄卡片容器 -->
             <div class="inspiration-container">
-                <!-- 身卡片 -->
-                <div class="inspiration-box shadow-premium" id="box-body">
+                <!-- 系統課程卡片 -->
+                <div class="inspiration-box shadow-premium" id="box-course" style="cursor: pointer;" onclick="openVideoModal('course')">
+                    <!-- 影音封面預覽 -->
+                    <div class="video-preview-wrapper" style="width: 100%; aspect-ratio: 16/9; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 20px; position: relative; background: var(--color-bg-secondary);">
+                        <img src="images for website/course_cover.png" alt="身心靈系統課程" class="video-preview-img" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);">
+                        <div class="video-preview-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(21, 17, 15, 0.2); display: flex; justify-content: center; align-items: center; transition: background 0.3s ease;">
+                            <div class="video-preview-play-btn" style="width: 48px; height: 48px; border-radius: 50%; background: var(--color-bg); display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.15); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+                                <i class="fa-solid fa-play" style="color: var(--color-accent); font-size: 1rem; margin-left: 2px; transition: color 0.3s ease;"></i>
+                            </div>
+                        </div>
+                    </div>
                     <div class="inspiration-card">
-                        <span class="inspiration-meta" id="insp-body-meta">身 (Body) · 清</span>
-                        <h3 class="inspiration-title" id="insp-body-title">細胞級膳食補充</h3>
-                        <p class="inspiration-desc" id="insp-body-desc">提供天然草本營養素與量子調頻能量咖啡，修復細胞壁，補足一整天所需的精微能量。</p>
+                        <span class="inspiration-meta" id="insp-course-meta">
+                            <i class="fa-solid fa-play-circle" style="margin-right: 5px; color: var(--color-accent);"></i> 免費影音 · 系統課程
+                        </span>
+                        <h3 class="inspiration-title" id="insp-course-title">一、身心靈系統課程</h3>
+                        <p class="inspiration-desc" id="insp-course-desc">從身心靈底層邏輯出發，系統化梳理定位、清理與能量補充的實修路徑，助您全面提升生命能階。</p>
                     </div>
                     <div class="inspiration-actions">
-                        <button class="collect-btn" id="collect-btn-body" onclick="toggleCollect('body')"
-                            aria-label="Collect body card">
-                            <i class="fa-regular fa-heart"></i> <span id="collect-text-body">收藏卡片</span>
+                        <button class="collect-btn" id="play-btn-course" aria-label="Play course video">
+                            <i class="fa-solid fa-play"></i> <span>立即播放</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- 心卡片 -->
-                <div class="inspiration-box shadow-premium" id="box-mind">
+                <!-- 能量補充卡片 -->
+                <div class="inspiration-box shadow-premium" id="box-energy" style="cursor: pointer;" onclick="openVideoModal('energy')">
+                    <!-- 影音封面預覽 -->
+                    <div class="video-preview-wrapper" style="width: 100%; aspect-ratio: 16/9; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 20px; position: relative; background: var(--color-bg-secondary);">
+                        <img src="images for website/energy_cover.png" alt="補充心靈能量系列" class="video-preview-img" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);">
+                        <div class="video-preview-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(21, 17, 15, 0.2); display: flex; justify-content: center; align-items: center; transition: background 0.3s ease;">
+                            <div class="video-preview-play-btn" style="width: 48px; height: 48px; border-radius: 50%; background: var(--color-bg); display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.15); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+                                <i class="fa-solid fa-play" style="color: var(--color-accent); font-size: 1rem; margin-left: 2px; transition: color 0.3s ease;"></i>
+                            </div>
+                        </div>
+                    </div>
                     <div class="inspiration-card">
-                        <span class="inspiration-meta" id="insp-mind-meta">心 (Mind) · 補</span>
-                        <h3 class="inspiration-title" id="insp-mind-title">西方敘事諮商與算命</h3>
-                        <p class="inspiration-desc" id="insp-mind-desc">結合命理格局與敘事諮商，梳理思維盲點，調正內在心態信念與人生定位。</p>
+                        <span class="inspiration-meta" id="insp-energy-meta">
+                            <i class="fa-solid fa-play-circle" style="margin-right: 5px; color: var(--color-accent);"></i> 免費影音 · 能量補充
+                        </span>
+                        <h3 class="inspiration-title" id="insp-energy-title">二、補充心靈能量系列</h3>
+                        <p class="inspiration-desc" id="insp-energy-desc">收錄西藏頌缽、純鈦音療及調頻冥想引導，隨時隨地為疲憊的心靈快速充能，重建氣場防護罩。</p>
                     </div>
                     <div class="inspiration-actions">
-                        <button class="collect-btn" id="collect-btn-mind" onclick="toggleCollect('mind')"
-                            aria-label="Collect mind card">
-                            <i class="fa-regular fa-heart"></i> <span id="collect-text-mind">收藏卡片</span>
+                        <button class="collect-btn" id="play-btn-energy" aria-label="Play energy video">
+                            <i class="fa-solid fa-play"></i> <span>立即播放</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- 靈卡片 -->
-                <div class="inspiration-box shadow-premium" id="box-soul">
+                <!-- 趣味知識卡片 -->
+                <div class="inspiration-box shadow-premium" id="box-knowledge" style="cursor: pointer;" onclick="openVideoModal('knowledge')">
+                    <!-- 影音封面預覽 -->
+                    <div class="video-preview-wrapper" style="width: 100%; aspect-ratio: 16/9; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 20px; position: relative; background: var(--color-bg-secondary);">
+                        <img src="images for website/knowledge_cover.png" alt="有趣身心靈知識" class="video-preview-img" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);">
+                        <div class="video-preview-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(21, 17, 15, 0.2); display: flex; justify-content: center; align-items: center; transition: background 0.3s ease;">
+                            <div class="video-preview-play-btn" style="width: 48px; height: 48px; border-radius: 50%; background: var(--color-bg); display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.15); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+                                <i class="fa-solid fa-play" style="color: var(--color-accent); font-size: 1rem; margin-left: 2px; transition: color 0.3s ease;"></i>
+                            </div>
+                        </div>
+                    </div>
                     <div class="inspiration-card">
-                        <span class="inspiration-meta" id="insp-soul-meta">靈 (Soul) · 定</span>
-                        <h3 class="inspiration-title" id="insp-soul-title">業力消災祈福法會</h3>
-                        <p class="inspiration-desc" id="insp-soul-desc">針對宿世因果業力堵塞進行超度與功德迴向，清除靈魂深層負能與業力糾纏。</p>
+                        <span class="inspiration-meta" id="insp-knowledge-meta">
+                            <i class="fa-solid fa-play-circle" style="margin-right: 5px; color: var(--color-accent);"></i> 免費影音 · 趣味知識
+                        </span>
+                        <h3 class="inspiration-title" id="insp-knowledge-title">三、有趣身心靈知識</h3>
+                        <p class="inspiration-desc" id="insp-knowledge-desc">用淺顯易懂的方式解析人類圖、星盤、紫微斗數及生命靈數等神秘學知識，開啟探索自我的趣味之門。</p>
                     </div>
                     <div class="inspiration-actions">
-                        <button class="collect-btn" id="collect-btn-soul" onclick="toggleCollect('soul')"
-                            aria-label="Collect soul card">
-                            <i class="fa-regular fa-heart"></i> <span id="collect-text-soul">收藏卡片</span>
+                        <button class="collect-btn" id="play-btn-knowledge" aria-label="Play knowledge video">
+                            <i class="fa-solid fa-play"></i> <span>立即播放</span>
                         </button>
                     </div>
                 </div>
             </div>
 
             <div style="text-align: center; margin-top: 40px;">
-                <button id="next-insp-btn" class="btn btn-primary">隨選今日靈感</button>
+                <button id="more-videos-btn" class="btn btn-primary" onclick="alert('更多進階身心靈課程正在錄製中，敬請期待！')">解鎖更多專屬影音</button>
             </div>
         </div>
     </section>
@@ -743,7 +773,7 @@
                 <div class="footer-links">
                     <h4>精選項目</h4>
                     <ul>
-                        <li><a href="#about">隨機修行靈感</a></li>
+                        <li><a href="#about">免費影音專區</a></li>
                         <li><a href="#matrix">身心靈定清補矩陣</a></li>
                         <li><a href="#quiz">免費命理定位測驗</a></li>
                     </ul>
@@ -767,6 +797,30 @@
             </div>
         </div>
     </footer>
+
+    <!-- 影片播放彈窗 (Video Modal) -->
+    <div class="modal" id="video-modal">
+        <div class="modal-content" style="max-width: 800px; padding: 25px;">
+            <button class="modal-close" onclick="closeVideoModal()" aria-label="Close modal">&times;</button>
+            <div class="modal-header" style="margin-bottom: 15px;">
+                <span class="modal-tag" id="video-modal-tag">免費影音 · 系統課程</span>
+                <h3 class="modal-title" id="video-modal-title">身心靈系統課程</h3>
+            </div>
+            <div class="modal-body" style="margin-bottom: 0;">
+                <div class="video-container" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <video id="preview-video" controls width="100%" height="100%" style="display: block; object-fit: cover;" poster="">
+                        <source id="video-source-mp4" type="video/mp4">
+                        <source id="video-source-webm" type="video/webm">
+                        您的瀏覽器不支援 HTML5 影片播放。
+                    </video>
+                </div>
+                <div class="video-footer" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <p id="video-modal-desc" style="font-size: 0.95rem; color: var(--color-text-muted); margin: 0; flex: 1; min-width: 250px; line-height: 1.5;">模擬免費影音內容說明。</p>
+                    <button class="btn btn-primary" onclick="alert('感謝觀看！完整 60 小時進階課程已收錄於我們的「覺醒」方案中，歡迎解鎖！'); closeVideoModal();" style="flex-shrink: 0; padding: 8px 20px; font-size: 0.9rem;">解鎖完整課程</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 服務詳情彈窗 (Modal) -->
     <div class="modal" id="matrix-modal">
@@ -855,7 +909,7 @@
             onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">&times;</button>
         <nav class="mobile-nav">
             <a href="#about" class="mobile-nav-link"
-                onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">每日修行資源</a>
+                onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">免費影音專區</a>
             <a href="#matrix" class="mobile-nav-link"
                 onclick="document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = '';">服務原理</a>
             <a href="#tools" class="mobile-nav-link"

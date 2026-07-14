@@ -1948,3 +1948,18 @@ body.dark-mode .mobile-nav-cta {
     border-radius: 30px;
     font-weight: 500;
 }
+
+/* 影音卡片預覽特效 */
+.inspiration-box:hover .video-preview-img {
+    transform: scale(1.05);
+}
+.inspiration-box:hover .video-preview-overlay {
+    background: rgba(21, 17, 15, 0.15) !important;
+}
+.inspiration-box:hover .video-preview-play-btn {
+    transform: scale(1.1);
+    background-color: var(--color-accent) !important;
+}
+.inspiration-box:hover .video-preview-play-btn i {
+    color: #ffffff !important;
+}
